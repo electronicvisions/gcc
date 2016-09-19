@@ -248,6 +248,39 @@
 		     | RS6000_BTC_SPECIAL),				\
 		    CODE_FOR_nothing)			/* ICODE */
 
+/* s2pp overloaded builtin function macros.  */
+#define BU_S2PP_OVERLOAD_1(ENUM, NAME)					\
+  RS6000_BUILTIN_1 (S2PP_BUILTIN_VEC_ ## ENUM,		/* ENUM */	\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_UNARY),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_OVERLOAD_2(ENUM, NAME)					\
+  RS6000_BUILTIN_2 (S2PP_BUILTIN_VEC_ ## ENUM,		/* ENUM */	\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_BINARY),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_OVERLOAD_3(ENUM, NAME)					\
+  RS6000_BUILTIN_3 (S2PP_BUILTIN_VEC_ ## ENUM,		/* ENUM */	\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_TERNARY),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_OVERLOAD_X(ENUM, NAME)				\
+  RS6000_BUILTIN_X (S2PP_BUILTIN_VEC_ ## ENUM,	/* ENUM */	\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_SPECIAL),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
 
 /* VSX convenience macros.  */
 #define BU_VSX_1(ENUM, NAME, ATTR, ICODE)				\
@@ -684,6 +717,9 @@ BU_S2PP_X (FXVLAX_V16QI,"fxvlax",	    MEM)
 BU_S2PP_X (FXVSTAX,	"fxvstax",	    MEM)
 BU_S2PP_X (FXVSTAX_V8HI,"fxvstax",	    MEM)
 BU_S2PP_X (FXVSTAX_V16QI,"fxvstax",	    MEM)
+
+BU_S2PP_OVERLOAD_2 (FXVADDBM,	   "fxvaddbm")
+BU_S2PP_OVERLOAD_2 (FXVADDHM,	   "fxvaddhm")
 
 /* 3 argument Altivec builtins.  */
 BU_ALTIVEC_3 (VMADDFP,        "vmaddfp",        FP,    	fmav4sf4)

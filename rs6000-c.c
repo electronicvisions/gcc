@@ -398,6 +398,11 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
       builtin_define ("__pixel=__attribute__((altivec(pixel__))) unsigned short");
       builtin_define ("__bool=__attribute__((altivec(bool__))) unsigned");
 
+      /* Define the AltiVec syntactic elements.  */
+      builtin_define ("__vector=__attribute__((s2pp(vector__)))");
+      builtin_define ("__pixel=__attribute__((s2pp(pixel__))) unsigned short");
+      builtin_define ("__bool=__attribute__((s2pp(bool__))) unsigned");
+
       if (!flag_iso)
 	{
 	  builtin_define ("vector=vector");
@@ -541,6 +546,80 @@ struct altivec_builtin_types
   signed char op2;
   signed char op3;
 };
+
+struct s2pp_builtin_types
+{
+  enum rs6000_builtins code;
+  enum rs6000_builtins overloaded_code;
+  signed char ret_type;
+  signed char op1;
+  signed char op2;
+  signed char op3;
+};
+
+
+const struct s2pp_builtin_types s2pp_overloaded_builtins[] = {
+
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
+
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
+    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
+    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, 0 },
+};
+
+
 /*p_o_i*/
 const struct altivec_builtin_types altivec_overloaded_builtins[] = {
   /* Unary AltiVec/VSX builtins.  */
@@ -4046,25 +4125,6 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_unsigned_V2DI, RS6000_BTI_unsigned_V2DI,
     RS6000_BTI_INTSI, RS6000_BTI_INTSI },
 
-/*s2pp*/
-
-  //{ S2PP_BUILTIN_VEC_SEL, S2PP_BUILTIN_FXVSEL,
-  // RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI },
-
-  /*{ S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
-
-  { S2PP_BUILTIN_VEC_LD, S2PP_BUILTIN_LAX_V8HI,
-    RS6000_BTI_void, RS6000_BTI_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_V8HI },
-  { S2PP_BUILTIN_VEC_LD, S2PP_BUILTIN_LAX_V16QI,
-    RS6000_BTI_void, RS6000_BTI_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_V16HI },
-  { S2PP_BUILTIN_VEC_ST, S2PP_BUILTIN_STAX_V8HI,
-    RS6000_BTI_void, RS6000_BTI_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_V8HI },
-  { S2PP_BUILTIN_VEC_ST, S2PP_BUILTIN_STAX_V16QI,
-    RS6000_BTI_void, RS6000_BTI_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_V16HI },
-*/
   { (enum rs6000_builtins) 0, (enum rs6000_builtins) 0, 0, 0, 0, 0 }
 };
 
@@ -4161,6 +4221,75 @@ altivec_build_resolved_builtin (tree *args, int n,
 			     build_int_cst (NULL_TREE, 2));
     }
 
+  switch (n)
+    {
+    case 0:
+      call = build_call_expr (impl_fndecl, 0);
+      break;
+    case 1:
+      call = build_call_expr (impl_fndecl, 1,
+			      fully_fold_convert (arg_type[0], args[0]));
+      break;
+    case 2:
+      call = build_call_expr (impl_fndecl, 2,
+			      fully_fold_convert (arg_type[0], args[0]),
+			      fully_fold_convert (arg_type[1], args[1]));
+      break;
+    case 3:
+      call = build_call_expr (impl_fndecl, 3,
+			      fully_fold_convert (arg_type[0], args[0]),
+			      fully_fold_convert (arg_type[1], args[1]),
+			      fully_fold_convert (arg_type[2], args[2]));
+      break;
+    default:
+      gcc_unreachable ();
+    }
+  return fold_convert (ret_type, call);
+}
+
+/* Build a tree for a function call to an Altivec non-overloaded builtin.
+   The overloaded builtin that matched the types and args is described
+   by DESC.  The N arguments are given in ARGS, respectively.  
+
+   Actually the only thing it does is calling fold_convert on ARGS, with
+   a small exception for vec_{all,any}_{ge,le} predicates. */
+
+static tree
+s2pp_build_resolved_builtin (tree *args, int n,
+				const struct s2pp_builtin_types *desc)
+{
+  tree impl_fndecl = rs6000_builtin_decls[desc->overloaded_code];
+  tree ret_type = rs6000_builtin_type (desc->ret_type);
+  tree argtypes = TYPE_ARG_TYPES (TREE_TYPE (impl_fndecl));
+  tree arg_type[3];
+  tree call;
+
+  int i;
+  for (i = 0; i < n; i++)
+    arg_type[i] = TREE_VALUE (argtypes), argtypes = TREE_CHAIN (argtypes);
+
+  /* The AltiVec overloading implementation is overall gross, but this
+     is particularly disgusting.  The vec_{all,any}_{ge,le} builtins
+     are completely different for floating-point vs. integer vector
+     types, because the former has vcmpgefp, but the latter should use
+     vcmpgtXX.
+
+     In practice, the second and third arguments are swapped, and the
+     condition (LT vs. EQ, which is recognizable by bit 1 of the first
+     argument) is reversed.  Patch the arguments here before building
+     the resolved CALL_EXPR.  */
+  /*if (desc->code == ALTIVEC_BUILTIN_VEC_VCMPGE_P
+      && desc->overloaded_code != ALTIVEC_BUILTIN_VCMPGEFP_P
+      && desc->overloaded_code != VSX_BUILTIN_XVCMPGEDP_P)
+    {
+      tree t;
+      t = args[2], args[2] = args[1], args[1] = t;
+      t = arg_type[2], arg_type[2] = arg_type[1], arg_type[1] = t;
+      
+      args[0] = fold_build2 (BIT_XOR_EXPR, TREE_TYPE (args[0]), args[0],
+			     build_int_cst (NULL_TREE, 2));
+    }
+*/
   switch (n)
     {
     case 0:
@@ -4587,6 +4716,296 @@ assignment for unaligned loads and stores");
 	    || rs6000_builtin_type_compatible (types[2], desc->op3))
 	&& rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
       return altivec_build_resolved_builtin (args, n, desc);
+
+ bad:
+  error ("invalid parameter combination for AltiVec intrinsic");
+  return error_mark_node;
+}
+
+/* Implementation of the resolve_overloaded_builtin target hook, to
+   support s2pp's overloaded builtins.  */
+
+tree
+s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
+				    void *passed_arglist)
+{
+  vec<tree, va_gc> *arglist = static_cast<vec<tree, va_gc> *> (passed_arglist);
+  unsigned int nargs = vec_safe_length (arglist);
+  enum rs6000_builtins fcode
+    = (enum rs6000_builtins)DECL_FUNCTION_CODE (fndecl);
+  tree fnargs = TYPE_ARG_TYPES (TREE_TYPE (fndecl));
+  tree types[3], args[3];
+  const struct s2pp_builtin_types *desc;
+  unsigned int n;
+
+  if (!rs6000_overloaded_builtin_p (fcode))
+    return NULL_TREE;
+
+  if (TARGET_DEBUG_BUILTIN)
+    fprintf (stderr, "s2pp_resolve_overloaded_builtin, code = %4d, %s\n",
+	     (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
+ 
+  /* For now treat vec_splats and vec_promote as the same.  */
+  if (fcode == S2PP_BUILTIN_VEC_SPLATS)
+    {
+      tree type, arg;
+      int size;
+      int i;
+      bool unsigned_p;
+      vec<constructor_elt, va_gc> *vec;
+      const char *name = "fxv_splats";
+
+      if (nargs != 1)
+	{
+	  error ("%s only accepts 1 argument", name);
+	  return error_mark_node;
+	}
+
+      arg = (*arglist)[0];
+      type = TREE_TYPE (arg);
+      if (!SCALAR_FLOAT_TYPE_P (type)
+	  && !INTEGRAL_TYPE_P (type))
+	goto bad;
+      unsigned_p = TYPE_UNSIGNED (type);
+      switch (TYPE_MODE (type))
+	{
+	  case HImode:
+	    type = (unsigned_p ? unsigned_V8HI_type_node : V8HI_type_node);
+	    size = 8;
+	    break;
+	  case QImode:
+	    type = (unsigned_p ? unsigned_V16QI_type_node : V16QI_type_node);
+	    size = 16;
+	    break;
+	  default:
+	    goto bad;
+	}
+      arg = save_expr (fold_convert (TREE_TYPE (type), arg));
+      vec_alloc (vec, size);
+      for(i = 0; i < size; i++)
+	{
+	  constructor_elt elt = {NULL_TREE, arg};
+	  vec->quick_push (elt);
+	}
+	return build_constructor (type, vec);
+    }
+
+  /* For now use pointer tricks to do the extraction, unless we are on VSX
+     extracting a double from a constant offset.  */
+  if (fcode == S2PP_BUILTIN_VEC_EXTRACT)
+    {
+      tree arg1;
+      tree arg1_type;
+      tree arg2;
+      tree arg1_inner_type;
+      tree decl, stmt;
+      tree innerptrtype;
+      enum machine_mode mode;
+
+      /* No second argument. */
+      if (nargs != 2)
+	{
+	  error ("vec_extract only accepts 2 arguments");
+	  return error_mark_node;
+	}
+
+      arg2 = (*arglist)[1];
+      arg1 = (*arglist)[0];
+      arg1_type = TREE_TYPE (arg1);
+
+      if (TREE_CODE (arg1_type) != VECTOR_TYPE)
+	goto bad; 
+      if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
+	goto bad; 
+
+      /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2). */
+      arg1_inner_type = TREE_TYPE (arg1_type);
+      arg2 = build_binary_op (loc, BIT_AND_EXPR, arg2,
+			      build_int_cst (TREE_TYPE (arg2),
+					     TYPE_VECTOR_SUBPARTS (arg1_type)
+					     - 1), 0);
+      decl = build_decl (loc, VAR_DECL, NULL_TREE, arg1_type);
+      DECL_EXTERNAL (decl) = 0;
+      TREE_PUBLIC (decl) = 0;
+      DECL_CONTEXT (decl) = current_function_decl;
+      TREE_USED (decl) = 1;
+      TREE_TYPE (decl) = arg1_type;
+      TREE_READONLY (decl) = TYPE_READONLY (arg1_type);
+      if (c_dialect_cxx ())
+	{
+	  stmt = build4 (TARGET_EXPR, arg1_type, decl, arg1,
+			 NULL_TREE, NULL_TREE);
+	  SET_EXPR_LOCATION (stmt, loc);
+	}
+      else
+	{
+	  DECL_INITIAL (decl) = arg1;
+	  stmt = build1 (DECL_EXPR, arg1_type, decl);
+	  TREE_ADDRESSABLE (decl) = 1;
+	  SET_EXPR_LOCATION (stmt, loc);
+	  stmt = build1 (COMPOUND_LITERAL_EXPR, arg1_type, stmt);
+	}
+
+      innerptrtype = build_pointer_type (arg1_inner_type);
+
+      stmt = build_unary_op (loc, ADDR_EXPR, stmt, 0);
+      stmt = convert (innerptrtype, stmt);
+      stmt = build_binary_op (loc, PLUS_EXPR, stmt, arg2, 1);
+      stmt = build_indirect_ref (loc, stmt, RO_NULL);
+
+      return stmt;
+    }
+
+  /* For now use pointer tricks to do the insertion, unless we are on VSX
+     inserting a double to a constant offset..  */
+  if (fcode == S2PP_VEC_BUILTIN_VEC_INSERT)
+    {
+      tree arg0;
+      tree arg1;
+      tree arg2;
+      tree arg1_type;
+      tree arg1_inner_type;
+      tree decl, stmt;
+      tree innerptrtype;
+      enum machine_mode mode;
+
+      /* No second or third arguments. */
+      if (nargs != 3)
+	{
+	  error ("vec_insert only accepts 3 arguments");
+	  return error_mark_node;
+	}
+
+      arg0 = (*arglist)[0];
+      arg1 = (*arglist)[1];
+      arg1_type = TREE_TYPE (arg1);
+      arg2 = (*arglist)[2];
+
+      if (TREE_CODE (arg1_type) != VECTOR_TYPE)
+	goto bad; 
+      if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
+	goto bad; 
+
+      /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2) = arg0. */
+      arg1_inner_type = TREE_TYPE (arg1_type);
+      arg2 = build_binary_op (loc, BIT_AND_EXPR, arg2,
+			      build_int_cst (TREE_TYPE (arg2),
+					     TYPE_VECTOR_SUBPARTS (arg1_type)
+					     - 1), 0);
+      decl = build_decl (loc, VAR_DECL, NULL_TREE, arg1_type);
+      DECL_EXTERNAL (decl) = 0;
+      TREE_PUBLIC (decl) = 0;
+      DECL_CONTEXT (decl) = current_function_decl;
+      TREE_USED (decl) = 1;
+      TREE_TYPE (decl) = arg1_type;
+      TREE_READONLY (decl) = TYPE_READONLY (arg1_type);
+      if (c_dialect_cxx ())
+	{
+	  stmt = build4 (TARGET_EXPR, arg1_type, decl, arg1,
+			 NULL_TREE, NULL_TREE);
+	  SET_EXPR_LOCATION (stmt, loc);
+	}
+      else
+	{
+	  DECL_INITIAL (decl) = arg1;
+	  stmt = build1 (DECL_EXPR, arg1_type, decl);
+	  TREE_ADDRESSABLE (decl) = 1;
+	  SET_EXPR_LOCATION (stmt, loc);
+	  stmt = build1 (COMPOUND_LITERAL_EXPR, arg1_type, stmt);
+	}
+
+      innerptrtype = build_pointer_type (arg1_inner_type);
+
+      stmt = build_unary_op (loc, ADDR_EXPR, stmt, 0);
+      stmt = convert (innerptrtype, stmt);
+      stmt = build_binary_op (loc, PLUS_EXPR, stmt, arg2, 1);
+      stmt = build_indirect_ref (loc, stmt, RO_NULL);
+      stmt = build2 (MODIFY_EXPR, TREE_TYPE (stmt), stmt,
+		     convert (TREE_TYPE (stmt), arg0));
+      stmt = build2 (COMPOUND_EXPR, arg1_type, stmt, decl);
+      return stmt;
+    }
+
+  for (n = 0;
+       !VOID_TYPE_P (TREE_VALUE (fnargs)) && n < nargs;
+       fnargs = TREE_CHAIN (fnargs), n++)
+    {
+      tree decl_type = TREE_VALUE (fnargs);
+      tree arg = (*arglist)[n];
+      tree type;
+
+      if (arg == error_mark_node)
+	return error_mark_node;
+
+      if (n >= 3)
+        abort ();
+
+      arg = default_conversion (arg);
+
+      /* The C++ front-end converts float * to const void * using
+	 NOP_EXPR<const void *> (NOP_EXPR<void *> (x)).  */
+      type = TREE_TYPE (arg);
+      if (POINTER_TYPE_P (type)
+	  && TREE_CODE (arg) == NOP_EXPR
+	  && lang_hooks.types_compatible_p (TREE_TYPE (arg),
+					    const_ptr_type_node)
+	  && lang_hooks.types_compatible_p (TREE_TYPE (TREE_OPERAND (arg, 0)),
+					    ptr_type_node))
+	{
+	  arg = TREE_OPERAND (arg, 0);
+          type = TREE_TYPE (arg);
+	}
+
+      /* Remove the const from the pointers to simplify the overload
+	 matching further down.  */
+      if (POINTER_TYPE_P (decl_type)
+	  && POINTER_TYPE_P (type)
+	  && TYPE_QUALS (TREE_TYPE (type)) != 0)
+	{
+          if (TYPE_READONLY (TREE_TYPE (type))
+	      && !TYPE_READONLY (TREE_TYPE (decl_type)))
+	    warning (0, "passing arg %d of %qE discards qualifiers from"
+		        "pointer target type", n + 1, fndecl);
+	  type = build_pointer_type (build_qualified_type (TREE_TYPE (type),
+							   0));
+	  arg = fold_convert (type, arg);
+	}
+
+      args[n] = arg;
+      types[n] = type;
+    }
+
+  /* If the number of arguments did not match the prototype, return NULL
+     and the generic code will issue the appropriate error message.  */
+  if (!VOID_TYPE_P (TREE_VALUE (fnargs)) || n < nargs)
+    return NULL;
+
+  if (n == 0)
+    abort ();
+
+  if (fcode == S2PP_BUILTIN_VEC_STEP)
+    {
+      if (TREE_CODE (types[0]) != VECTOR_TYPE)
+	goto bad;
+
+      return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
+    }
+
+  for (desc = s2pp_overloaded_builtins;
+       desc->code && desc->code != fcode; desc++)
+    continue;
+
+  /* For arguments after the last, we have RS6000_BTI_NOT_OPAQUE in
+     the opX fields.  */
+  for (; desc->code == fcode; desc++)
+    if ((desc->op1 == RS6000_BTI_NOT_OPAQUE
+	 || rs6000_builtin_type_compatible (types[0], desc->op1))
+	&& (desc->op2 == RS6000_BTI_NOT_OPAQUE
+	    || rs6000_builtin_type_compatible (types[1], desc->op2))
+	&& (desc->op3 == RS6000_BTI_NOT_OPAQUE
+	    || rs6000_builtin_type_compatible (types[2], desc->op3))
+	&& rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
+      return s2pp_build_resolved_builtin (args, n, desc);
 
  bad:
   error ("invalid parameter combination for AltiVec intrinsic");

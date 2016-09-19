@@ -18,5 +18,6 @@
 #define s2pp_fxvaddbm __builtin_s2pp_fxvaddbm
 #define s2pp_fxvaddhm __builtin_s2pp_fxvaddhm
 
+#define vec_add __builtin_vec_add
 
 #endif /* _S2PP_H */
