@@ -136,6 +136,41 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define f63	63
 #endif
 
+#ifdef __S2PP__
+#define f32	0
+#define f33	1
+#define f34	2
+#define f35	3
+#define f36	4
+#define f37	5
+#define f38	6
+#define f39	7
+#define f40	8
+#define f41	9
+#define f42	10
+#define f43	11
+#define f44	12
+#define f45	13
+#define f46	14
+#define f47	15
+#define f48	16
+#define f49	17
+#define f50	18
+#define f51	19
+#define f52	20
+#define f53	21
+#define f54	22
+#define f55	23
+#define f56	24
+#define f57	25
+#define f58	26
+#define f59	27
+#define f60	28
+#define f61	29
+#define f62	30
+#define f63	31
+#endif
+
 #ifdef __ALTIVEC__
 #define v0	0
 #define v1	1
@@ -236,6 +271,41 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define vs61	61
 #define vs62	62
 #define vs63	63
+#endif
+
+#ifdef __S2PP__
+#define k0	0
+#define k1	1
+#define k2	2
+#define k3	3
+#define k4	4
+#define k5	5
+#define k6	6
+#define k7	7
+#define k8	8
+#define k9	9
+#define k10	10
+#define k11	11
+#define k12	12
+#define k13	13
+#define k14	14
+#define k15	15
+#define k16	16
+#define k17	17
+#define k18	18
+#define k19	19
+#define k20	20
+#define k21	21
+#define k22	22
+#define k23	23
+#define k24	24
+#define k25	25
+#define k26	26
+#define k27	27
+#define k28	28
+#define k29	29
+#define k30	30
+#define k31	31
 #endif
 
 /*

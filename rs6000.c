@@ -320,12 +320,12 @@ enum rs6000_reg_type {
   GPR_REG_TYPE,
   VSX_REG_TYPE,
   ALTIVEC_REG_TYPE,
+  S2PP_REG_TYPE,
   FPR_REG_TYPE,
   SPR_REG_TYPE,
   CR_REG_TYPE,
   SPE_ACC_TYPE,
-  SPEFSCR_REG_TYPE,
-  S2PP_REG_TYPE
+  SPEFSCR_REG_TYPE
 };
 
 /* Map register class to register type.  */
@@ -985,6 +985,25 @@ struct processor_costs ppca2_cost = {
   16,			/* l1 cache */
   2048,			/* l2 cache */
   16,			/* prefetch streams */
+};
+
+/* Instruction costs on s2pp processors = power7_costs.  */
+static const
+struct processor_costs s2pp_cost = {
+  COSTS_N_INSNS (2),	/* mulsi */
+  COSTS_N_INSNS (2),	/* mulsi_const */
+  COSTS_N_INSNS (2),	/* mulsi_const9 */
+  COSTS_N_INSNS (2),	/* muldi */
+  COSTS_N_INSNS (18),	/* divsi */
+  COSTS_N_INSNS (34),	/* divdi */
+  COSTS_N_INSNS (3),	/* fp */
+  COSTS_N_INSNS (3),	/* dmul */
+  COSTS_N_INSNS (13),	/* sdiv */
+  COSTS_N_INSNS (16),	/* ddiv */
+  128,			/* cache line size */
+  32,			/* l1 cache */
+  256,			/* l2 cache */
+  12,			/* prefetch streams */
 };
 
 
@@ -3308,12 +3327,12 @@ rs6000_option_override_internal (bool global_init_p)
 	error ("SPE not supported in this target");
     }
 
-  if (rs6000_cpu == PROCESSOR_S2PP)
+/*  if (TARGET_S2PP)
     {
       //if (TARGET_S2PP)
 	error ("this is a test"); //s2pp-mark
     }
-
+*/
   /* Disable Cell microcode if we are optimizing for the Cell
      and not optimizing for size.  */
   if (rs6000_gen_cell_microcode == -1)
@@ -14008,11 +14027,11 @@ rs6000_init_builtins (void)
   enum machine_mode mode;
 
   if (TARGET_DEBUG_BUILTIN)
-    fprintf (stderr, "rs6000_init_builtins%s%s%s%s\n",
+    fprintf (stderr, "rs6000_init_builtins%s%s%s%s%s\n",
 	     (TARGET_PAIRED_FLOAT) ? ", paired"	 : "",
 	     (TARGET_SPE)	   ? ", spe"	 : "",
 	     (TARGET_ALTIVEC)	   ? ", altivec" : "",
-	     (TARGET_S2PP)	   ? ", s2pp" : "",
+	     (TARGET_S2PP)	   ? ", s2pp" 	 : "",
 	     (TARGET_VSX)	   ? ", vsx"	 : "");
 
   V2SI_type_node = build_vector_type (intSI_type_node, 2);

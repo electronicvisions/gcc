@@ -136,14 +136,24 @@ mmfpgpr
 Target Report Mask(MFPGPR) Var(rs6000_isa_flags)
 Use extended PowerPC V2.05 move floating point to/from GPR instructions
 
-maltivec
-Target Report Mask(ALTIVEC) Var(rs6000_isa_flags)
-Use AltiVec instructions
-
 ms2pp
 Target Report Mask(S2PP) Var(rs6000_isa_flags)
 Use s2pp instructions
+;;s2pp-mark, depracated
+
+ms2pp2
+Common Report Mask(S2PP) Var(rs6000_isa_flags)
+Use s2pp instructions
 ;;s2pp-mark
+
+ms2pp3
+Common Report Mask(S2PP) Var(rs6000_isa_flags)
+Use s2pp instructions
+;;s2pp-mark
+
+maltivec
+Target Report Mask(ALTIVEC) Var(rs6000_isa_flags)
+Use AltiVec instructions
 
 maltivec=le
 Target Report RejectNegative Var(rs6000_altivec_element_order, 1) Save

@@ -421,7 +421,7 @@ static const struct asm_name asm_names[] = {
   { NULL,	"\
 %{mpowerpc64*: -mppc64} \
 %{!mpowerpc64*: %(asm_default)}" },
-  { "s2pp",	"-mpower7 -m2pp" },//s2pp-mark
+  { "ppu",	"-mpower7 -m2pp2" },//s2pp-mark
 #endif
 };
 
