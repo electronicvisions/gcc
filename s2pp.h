@@ -6,6 +6,10 @@
 #error Use the "-ms2pp" flag to enable s2pp support
 #endif
 
+#define vector __vector
+#define pixel __pixel
+#define bool __bool
+
 /* Condition register codes for s2pp predicates. */
 
 #define __C_EQ		0
@@ -18,6 +22,6 @@
 #define s2pp_fxvaddbm __builtin_s2pp_fxvaddbm
 #define s2pp_fxvaddhm __builtin_s2pp_fxvaddhm
 
-#define vec_add __builtin_vec_add
+#define vec_add __builtin_vec_addx
 
 #endif /* _S2PP_H */

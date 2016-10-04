@@ -99,6 +99,7 @@ typedef struct rs6000_stack {
   int first_gp_reg_save;	/* first callee saved GP register used */
   int first_fp_reg_save;	/* first callee saved FP register used */
   int first_altivec_reg_save;	/* first callee saved AltiVec register used */
+  int first_s2pp_reg_save;	/* first callee saved AltiVec register used */
   int lr_save_p;		/* true if the link reg needs to be saved */
   int cr_save_p;		/* true if the CR reg needs to be saved */
   unsigned int vrsave_mask;	/* mask of vec registers to save */
@@ -110,6 +111,7 @@ typedef struct rs6000_stack {
   int gp_save_offset;		/* offset to save GP regs from initial SP */
   int fp_save_offset;		/* offset to save FP regs from initial SP */
   int altivec_save_offset;	/* offset to save AltiVec regs from initial SP */
+  int s2pp_save_offset;	/* offset to save AltiVec regs from initial SP */
   int lr_save_offset;		/* offset to save LR from initial SP */
   int cr_save_offset;		/* offset to save CR from initial SP */
   int vrsave_save_offset;	/* offset to save VRSAVE from initial SP */
@@ -125,9 +127,12 @@ typedef struct rs6000_stack {
   int gp_size;			/* size of saved GP registers */
   int fp_size;			/* size of saved FP registers */
   int altivec_size;		/* size of saved AltiVec registers */
+  int s2pp_size;		/* size of saved AltiVec registers */
   int cr_size;			/* size to hold CR if not in save_size */
   int vrsave_size;		/* size to hold VRSAVE if not in save_size */
   int altivec_padding_size;	/* size of altivec alignment padding if
+				   not in save_size */
+  int s2pp_padding_size;	/* size of altivec alignment padding if
 				   not in save_size */
   int spe_gp_size;		/* size of 64-bit GPR save size for SPE */
   int spe_padding_size;
@@ -346,6 +351,7 @@ enum rs6000_reload_reg_type {
   RELOAD_REG_GPR,			/* General purpose registers.  */
   RELOAD_REG_FPR,			/* Traditional floating point regs.  */
   RELOAD_REG_VMX,			/* Altivec (VMX) registers.  */
+  RELOAD_REG_S2PP,			/* Altivec (VMX) registers.  */
   RELOAD_REG_ANY,			/* OR of GPR, FPR, Altivec masks.  */
   N_RELOAD_REG
 };
@@ -354,7 +360,8 @@ enum rs6000_reload_reg_type {
    into real registers, and skip the ANY class, which is just an OR of the
    bits.  */
 #define FIRST_RELOAD_REG_CLASS	RELOAD_REG_GPR
-#define LAST_RELOAD_REG_CLASS	RELOAD_REG_VMX
+#define LAST_RELOAD_REG_CLASS	RELOAD_REG_S2PP
+/*possibly critical*/
 
 /* Map reload register type to a register in the register class.  */
 struct reload_reg_map_type {
@@ -1087,6 +1094,7 @@ static struct machine_function * rs6000_init_machine_status (void);
 static int rs6000_ra_ever_killed (void);
 static tree rs6000_handle_longcall_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_altivec_attribute (tree *, tree, tree, int, bool *);
+static tree rs6000_handle_s2pp_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_struct_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_builtin_vectorized_libmass (tree, tree, tree);
 static rtx rs6000_emit_set_long_const (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
@@ -1292,6 +1300,8 @@ static const struct attribute_spec rs6000_attribute_table[] =
   /* { name, min_len, max_len, decl_req, type_req, fn_type_req, handler,
        affects_type_identity } */
   { "altivec",   1, 1, false, true,  false, rs6000_handle_altivec_attribute,
+    false },
+  { "s2pp",   1, 1, false, true,  false, rs6000_handle_s2pp_attribute,
     false },
   { "longcall",  0, 0, false, true,  true,  rs6000_handle_longcall_attribute,
     false },
@@ -11591,6 +11601,39 @@ static const struct builtin_description bdesc_altivec_preds[] =
 #include "rs6000-builtin.def"
 };
 
+#undef RS6000_BUILTIN_1
+#undef RS6000_BUILTIN_2
+#undef RS6000_BUILTIN_3
+#undef RS6000_BUILTIN_A
+#undef RS6000_BUILTIN_D
+#undef RS6000_BUILTIN_E
+#undef RS6000_BUILTIN_H
+#undef RS6000_BUILTIN_P
+#undef RS6000_BUILTIN_Q
+#undef RS6000_BUILTIN_S
+#undef RS6000_BUILTIN_X
+
+#define RS6000_BUILTIN_1(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_2(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_3(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_A(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_D(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_E(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_H(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_P(ENUM, NAME, MASK, ATTR, ICODE) \
+  { MASK, ICODE, NAME, ENUM },
+
+#define RS6000_BUILTIN_Q(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_S(ENUM, NAME, MASK, ATTR, ICODE)
+#define RS6000_BUILTIN_X(ENUM, NAME, MASK, ATTR, ICODE)
+
+/* s2pp predicates.  */
+
+static const struct builtin_description bdesc_s2pp_preds[] =
+{
+#include "rs6000-builtin.def"
+};
+
 /* SPE predicates.  */
 #undef RS6000_BUILTIN_1
 #undef RS6000_BUILTIN_2
@@ -15198,9 +15241,9 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_vsx_st", void_ftype_opaque_long_pvoid,
 	       VSX_BUILTIN_VEC_ST);
 */
-  def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
-  def_builtin ("__builtin_vec_splats", opaque_ftype_opaque, S2PP_BUILTIN_VEC_SPLATS);
-  def_builtin ("__builtin_vec_promote", opaque_ftype_opaque, S2PP_BUILTIN_VEC_PROMOTE);
+  def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEPX);
+  def_builtin ("__builtin_vec_splats", opaque_ftype_opaque, S2PP_BUILTIN_VEC_SPLATSX);
+  def_builtin ("__builtin_vec_promote", opaque_ftype_opaque, S2PP_BUILTIN_VEC_PROMOTEX);
 /*
   def_builtin ("__builtin_vec_sld", opaque_ftype_opaque_opaque_int, ALTIVEC_BUILTIN_VEC_SLD);
   def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_SPLAT);
@@ -15242,8 +15285,8 @@ s2pp_init_builtins (void)
     def_builtin (d->name, void_ftype_pcvoid_int_int, d->code);
 
   /* Initialize the predicates.  */
-  d = bdesc_altivec_preds;
-  for (i = 0; i < ARRAY_SIZE (bdesc_altivec_preds); i++, d++)
+  /*d = bdesc_altivec_preds;
+  for (i = 0; i < ARRAY_SIZE (bdesc_s2pp_preds); i++, d++)
     {
       enum machine_mode mode1;
       tree type;
@@ -15270,9 +15313,9 @@ s2pp_init_builtins (void)
 
       def_builtin (d->name, type, d->code);
     }
-
+*/
   /* Initialize the abs* operators.  */
-  d = bdesc_abs;
+ /* d = bdesc_abs;
   for (i = 0; i < ARRAY_SIZE (bdesc_abs); i++, d++)
     {
       enum machine_mode mode0;
@@ -15294,20 +15337,20 @@ s2pp_init_builtins (void)
 
       def_builtin (d->name, type, d->code);
     }
-
+*/
   /* Initialize target builtin that implements
      targetm.vectorize.builtin_mask_for_load.  */
-
+/*
   decl = add_builtin_function ("__builtin_altivec_mask_for_load",
 			       v16qi_ftype_long_pcvoid,
 			       ALTIVEC_BUILTIN_MASK_FOR_LOAD,
 			       BUILT_IN_MD, NULL, NULL_TREE);
   TREE_READONLY (decl) = 1;
-  /* Record the decl. Will be used by rs6000_builtin_mask_for_load.  */
-  altivec_builtin_mask_for_load = decl;
+ */ /* Record the decl. Will be used by rs6000_builtin_mask_for_load.  */
+//  altivec_builtin_mask_for_load = decl;
 
   /* Access to the vec_init patterns.  */
-  ftype = build_function_type_list (V8HI_type_node, short_integer_type_node,
+/*  ftype = build_function_type_list (V8HI_type_node, short_integer_type_node,
 				    short_integer_type_node,
 				    short_integer_type_node,
 				    short_integer_type_node,
@@ -15328,9 +15371,9 @@ s2pp_init_builtins (void)
 				    char_type_node, NULL_TREE);
   def_builtin ("__builtin_vec_init_v16qi", ftype,
 	       ALTIVEC_BUILTIN_VEC_INIT_V16QI);
-
+*/
   /* Access to the vec_set patterns.  */
-  ftype = build_function_type_list (V8HI_type_node, V8HI_type_node,
+/*  ftype = build_function_type_list (V8HI_type_node, V8HI_type_node,
 				    intHI_type_node,
 				    integer_type_node, NULL_TREE);
   def_builtin ("__builtin_vec_set_v8hi", ftype, ALTIVEC_BUILTIN_VEC_SET_V8HI);
@@ -15339,16 +15382,16 @@ s2pp_init_builtins (void)
 				    intQI_type_node,
 				    integer_type_node, NULL_TREE);
   def_builtin ("__builtin_vec_set_v16qi", ftype, ALTIVEC_BUILTIN_VEC_SET_V16QI);
-
+*/
   /* Access to the vec_extract patterns.  */
-  ftype = build_function_type_list (intHI_type_node, V8HI_type_node,
+/*  ftype = build_function_type_list (intHI_type_node, V8HI_type_node,
 				    integer_type_node, NULL_TREE);
   def_builtin ("__builtin_vec_ext_v8hi", ftype, ALTIVEC_BUILTIN_VEC_EXT_V8HI);
 
   ftype = build_function_type_list (intQI_type_node, V16QI_type_node,
 				    integer_type_node, NULL_TREE);
   def_builtin ("__builtin_vec_ext_v16qi", ftype, ALTIVEC_BUILTIN_VEC_EXT_V16QI);
-
+*/
 }
 
 
@@ -15757,6 +15800,8 @@ rs6000_common_init_builtins (void)
 					  opaque_V4SI_type_node,
 					  opaque_V4SI_type_node,
 					  NULL_TREE);
+	  if (TARGET_DEBUG_BUILTIN)
+	    fprintf (stderr, "builtin is %s is overloaded with \n", d->name);
 	}
       else
 	{
@@ -15809,6 +15854,8 @@ rs6000_common_init_builtins (void)
 					  d->code, d->name);
 	}
 
+      if (TARGET_DEBUG_BUILTIN)
+	fprintf (stderr, "rs6000_builtin, name: %s type: %s code:\n", d->name, type);
       def_builtin (d->name, type, d->code);
     }
 
@@ -17552,6 +17599,10 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
   if (TARGET_VSX && x == CONST0_RTX (mode) && VSX_REG_CLASS_P (rclass))
     return rclass;
 
+  if (rclass == S2PP_REGS)
+    fprintf (stderr, "s2pp reg used"); 
+
+  //maybe not needed!
   if (TARGET_S2PP && x == CONST0_RTX (mode) && S2PP_REG_CLASS_P (rclass))
     return rclass;
 
@@ -28571,6 +28622,8 @@ rs6000_trampoline_init (rtx m_tramp, tree fndecl, rtx cxt)
 static bool
 rs6000_attribute_takes_identifier_p (const_tree attr_id)
 {
+  if (TARGET_S2PP)
+    return is_attribute_p ("s2pp", attr_id);
   return is_attribute_p ("altivec", attr_id);
 }
 
@@ -28673,6 +28726,90 @@ rs6000_handle_altivec_attribute (tree *node,
 	{
 	case DImode: case V2DImode: result = bool_V2DI_type_node; break;
 	case SImode: case V4SImode: result = bool_V4SI_type_node; break;
+	case HImode: case V8HImode: result = bool_V8HI_type_node; break;
+	case QImode: case V16QImode: result = bool_V16QI_type_node;
+	default: break;
+	}
+      break;
+    case 'p':
+      switch (mode)
+	{
+	case V8HImode: result = pixel_V8HI_type_node;
+	default: break;
+	}
+    default: break;
+    }
+
+  /* Propagate qualifiers attached to the element type
+     onto the vector type.  */
+  if (result && result != type && TYPE_QUALS (type))
+    result = build_qualified_type (result, TYPE_QUALS (type));
+
+  *no_add_attrs = true;  /* No need to hang on to the attribute.  */
+
+  if (result)
+    *node = lang_hooks.types.reconstruct_complex_type (*node, result);
+
+  return NULL_TREE;
+}
+
+static tree
+rs6000_handle_s2pp_attribute (tree *node,
+				 tree name ATTRIBUTE_UNUSED,
+				 tree args,
+				 int flags ATTRIBUTE_UNUSED,
+				 bool *no_add_attrs)
+{
+  tree type = *node, result = NULL_TREE;
+  enum machine_mode mode;
+  int unsigned_p;
+  char s2pp_type
+    = ((args && TREE_CODE (args) == TREE_LIST && TREE_VALUE (args)
+	&& TREE_CODE (TREE_VALUE (args)) == IDENTIFIER_NODE)
+       ? *IDENTIFIER_POINTER (TREE_VALUE (args))
+       : '?');
+
+  while (POINTER_TYPE_P (type)
+	 || TREE_CODE (type) == FUNCTION_TYPE
+	 || TREE_CODE (type) == METHOD_TYPE
+	 || TREE_CODE (type) == ARRAY_TYPE)
+    type = TREE_TYPE (type);
+
+  mode = TYPE_MODE (type);
+
+  /* Check for invalid AltiVec type qualifiers.  */
+  if (type == long_double_type_node)
+    error ("use of %<long double%> in Vec types is invalid");
+  else if (type == boolean_type_node)
+    error ("use of boolean types in Vec types is invalid");
+  else if (TREE_CODE (type) == COMPLEX_TYPE)
+    error ("use of %<complex%> in Vec types is invalid");
+  else if (DECIMAL_FLOAT_MODE_P (mode))
+    error ("use of decimal floating point types in Vec types is invalid");
+
+  switch (s2pp_type)
+    {
+    case 'v': //make 'k' ?
+      unsigned_p = TYPE_UNSIGNED (type);
+      switch (mode)
+	{
+	case HImode:
+	  result = (unsigned_p ? unsigned_V8HI_type_node : V8HI_type_node);
+	  break;
+	case QImode:
+	  result = (unsigned_p ? unsigned_V16QI_type_node : V16QI_type_node);
+	  break;
+	  /* If the user says 'vector int bool', we may be handed the 'bool'
+	     attribute _before_ the 'vector' attribute, and so select the
+	     proper type in the 'b' case below.  */
+	case V8HImode: case V16QImode:
+	  result = type;
+	default: break;
+	}
+      break;
+    case 'b':
+      switch (mode)
+	{
 	case HImode: case V8HImode: result = bool_V8HI_type_node; break;
 	case QImode: case V16QImode: result = bool_V16QI_type_node;
 	default: break;

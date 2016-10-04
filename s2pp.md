@@ -16,8 +16,8 @@
 
 ;; Vector move instructions.
 ;;(define_insn "*s2pp_mov<mode>"
- ;; [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,v,v")
-	;;(match_operand:FXVI 1 "input_operand" "v,Z,v"))]
+ ;; [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,k,k")
+	;;(match_operand:FXVI 1 "input_operand" "k,Z,k"))]
  ;; "VECTOR_MEM_S2PP_P (<MODE>mode)
  ;;  && (register_operand (operands[0], <MODE>mode) 
  ;;      || register_operand (operands[1], <MODE>mode))"
@@ -34,18 +34,27 @@
 
 (define_insn "s2pp_stax_<mode>"
   [(parallel
-    [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	  (match_operand:FXVI 1 "register_operand" "v"))
+    [(set (match_operand:FXVI 0 "adress_operand" "=p")
+	  (match_operand:FXVI 1 "register_operand" "k"))
      (unspec [(const_int 0)] UNSPEC_STAX)])]
   "TARGET_S2PP"
   "fxvstax %1,%a0"
   [(set_attr "type" "vecstore")])
 
+(define_insn "s2pp_lax_<mode>"
+  [(parallel
+    [(set (match_operand:FXVI 0 "adress_operand" "=p")
+	  (match_operand:FXVI 1 "register_operand" "k"))
+     (unspec [(const_int 0)] UNSPEC_STAX)])]
+  "TARGET_S2PP"
+  "fxvlax %0,%a1"
+  [(set_attr "type" "vecstore")])
+
 ;; add
 (define_insn "fxvadd<mode>3"
-  [(set (match_operand:FXVI 0 "register_operand" "=v")
-        (plus:FXVI (match_operand:FXVI 1 "register_operand" "v")
-		  (match_operand:FXVI 2 "register_operand" "v")))]
+  [(set (match_operand:FXVI 0 "register_operand" "=k")
+        (plus:FXVI (match_operand:FXVI 1 "register_operand" "k")
+		  (match_operand:FXVI 2 "register_operand" "k")))]
   "<FXVI_unit>"
   "fxvadd<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])

@@ -171,9 +171,10 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 
   /* If the current machine does not have altivec, don't look for the
      keywords.  */
-  if (!TARGET_ALTIVEC)
+  if (!TARGET_ALTIVEC){
+    fprintf (stderr, "this happens");
     return NULL;
-
+  }
   ident = altivec_categorize_keyword (tok);
 
   if (ident != expand_this)
@@ -393,16 +394,19 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 
   if (TARGET_EXTRA_BUILTINS)
     {/*p_o_i*/
-      /* Define the AltiVec syntactic elements.  */
-      builtin_define ("__vector=__attribute__((altivec(vector__)))");
-      builtin_define ("__pixel=__attribute__((altivec(pixel__))) unsigned short");
-      builtin_define ("__bool=__attribute__((altivec(bool__))) unsigned");
 
       /* Define the AltiVec syntactic elements.  */
+      if (TARGET_S2PP){
       builtin_define ("__vector=__attribute__((s2pp(vector__)))");
       builtin_define ("__pixel=__attribute__((s2pp(pixel__))) unsigned short");
       builtin_define ("__bool=__attribute__((s2pp(bool__))) unsigned");
+      }
+      else{
 
+      builtin_define ("__vector=__attribute__((altivec(vector__)))");
+      builtin_define ("__pixel=__attribute__((altivec(pixel__))) unsigned short");
+      builtin_define ("__bool=__attribute__((altivec(bool__))) unsigned");
+      } 
       if (!flag_iso)
 	{
 	  builtin_define ("vector=vector");
@@ -560,63 +564,35 @@ struct s2pp_builtin_types
 
 const struct s2pp_builtin_types s2pp_overloaded_builtins[] = {
 
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+//    RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+//    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, 0 },
+
+  { S2PP_BUILTIN_VEC_ADDX, S2PP_BUILTIN_FXVADDBM,
     RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+ 
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+//    RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDBM,
+//    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, 0 },
+  { S2PP_BUILTIN_VEC_ADDX, S2PP_BUILTIN_FXVADDBM,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+//    RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, 0 },
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+//    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, 0 },
+ 
+  { S2PP_BUILTIN_VEC_ADDX, S2PP_BUILTIN_FXVADDHM,
     RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+ 
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+//    RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
+//  { S2PP_BUILTIN_VEC_ADD, S2PP_BUILTIN_FXVADDHM,
+//    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, 0 },
+  { S2PP_BUILTIN_VEC_ADDX, S2PP_BUILTIN_FXVADDHM,
     RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
 
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_bool_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDHM, S2PP_BUILTIN_FXVADDHM,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_bool_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVADDBM, S2PP_BUILTIN_FXVADDBM,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_bool_V16QI, 0 },
 };
 
 
@@ -4746,7 +4722,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	     (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
  
   /* For now treat vec_splats and vec_promote as the same.  */
-  if (fcode == S2PP_BUILTIN_VEC_SPLATS)
+  if (fcode == S2PP_BUILTIN_VEC_SPLATSX)
     {
       tree type, arg;
       int size;
@@ -4792,7 +4768,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 
   /* For now use pointer tricks to do the extraction, unless we are on VSX
      extracting a double from a constant offset.  */
-  if (fcode == S2PP_BUILTIN_VEC_EXTRACT)
+  if (fcode == S2PP_BUILTIN_VEC_EXTRACTX)
     {
       tree arg1;
       tree arg1_type;
@@ -4858,7 +4834,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 
   /* For now use pointer tricks to do the insertion, unless we are on VSX
      inserting a double to a constant offset..  */
-  if (fcode == S2PP_VEC_BUILTIN_VEC_INSERT)
+  if (fcode == S2PP_BUILTIN_VEC_INSERTX)
     {
       tree arg0;
       tree arg1;
@@ -4983,7 +4959,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
   if (n == 0)
     abort ();
 
-  if (fcode == S2PP_BUILTIN_VEC_STEP)
+  if (fcode == S2PP_BUILTIN_VEC_STEPX)
     {
       if (TREE_CODE (types[0]) != VECTOR_TYPE)
 	goto bad;
@@ -5008,6 +4984,6 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       return s2pp_build_resolved_builtin (args, n, desc);
 
  bad:
-  error ("invalid parameter combination for AltiVec intrinsic");
+  error ("invalid parameter combination for s2pp intrinsic");
   return error_mark_node;
 }

@@ -166,7 +166,7 @@
 %{maltivec: -maltivec} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
-%{mcpu=ppu: -mpower7 -ms2pp2} \
+%{mcpu=ppu: -mpower7 -ms2pp} \
 -many"
 /*p_o_i*/
 #define CPP_DEFAULT_SPEC ""
@@ -395,6 +395,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
+#define rs6000_debug 0x0c 
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -509,6 +510,7 @@ extern int rs6000_vector_align[];
 #define TARGET_LONG_DOUBLE_128 (rs6000_long_double_type_size == 128)
 #define TARGET_IEEEQUAD rs6000_ieeequad
 #define TARGET_ALTIVEC_ABI rs6000_altivec_abi
+//#define TARGET_S2PP_ABI rs6000_s2pp_abi
 #define TARGET_LDBRX (TARGET_POPCNTD || rs6000_cpu == PROCESSOR_CELL)
 
 #define TARGET_SPE_ABI 0
@@ -705,7 +707,10 @@ extern unsigned char rs6000_recip_bits[];
 #define REGISTER_TARGET_PRAGMAS() do {				\
   c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
   targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
-  targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
+  if(OPTION_MASK_S2PP) \
+    targetm.resolve_overloaded_builtin = s2pp_resolve_overloaded_builtin; \
+  else \
+    targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
   rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
 } while (0)
 
@@ -1429,7 +1434,7 @@ enum reg_class
   { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
-  /* S2PP_REGS. */							\
+  /* S2PP_REGS. should befixed*/							\
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
@@ -1529,7 +1534,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
   ((CLASS) == VSX_REGS || (CLASS) == FLOAT_REGS || (CLASS) == ALTIVEC_REGS)
 /* Return whether a given register class can hold S2PP objects.  */
 #define S2PP_REG_CLASS_P(CLASS)			\
-  ((CLASS) == S2PP_REGS || (CLASS) == FLOAT_REGS)
+  ((CLASS) == S2PP_REGS)
 /*p_o_i*/
 /* Return whether a given register class targets general purpose registers.  */
 #define GPR_REG_CLASS_P(CLASS) ((CLASS) == GENERAL_REGS || (CLASS) == BASE_REGS)
@@ -1733,6 +1738,11 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define ALTIVEC_ARG_MAX_REG (ALTIVEC_ARG_MIN_REG + 11)
 #define ALTIVEC_ARG_NUM_REG (ALTIVEC_ARG_MAX_REG - ALTIVEC_ARG_MIN_REG + 1)
 
+/* Minimum and maximum s2pp registers used to hold arguments.  */
+#define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
+#define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 11)
+#define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
+
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
 
@@ -1740,10 +1750,13 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define GP_ARG_RETURN GP_ARG_MIN_REG
 #define FP_ARG_RETURN FP_ARG_MIN_REG
 #define ALTIVEC_ARG_RETURN (FIRST_ALTIVEC_REGNO + 2)
+#define S2PP_ARG_RETURN S2PP_ARG_MIN_REG
 #define FP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? FP_ARG_RETURN	\
 			   : (FP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 #define ALTIVEC_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? ALTIVEC_ARG_RETURN \
 			        : (ALTIVEC_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
+#define S2PP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? S2PP_ARG_RETURN \
+			        : (S2PP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 
 /* Flags for the call/call_value rtl operations set up by function_arg */
 #define CALL_NORMAL		0x00000000	/* no special processing */
@@ -1766,7 +1779,10 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || ((N) >= FP_ARG_RETURN && (N) <= FP_ARG_MAX_RETURN			\
        && TARGET_HARD_FLOAT && TARGET_FPRS)				\
    || ((N) >= ALTIVEC_ARG_RETURN && (N) <= ALTIVEC_ARG_MAX_RETURN	\
-       && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI))
+       && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI)				\
+/*   || ((N) >= S2PP_ARG_RETURN && (N) <= S2PP_ARG_MAX_RETURN		\
+       && TARGET_S2PP && TARGET_S2PP_ABI)				\
+*/   )
 /*p_o_i*/
 /* 1 if N is a possible register number for function argument passing.
    On RS/6000, these are r3-r10 and fp1-fp13.
@@ -1776,7 +1792,10 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || ((unsigned) (N) - ALTIVEC_ARG_MIN_REG < ALTIVEC_ARG_NUM_REG	\
        && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI)				\
    || ((unsigned) (N) - FP_ARG_MIN_REG < FP_ARG_NUM_REG			\
-       && TARGET_HARD_FLOAT && TARGET_FPRS))
+       && TARGET_HARD_FLOAT && TARGET_FPRS)				\
+/*   || ((unsigned) (N) - S2PP_ARG_MIN_REG < S2PP_ARG_NUM_REG		\
+       && TARGET_S2PP && TARGET_S2PP_ABI)				\
+*/   )
 
 /* Define a data type for recording info about an argument list
    during the scan of that argument list.  This data type should
@@ -1868,6 +1887,7 @@ typedef struct rs6000_args
 #define	EPILOGUE_USES(REGNO)					\
   ((reload_completed && (REGNO) == LR_REGNO)			\
    || (TARGET_ALTIVEC && (REGNO) == VRSAVE_REGNO)		\
+   || (TARGET_S2PP && (REGNO) == VRSAVE_REGNO)			\
    || (crtl->calls_eh_return					\
        && TARGET_AIX						\
        && (REGNO) == 2))
@@ -2454,6 +2474,39 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   &rs6000_reg_names[147][0],	/* SPE rh30.  */			\
   &rs6000_reg_names[148][0],	/* SPE rh31.  */			\
 }
+//don't know if needed (probably not), but if needed, t\s alreadz done									\
+//  &rs6000_reg_names[149][0],	/* S2PP k0.  */				\
+//  &rs6000_reg_names[150][0],	/* S2PP k1.  */				\
+//  &rs6000_reg_names[151][0],	/* S2PP k2.  */				\
+//  &rs6000_reg_names[151][0],	/* S2PP k3.  */				\
+//  &rs6000_reg_names[152][0],	/* S2PP k4.  */				\
+//  &rs6000_reg_names[153][0],	/* S2PP k5.  */				\
+//  &rs6000_reg_names[154][0],	/* S2PP k6.  */				\
+//  &rs6000_reg_names[155][0],	/* S2PP k7.  */				\
+//  &rs6000_reg_names[156][0],	/* S2PP k8.  */				\
+//  &rs6000_reg_names[157][0],	/* S2PP k9.  */				\
+//  &rs6000_reg_names[158][0],	/* S2PP k10.  */			\
+//  &rs6000_reg_names[159][0],	/* S2PP k11.  */			\
+//  &rs6000_reg_names[160][0],	/* S2PP k12.  */			\
+//  &rs6000_reg_names[161][0],	/* S2PP k13.  */			\
+//  &rs6000_reg_names[162][0],	/* S2PP k14.  */			\
+//  &rs6000_reg_names[163][0],	/* S2PP k15.  */			\
+//  &rs6000_reg_names[164][0],	/* S2PP k16.  */			\
+//  &rs6000_reg_names[165][0],	/* S2PP k17.  */			\
+//  &rs6000_reg_names[166][0],	/* S2PP k18.  */			\
+//  &rs6000_reg_names[167][0],	/* S2PP k19.  */			\
+//  &rs6000_reg_names[168][0],	/* S2PP k20.  */			\
+//  &rs6000_reg_names[169][0],	/* S2PP k21.  */			\
+//  &rs6000_reg_names[170][0],	/* S2PP k22.  */			\
+//  &rs6000_reg_names[171][0],	/* S2PP k22.  */			\
+//  &rs6000_reg_names[172][0],	/* S2PP k24.  */			\
+//  &rs6000_reg_names[173][0],	/* S2PP k25.  */			\
+//  &rs6000_reg_names[174][0],	/* S2PP k26.  */			\
+//  &rs6000_reg_names[175][0],	/* S2PP k27.  */			\
+//  &rs6000_reg_names[176][0],	/* S2PP k28.  */			\
+//  &rs6000_reg_names[177][0],	/* S2PP k29.  */			\
+//  &rs6000_reg_names[178][0],	/* S2PP k30.  */			\
+//  &rs6000_reg_names[179][0],	/* S2PP k31.  */			\
 
 /* Table of additional register names to use in user input.  */
 
