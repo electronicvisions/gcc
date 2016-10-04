@@ -2,7 +2,6 @@
 
 (define_c_enum "unspec"
   [UNSPEC_STAX
-   UNSEPC_VADDU
 ])  
 
 ;; Vec int modes
@@ -34,7 +33,7 @@
 
 (define_insn "s2pp_stax_<mode>"
   [(parallel
-    [(set (match_operand:FXVI 0 "adress_operand" "=p")
+    [(set (match_operand:FXVI 0 "address_operand" "=p")
 	  (match_operand:FXVI 1 "register_operand" "k"))
      (unspec [(const_int 0)] UNSPEC_STAX)])]
   "TARGET_S2PP"
@@ -43,8 +42,8 @@
 
 (define_insn "s2pp_lax_<mode>"
   [(parallel
-    [(set (match_operand:FXVI 0 "adress_operand" "=p")
-	  (match_operand:FXVI 1 "register_operand" "k"))
+    [(set (match_operand:FXVI 0 "register_operand" "=k")
+	  (match_operand:FXVI 1 "memory_operand" "p"))
      (unspec [(const_int 0)] UNSPEC_STAX)])]
   "TARGET_S2PP"
   "fxvlax %0,%a1"
