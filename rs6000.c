@@ -351,7 +351,6 @@ enum rs6000_reload_reg_type {
   RELOAD_REG_GPR,			/* General purpose registers.  */
   RELOAD_REG_FPR,			/* Traditional floating point regs.  */
   RELOAD_REG_VMX,			/* Altivec (VMX) registers.  */
-  RELOAD_REG_S2PP,			/* Altivec (VMX) registers.  */
   RELOAD_REG_ANY,			/* OR of GPR, FPR, Altivec masks.  */
   N_RELOAD_REG
 };
@@ -360,8 +359,7 @@ enum rs6000_reload_reg_type {
    into real registers, and skip the ANY class, which is just an OR of the
    bits.  */
 #define FIRST_RELOAD_REG_CLASS	RELOAD_REG_GPR
-#define LAST_RELOAD_REG_CLASS	RELOAD_REG_S2PP
-/*possibly critical*/
+#define LAST_RELOAD_REG_CLASS	RELOAD_REG_VMX
 
 /* Map reload register type to a register in the register class.  */
 struct reload_reg_map_type {
@@ -2863,15 +2861,17 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	  reg_addr[V8HImode].reload_store  = CODE_FOR_reload_v8hi_si_store;
 	  reg_addr[V8HImode].reload_load   = CODE_FOR_reload_v8hi_si_load;
 	  reg_addr[V4SImode].reload_store  = CODE_FOR_reload_v4si_si_store;
-	  reg_addr[V4SImode].reload_load   = CODE_FOR_reload_v4si_si_load;
-	  reg_addr[V2DImode].reload_store  = CODE_FOR_reload_v2di_si_store;
-	  reg_addr[V2DImode].reload_load   = CODE_FOR_reload_v2di_si_load;
-	  reg_addr[V1TImode].reload_store  = CODE_FOR_reload_v1ti_si_store;
-	  reg_addr[V1TImode].reload_load   = CODE_FOR_reload_v1ti_si_load;
-	  reg_addr[V4SFmode].reload_store  = CODE_FOR_reload_v4sf_si_store;
-	  reg_addr[V4SFmode].reload_load   = CODE_FOR_reload_v4sf_si_load;
-	  reg_addr[V2DFmode].reload_store  = CODE_FOR_reload_v2df_si_store;
-	  reg_addr[V2DFmode].reload_load   = CODE_FOR_reload_v2df_si_load;
+	  if (!TARGET_S2PP){
+	    reg_addr[V4SImode].reload_load   = CODE_FOR_reload_v4si_si_load;
+	    reg_addr[V2DImode].reload_store  = CODE_FOR_reload_v2di_si_store;
+  	    reg_addr[V2DImode].reload_load   = CODE_FOR_reload_v2di_si_load;
+	    reg_addr[V1TImode].reload_store  = CODE_FOR_reload_v1ti_si_store;
+	    reg_addr[V1TImode].reload_load   = CODE_FOR_reload_v1ti_si_load;
+	    reg_addr[V4SFmode].reload_store  = CODE_FOR_reload_v4sf_si_store;
+	    reg_addr[V4SFmode].reload_load   = CODE_FOR_reload_v4sf_si_load;
+	    reg_addr[V2DFmode].reload_store  = CODE_FOR_reload_v2df_si_store;
+	    reg_addr[V2DFmode].reload_load   = CODE_FOR_reload_v2df_si_load;
+	  }
 	  if (TARGET_VSX && TARGET_UPPER_REGS_DF)
 	    {
 	      reg_addr[DFmode].reload_store    = CODE_FOR_reload_df_si_store;

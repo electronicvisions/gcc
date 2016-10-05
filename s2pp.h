@@ -18,9 +18,16 @@
 
 #define s2pp_fxvstax __builtin_s2pp_fxvstax
 #define s2pp_fxvlax __builtin_s2pp_fxvlax
+#define vec_st __builtin_vec_fxvst
+#define vec_ld __builtin_vec_fxvld
 
-#define s2pp_fxvaddbm __builtin_s2pp_fxvaddbm
-#define s2pp_fxvaddhm __builtin_s2pp_fxvaddhm
+#define vec_splat __builtin_vec_splatx
+#define vec_splats __builtin_vec_splats
+#define vec_splatb __builtin_vec_fxvsplatb
+#define vec_splath __builtin_vec_fxvsplath
+
+#define s2pp_fxvaddbm __builtin_vec_fxvaddbm
+#define s2pp_fxvaddhm __builtin_vec_fxvaddhm
 
 #define vec_add __builtin_vec_addx
 
