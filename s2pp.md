@@ -25,8 +25,8 @@
 ;;{
  ;; switch (which_alternative)
  ;;   {
- ;;   case 0: return "fxvstax %1,%a0";
- ;;   case 1: return "fxvlax %0,%a1";
+ ;;   case 0: return "fxvstax %1,0,%a0";
+ ;;   case 1: return "fxvlax %0,0,%a1";
  ;;   case 2: return "fxvsel %0,%1,%1,1";
  ;;   default: gcc_unreachable ();
  ;;   }
@@ -49,7 +49,7 @@
 	  (match_operand:FXVI 1 "register_operand" "k"))
      (unspec [(const_int 0)] UNSPEC_STAX)])]
   "TARGET_S2PP"
-  "fxvstax %1,%y0"
+  "fxvstax %1,0,%y0"
   [(set_attr "type" "vecstore")])
 
 ;;(define_insn "s2pp_stax_<mode>"
@@ -58,9 +58,8 @@
 ;;	  (match_operand:FXVI 1 "register_operand" "k"))
 ;;     (unspec [(const_int 0)] UNSPEC_STAX)])]
 ;;  "TARGET_S2PP"
-;;  "fxvstax %1,%a0"
+;;  "fxvstax %1,0,%a0"
 ;;  [(set_attr "type" "vecstore")])
-
 
 (define_expand "s2pp_lax_<mode>"
   [(parallel
@@ -77,17 +76,18 @@
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] UNSPEC_LAX)])]
   "TARGET_S2PP"
-  "fxvlax %0,%y1"
+  "fxvlax %0,0,%y1"
   [(set_attr "type" "vecload")])
 
-;;(define_insn "s2pp_lax_<mode>"
-;;  [(parallel
-;;    [(set (match_operand:FXVI 0 "register_operand" "=k")
-;;	  (match_operand:FXVI 1 "memory_operand" "p"))
-;;     (unspec [(const_int 0)] UNSPEC_LAX)])]
-;;  "TARGET_S2PP"
-;;  "fxvlax %0,%a1"
-;;  [(set_attr "type" "vecload")])
+
+
+(define_insn "s2pp_fxvlax_direct"
+  [(set (match_operand:V16QI 0 "register_operand" "=k")
+	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
+                      UNSPEC_LAX))]
+  "TARGET_S2PP"
+  "fxvlax %0,0,%a1"
+  [(set_attr "type" "vecload")])
 
 ;; add
 (define_insn "fxvadd<mode>3"
@@ -101,15 +101,14 @@
 
 (define_expand "s2pp_splatb"
   [(use (match_operand:V16QI 0 "register_operand" ""))
-   (use (match_operand:V16QI 1 "register_operand" ""))
-   (use (match_operand:QI 2 "u5bit_cint_operand" ""))]
+   (use (match_operand:QI 1 "u5bit_cint_operand" ""))]
   "TARGET_S2PP"
 {
   rtvec v;
   rtx x;
 
-  v = gen_rtvec (1, operands[2]);
-  x = gen_rtx_VEC_SELECT (QImode, operands[1], gen_rtx_PARALLEL (VOIDmode, v));
+  v = gen_rtvec (1, operands[1]);
+  x = gen_rtx_VEC_SELECT (QImode, operands[0], gen_rtx_PARALLEL (VOIDmode, v));
   x = gen_rtx_VEC_DUPLICATE (V16QImode, x);
   emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
   DONE;
@@ -117,36 +116,31 @@
 
 (define_insn "*s2pp_splatb_internal"
   [(set (match_operand:V16QI 0 "register_operand" "=k")
-        (vec_duplicate:V16QI
-	 (vec_select:QI (match_operand:V16QI 1 "register_operand" "k")
-			(parallel
-			 [(match_operand:QI 2 "u5bit_cint_operand" "")]))))]
+        (unspec:V16QI [(match_operand:QI 1 "u5bit_cint_operand" "")]
   "TARGET_S2PP"
 {
-  return "fxvsplatb %0,%1,%2";
+  return "fxvsplatb %0,%1";
 }
   [(set_attr "type" "vecperm")])
 
 (define_insn "s2pp_fxvsplatb_direct"
   [(set (match_operand:V16QI 0 "register_operand" "=k")
-        (unspec:V16QI [(match_operand:V16QI 1 "register_operand" "k")
-	               (match_operand:QI 2 "u5bit_cint_operand" "i")]
+        (unspec:V16QI [(match_operand:QI 1 "u5bit_cint_operand" "i")]
                       UNSPEC_FXVSPLT_DIRECT))]
   "TARGET_S2PP"
-  "fxvsplatb %0,%1,%2"
+  "fxvsplatb %0,%1"
   [(set_attr "type" "vecperm")])
 
 (define_expand "s2pp_splath"
   [(use (match_operand:V8HI 0 "register_operand" ""))
-   (use (match_operand:V8HI 1 "register_operand" ""))
-   (use (match_operand:QI 2 "u5bit_cint_operand" ""))]
+   (use (match_operand:QI 1 "u5bit_cint_operand" ""))]
   "TARGET_S2PP"
 {
   rtvec v;
   rtx x;
 
-  v = gen_rtvec (1, operands[2]);
-  x = gen_rtx_VEC_SELECT (HImode, operands[1], gen_rtx_PARALLEL (VOIDmode, v));
+  v = gen_rtvec (1, operands[1]);
+  x = gen_rtx_VEC_SELECT (HImode, operands[0], gen_rtx_PARALLEL (VOIDmode, v));
   x = gen_rtx_VEC_DUPLICATE (V8HImode, x);
   emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
   DONE;
@@ -154,10 +148,7 @@
 
 (define_insn "*s2pp_splath_internal"
   [(set (match_operand:V8HI 0 "register_operand" "=k")
-	(vec_duplicate:V8HI
-	 (vec_select:HI (match_operand:V8HI 1 "register_operand" "k")
-			(parallel
-			 [(match_operand:QI 2 "u5bit_cint_operand" "")]))))]
+	 (unspec:V8HI [(match_operand:QI 1 "u5bit_cint_operand" "")]))]
   "TARGET_S2PP"
 {
   return "fxvsplath %0,%1,%2";
@@ -166,10 +157,9 @@
 
 (define_insn "s2pp_splath_direct"
   [(set (match_operand:V8HI 0 "register_operand" "=k")
-        (unspec:V8HI [(match_operand:V8HI 1 "register_operand" "k")
-                      (match_operand:QI 2 "u5bit_cint_operand" "i")]
+        (unspec:V8HI (match_operand:QI 1 "u5bit_cint_operand" "i")]
                      UNSPEC_FXVSPLT_DIRECT))]
   "TARGET_S2PP"
-  "vsplth %0,%1,%2"
+  "fxvsplath %0,%1"
   [(set_attr "type" "vecperm")])
 

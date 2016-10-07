@@ -729,33 +729,53 @@ BU_S2PP_2 (FXVADDHM,	 "fxvaddhm",	CONST,	addv8hi3)
 BU_S2PP_2 (FXVSPLTB,	 "fxvsplatb",	CONST,	s2pp_splatb)
 BU_S2PP_2 (FXVSPLTH,	 "fxvsplath",	CONST,	s2pp_splath)
 
-BU_S2PP_X (FXVLAX,	"fxvlax",	    MEM)
-BU_S2PP_X (FXVLAX_V8HI,	"fxvlax",	    MEM)
-BU_S2PP_X (FXVLAX_V16QI,"fxvlax",	    MEM)
-BU_S2PP_X (FXVSTAX,	"fxvstax",	    MEM)
-BU_S2PP_X (FXVSTAX_V8HI,"fxvstax",	    MEM)
-BU_S2PP_X (FXVSTAX_V16QI,"fxvstax",	    MEM)
+//BU_S2PP_X (FXVLAX,	"fxvlax",	    MEM)
+//BU_S2PP_X (FXVLAX_V8HI,	"fxvlax",	    MEM)
+//BU_S2PP_X (FXVLAX_V16QI,"fxvlax",	    MEM)
+//BU_S2PP_X (FXVSTAX,	"fxvstax",	    MEM)
+//BU_S2PP_X (FXVSTAX_V8HI,"fxvstax",	    MEM)
+//BU_S2PP_X (FXVSTAX_V16QI,"fxvstax",	    MEM)
+//
+//LVXL marks Least Recently Used vector in memory
+//BU_S2PP_X (LVEBX,	"lvebx",	    MEM) load vector ELEMENT
+//BU_S2PP_X (LVEHX,	"lvehx",	    MEM)
+//BU_S2PP_X (STVEBX,	"stvebx",	    MEM)
+//BU_S2PP_X (STVEHX,	"stvehx",	    MEM)
+
+BU_S2PP_X (LAX_V8HI,	"lax_v8hi",	    MEM)
+BU_S2PP_X (LAX_V16QI,	"lax_v16qi",	    MEM)
+BU_S2PP_X (STAX_V8HI,	"stax_v8hi",	    MEM)
+BU_S2PP_X (STAX_V16QI,	"stax_v16qi",	    MEM)
+
+BU_S2PP_X (MASK_FOR_LOAD,	"mask_for_load",    MISC)
+BU_S2PP_X (MASK_FOR_STORE,	"mask_for_store",   MISC)
+
+BU_S2PP_X (ST_INTERNAL_8hi,	"st_internal_8hi",  MEM)
+BU_S2PP_X (LD_INTERNAL_8hi,	"ld_internal_8hi",  MEM)
+BU_S2PP_X (ST_INTERNAL_16qi,	"st_internal_16qi", MEM)
+BU_S2PP_X (LD_INTERNAL_16qi,	"ld_internal_16qi", MEM)
 
 BU_S2PP_OVERLOAD_2 (FXVADDBM,	   "fxvaddbm")
 BU_S2PP_OVERLOAD_2 (FXVADDHM,	   "fxvaddhm")
 BU_S2PP_OVERLOAD_2 (ADDX,	   "addx")
 
-BU_S2PP_OVERLOAD_X (EXTRACTX,	   "extractx")
-BU_S2PP_OVERLOAD_X (INSERTX,	   "insertx")
 BU_S2PP_OVERLOAD_X (SPLATSX,	   "splatsx")
-BU_S2PP_OVERLOAD_X (STEPX,	   "stepx")
-BU_S2PP_OVERLOAD_X (PROMOTEX,	   "promotex")
 BU_S2PP_OVERLOAD_X (FXVST,	   "fxvst")
 BU_S2PP_OVERLOAD_X (FXVLD,	   "fxvld")
-BU_S2PP_OVERLOAD_X (SPLATX,	   "splatx")
 BU_S2PP_OVERLOAD_X (FXVSPLTB,	   "fxvsplatb")
 BU_S2PP_OVERLOAD_X (FXVSPLTH,	   "fxvsplath")
 
-/*BU_S2PP_X (ST_INTERNAL_8hi,	"st_internal_8hi",  MEM)
-BU_S2PP_X (LD_INTERNAL_8hi,	"ld_internal_8hi",  MEM)
-BU_S2PP_X (ST_INTERNAL_16qi,	"st_internal_16qi", MEM)
-BU_S2PP_X (LD_INTERNAL_16qi,	"ld_internal_16qi", MEM)
-*/
+//BU_S2PP_OVERLOAD_X (EXTRACTX,	   "extractx")
+//BU_S2PP_OVERLOAD_X (INSERTX,	   "insertx")
+//BU_S2PP_OVERLOAD_X (STEPX,	   "stepx")
+//BU_S2PP_OVERLOAD_X (PROMOTEX,	   "promotex")
+//BU_S2PP_OVERLOAD_X (SPLATX,	   "splatx")
+//
+//BU_S2PP_OVERLOAD_X (LVEBX,	   "lvebx")
+//BU_S2PP_OVERLOAD_X (LVEHX,	   "lvehx")
+//BU_S2PP_OVERLOAD_X (STVEBX,	   "stvebx")
+//BU_S2PP_OVERLOAD_X (STVEHX,	   "stvehx")
+
 
 /* 3 argument Altivec builtins.  */
 BU_ALTIVEC_3 (VMADDFP,        "vmaddfp",        FP,    	fmav4sf4)

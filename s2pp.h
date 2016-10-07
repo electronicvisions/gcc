@@ -16,10 +16,11 @@
 #define __C_GT		1
 #define __C_LT		2
 
-#define s2pp_fxvstax __builtin_s2pp_fxvstax
-#define s2pp_fxvlax __builtin_s2pp_fxvlax
-#define vec_st __builtin_vec_fxvst
-#define vec_ld __builtin_vec_fxvld
+#define s2pp_stax __builtin_s2pp_stax
+#define s2pp_lax __builtin_s2pp_lax
+#define vec_st __builtin_vec_st
+#define vec_ld __builtin_vec_ld
+//deprecated
 
 #define vec_splat __builtin_vec_splatx
 #define vec_splats __builtin_vec_splats

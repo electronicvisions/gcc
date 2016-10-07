@@ -395,7 +395,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
-#define rs6000_debug 0x0c 
+//#define rs6000_debug 0x56 
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -629,14 +629,13 @@ extern int rs6000_vector_align[];
    VSX.  */
 /*p_o_i*/ 
 #define TARGET_EXTRA_BUILTINS	(!TARGET_SPE && !TARGET_PAIRED_FLOAT	 \
-				 && ((TARGET_POWERPC64			 \
+				 && !TARGET_S2PP && ((TARGET_POWERPC64			 \
 				      || TARGET_PPC_GPOPT /* 970/power4 */ \
 				      || TARGET_POPCNTB	  /* ISA 2.02 */ \
 				      || TARGET_CMPB	  /* ISA 2.05 */ \
 				      || TARGET_POPCNTD	  /* ISA 2.06 */ \
 				      || TARGET_ALTIVEC			 \
 				      || TARGET_VSX			 \
-				      || TARGET_S2PP			 \
 				      || TARGET_HARD_FLOAT)))
 
 /* E500 cores only support plain "sync", not lwsync.  */

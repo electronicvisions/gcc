@@ -172,6 +172,9 @@ typedef struct GTY(()) machine_function
 /* Support targetm.vectorize.builtin_mask_for_load.  */
 static GTY(()) tree altivec_builtin_mask_for_load;
 
+/* Support targetm.vectorize.builtin_mask_for_load.  */
+static GTY(()) tree s2pp_builtin_mask_for_load;
+
 /* Set to nonzero once AIX common-mode calls have been defined.  */
 static GTY(()) int common_mode_defined;
 
@@ -2632,7 +2635,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	}
     }
   else if (TARGET_S2PP)
-    {
+    {/*mazbe add V4SI type for opaque handling*/
       rs6000_vector_unit[V8HImode] = VECTOR_S2PP;
       rs6000_vector_mem[V8HImode] = VECTOR_S2PP;
       rs6000_vector_align[V8HImode] = align32;
@@ -2860,8 +2863,8 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	  reg_addr[V16QImode].reload_load  = CODE_FOR_reload_v16qi_si_load;
 	  reg_addr[V8HImode].reload_store  = CODE_FOR_reload_v8hi_si_store;
 	  reg_addr[V8HImode].reload_load   = CODE_FOR_reload_v8hi_si_load;
-	  reg_addr[V4SImode].reload_store  = CODE_FOR_reload_v4si_si_store;
 	  if (!TARGET_S2PP){
+	    reg_addr[V4SImode].reload_store  = CODE_FOR_reload_v4si_si_store;
 	    reg_addr[V4SImode].reload_load   = CODE_FOR_reload_v4si_si_load;
 	    reg_addr[V2DImode].reload_store  = CODE_FOR_reload_v2di_si_store;
   	    reg_addr[V2DImode].reload_load   = CODE_FOR_reload_v2di_si_load;
@@ -4160,6 +4163,8 @@ rs6000_builtin_mask_for_load (void)
 {
   if (TARGET_ALTIVEC || TARGET_VSX)
     return altivec_builtin_mask_for_load;
+  else if (TARGET_S2PP)
+    return s2pp_builtin_mask_for_load;
   else
     return 0;
 }
@@ -11996,6 +12001,38 @@ altivec_expand_abs_builtin (enum insn_code icode, tree exp, rtx target)
 }
 
 static rtx
+s2pp_expand_abs_builtin (enum insn_code icode, tree exp, rtx target)
+{
+  rtx pat, scratch1, scratch2;
+  tree arg0 = CALL_EXPR_ARG (exp, 0);
+  rtx op0 = expand_normal (arg0);
+  enum machine_mode tmode = insn_data[icode].operand[0].mode;
+  enum machine_mode mode0 = insn_data[icode].operand[1].mode;
+
+  /* If we have invalid arguments, bail out before generating bad rtl.  */
+  if (arg0 == error_mark_node)
+    return const0_rtx;
+
+  if (target == 0
+      || GET_MODE (target) != tmode
+      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
+    target = gen_reg_rtx (tmode);
+
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
+    op0 = copy_to_mode_reg (mode0, op0);
+
+  scratch1 = gen_reg_rtx (mode0);
+  scratch2 = gen_reg_rtx (mode0);
+
+  pat = GEN_FCN (icode) (target, op0, scratch1, scratch2);
+  if (! pat)
+    return 0;
+  emit_insn (pat);
+
+  return target;
+}
+
+static rtx
 rs6000_expand_binop_builtin (enum insn_code icode, tree exp, rtx target)
 {
   rtx pat;
@@ -12137,6 +12174,81 @@ altivec_expand_predicate_builtin (enum insn_code icode, tree exp, rtx target)
       break;
     default:
       error ("argument 1 of __builtin_altivec_predicate is out of range");
+      break;
+    }
+
+  return target;
+}
+
+static rtx
+s2pp_expand_predicate_builtin (enum insn_code icode, tree exp, rtx target)
+{
+  rtx pat, scratch;
+  tree cr6_form = CALL_EXPR_ARG (exp, 0);
+  tree arg0 = CALL_EXPR_ARG (exp, 1);
+  tree arg1 = CALL_EXPR_ARG (exp, 2);
+  rtx op0 = expand_normal (arg0);
+  rtx op1 = expand_normal (arg1);
+  enum machine_mode tmode = SImode;
+  enum machine_mode mode0 = insn_data[icode].operand[1].mode;
+  enum machine_mode mode1 = insn_data[icode].operand[2].mode;
+  int cr6_form_int;
+
+  if (TREE_CODE (cr6_form) != INTEGER_CST)
+    {
+      error ("argument 1 of __builtin_s2pp_predicate must be a constant");
+      return const0_rtx;
+    }
+  else
+    cr6_form_int = TREE_INT_CST_LOW (cr6_form);
+
+  gcc_assert (mode0 == mode1);
+
+  /* If we have invalid arguments, bail out before generating bad rtl.  */
+  if (arg0 == error_mark_node || arg1 == error_mark_node)
+    return const0_rtx;
+
+  if (target == 0
+      || GET_MODE (target) != tmode
+      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
+    target = gen_reg_rtx (tmode);
+
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
+    op0 = copy_to_mode_reg (mode0, op0);
+  if (! (*insn_data[icode].operand[2].predicate) (op1, mode1))
+    op1 = copy_to_mode_reg (mode1, op1);
+
+  scratch = gen_reg_rtx (mode0);
+
+  pat = GEN_FCN (icode) (scratch, op0, op1);
+  if (! pat)
+    return 0;
+  emit_insn (pat);
+
+  /* The vec_any* and vec_all* predicates use the same opcodes for two
+     different operations, but the bits in CR6 will be different
+     depending on what information we want.  So we have to play tricks
+     with CR6 to get the right bits out.
+
+     If you think this is disgusting, look at the specs for the
+     AltiVec predicates.  */
+
+  switch (cr6_form_int)
+    {
+    case 0:
+      emit_insn (gen_cr6_test_for_zero (target));
+      break;
+    case 1:
+      emit_insn (gen_cr6_test_for_zero_reverse (target));
+      break;
+    case 2:
+      emit_insn (gen_cr6_test_for_lt (target));
+      break;
+    case 3:
+      emit_insn (gen_cr6_test_for_lt_reverse (target));
+      break;
+    default:
+      error ("argument 1 of __builtin_s2pp_predicate is out of range");
       break;
     }
 
@@ -12330,6 +12442,53 @@ altivec_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 }
 
 static rtx
+s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
+{
+  rtx pat, addr;
+  tree arg0 = CALL_EXPR_ARG (exp, 0);
+  tree arg1 = CALL_EXPR_ARG (exp, 1);
+  enum machine_mode tmode = insn_data[icode].operand[0].mode;
+  enum machine_mode mode0 = Pmode;
+  enum machine_mode mode1 = Pmode;
+  rtx op0 = expand_normal (arg0);
+  rtx op1 = expand_normal (arg1);
+
+  if (icode == CODE_FOR_nothing)
+    /* Builtin not supported on this processor.  */
+    return 0;
+
+  /* If we got invalid arguments bail out before generating bad rtl.  */
+  if (arg0 == error_mark_node || arg1 == error_mark_node)
+    return const0_rtx;
+
+  if (target == 0
+      || GET_MODE (target) != tmode
+      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
+    target = gen_reg_rtx (tmode);
+
+  op1 = copy_to_mode_reg (mode1, op1);
+
+  if (op0 == const0_rtx)
+    {
+      addr = gen_rtx_MEM (blk ? BLKmode : tmode, op1);
+    }
+  else
+    {
+      op0 = copy_to_mode_reg (mode0, op0);
+      addr = gen_rtx_MEM (blk ? BLKmode : tmode, gen_rtx_PLUS (Pmode, op0, op1));
+    }
+
+  pat = GEN_FCN (icode) (target, addr);
+
+  if (! pat)
+    return 0;
+  emit_insn (pat);
+
+  return target;
+}
+
+
+static rtx
 spe_expand_stv_builtin (enum insn_code icode, tree exp)
 {
   tree arg0 = CALL_EXPR_ARG (exp, 0);
@@ -12405,6 +12564,48 @@ paired_expand_stv_builtin (enum insn_code icode, tree exp)
 
 static rtx
 altivec_expand_stv_builtin (enum insn_code icode, tree exp)
+{
+  tree arg0 = CALL_EXPR_ARG (exp, 0);
+  tree arg1 = CALL_EXPR_ARG (exp, 1);
+  tree arg2 = CALL_EXPR_ARG (exp, 2);
+  rtx op0 = expand_normal (arg0);
+  rtx op1 = expand_normal (arg1);
+  rtx op2 = expand_normal (arg2);
+  rtx pat, addr;
+  enum machine_mode tmode = insn_data[icode].operand[0].mode;
+  enum machine_mode smode = insn_data[icode].operand[1].mode;
+  enum machine_mode mode1 = Pmode;
+  enum machine_mode mode2 = Pmode;
+
+  /* Invalid arguments.  Bail before doing anything stoopid!  */
+  if (arg0 == error_mark_node
+      || arg1 == error_mark_node
+      || arg2 == error_mark_node)
+    return const0_rtx;
+
+  if (! (*insn_data[icode].operand[1].predicate) (op0, smode))
+    op0 = copy_to_mode_reg (smode, op0);
+
+  op2 = copy_to_mode_reg (mode2, op2);
+
+  if (op1 == const0_rtx)
+    {
+      addr = gen_rtx_MEM (tmode, op2);
+    }
+  else
+    {
+      op1 = copy_to_mode_reg (mode1, op1);
+      addr = gen_rtx_MEM (tmode, gen_rtx_PLUS (Pmode, op1, op2));
+    }
+
+  pat = GEN_FCN (icode) (addr, op0);
+  if (pat)
+    emit_insn (pat);
+  return NULL_RTX;
+}
+
+static rtx
+s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
 {
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
@@ -12799,7 +13000,7 @@ rs6000_expand_ternop_builtin (enum insn_code icode, tree exp, rtx target)
 
   return target;
 }
-
+/*p-o-i!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11*/
 /* Expand the lvx builtins.  */
 static rtx
 altivec_expand_ld_builtin (tree exp, rtx target, bool *expandedp)
@@ -13093,7 +13294,7 @@ altivec_expand_vec_ext_builtin (tree exp, rtx target)
 
   return target;
 }
-/*p-o-i*/
+/*p-o-i!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 /* Expand the builtin in EXP and store the result in TARGET.  Store
    true in *EXPANDEDP if we found a builtin to expand.  */
 static rtx
@@ -13394,6 +13595,191 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
   *expandedp = false;
   return NULL_RTX;
 }
+
+/* Expand the lax builtins.  */
+static rtx
+s2pp_expand_ld_builtin (tree exp, rtx target, bool *expandedp)
+{
+  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
+  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
+  tree arg0;
+  enum machine_mode tmode, mode0;
+  rtx pat, op0;
+  enum insn_code icode;
+
+  switch (fcode)
+    {
+    case S2PP_BUILTIN_LD_INTERNAL_16qi:
+      icode = CODE_FOR_vector_s2pp_load_v16qi;
+      break;
+    case S2PP_BUILTIN_LD_INTERNAL_8hi:
+      icode = CODE_FOR_vector_s2pp_load_v8hi;
+      break;
+    default:
+      *expandedp = false;
+      return NULL_RTX;
+    }
+
+  *expandedp = true;
+
+  arg0 = CALL_EXPR_ARG (exp, 0);
+  op0 = expand_normal (arg0);
+  tmode = insn_data[icode].operand[0].mode;
+  mode0 = insn_data[icode].operand[1].mode;
+
+  if (target == 0
+      || GET_MODE (target) != tmode
+      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
+    target = gen_reg_rtx (tmode);
+
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
+    op0 = gen_rtx_MEM (mode0, copy_to_mode_reg (Pmode, op0));
+
+  pat = GEN_FCN (icode) (target, op0);
+  if (! pat)
+    return 0;
+  emit_insn (pat);
+  return target;
+}
+
+/* Expand the stax builtins.  */
+static rtx
+s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
+			   bool *expandedp)
+{
+  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
+  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
+  tree arg0, arg1;
+  enum machine_mode mode0, mode1;
+  rtx pat, op0, op1;
+  enum insn_code icode;
+
+  switch (fcode)
+    {
+    case S2PP_BUILTIN_ST_INTERNAL_16qi:
+      icode = CODE_FOR_vector_s2pp_store_v16qi;
+      break;
+    case S2PP_BUILTIN_ST_INTERNAL_8hi:
+      icode = CODE_FOR_vector_s2pp_store_v8hi;
+      break;
+    default:
+      *expandedp = false;
+      return NULL_RTX;
+    }
+
+  arg0 = CALL_EXPR_ARG (exp, 0);
+  arg1 = CALL_EXPR_ARG (exp, 1);
+  op0 = expand_normal (arg0);
+  op1 = expand_normal (arg1);
+  mode0 = insn_data[icode].operand[0].mode;
+  mode1 = insn_data[icode].operand[1].mode;
+
+  if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
+    op0 = gen_rtx_MEM (mode0, copy_to_mode_reg (Pmode, op0));
+  if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
+    op1 = copy_to_mode_reg (mode1, op1);
+
+  pat = GEN_FCN (icode) (op0, op1);
+  if (pat)
+    emit_insn (pat);
+
+  *expandedp = true;
+  return NULL_RTX;
+}
+
+/* Expand the builtin in EXP and store the result in TARGET.  Store
+   true in *EXPANDEDP if we found a builtin to expand.  */
+static rtx
+s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
+{
+  const struct builtin_description *d;
+  size_t i;
+  enum insn_code icode;
+  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
+  tree arg0;
+  rtx op0, pat;
+  enum machine_mode tmode, mode0;
+  enum rs6000_builtins fcode
+    = (enum rs6000_builtins) DECL_FUNCTION_CODE (fndecl);
+
+  if (rs6000_overloaded_builtin_p (fcode))
+    {
+      *expandedp = true;
+      error ("unresolved overload for s2pp builtin %qF", fndecl);
+
+      /* Given it is invalid, just generate a normal call.  */
+      return expand_call (exp, target, false);
+    }
+
+  target = s2pp_expand_ld_builtin (exp, target, expandedp);
+  if (*expandedp)
+    return target;
+
+  target = s2pp_expand_st_builtin (exp, target, expandedp);
+  if (*expandedp)
+    return target;
+
+//  target = s2pp_expand_dst_builtin (exp, target, expandedp);
+//  if (*expandedp)
+//    return target;
+
+  *expandedp = true;
+
+  switch (fcode)
+    {
+    case S2PP_BUILTIN_STAX_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_stax_v8hi, exp);
+    case S2PP_BUILTIN_STAX_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_stax_v16qi, exp);
+/*
+    case S2PP_BUILTIN_VEC_INIT_V8HI:
+    case S2PP_BUILTIN_VEC_INIT_V16QI:
+      return s2pp_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
+
+    case S2PP_BUILTIN_VEC_SET_V8HI:
+    case S2PP_BUILTIN_VEC_SET_V16QI:
+      return s2pp_expand_vec_set_builtin (exp);
+
+    case S2PP_BUILTIN_VEC_EXT_V8HI:
+    case S2PP_BUILTIN_VEC_EXT_V16QI:
+      return s2pp_expand_vec_ext_builtin (exp, target);
+*/
+    default:
+      break;
+      /* Fall through.  */
+    }
+
+  /* Expand abs* operations.  */
+  d = bdesc_abs;
+  for (i = 0; i < ARRAY_SIZE (bdesc_abs); i++, d++)
+    if (d->code == fcode)
+      return s2pp_expand_abs_builtin (d->icode, exp, target);
+
+  /* Expand the AltiVec predicates.  */
+  d = bdesc_s2pp_preds;
+  for (i = 0; i < ARRAY_SIZE (bdesc_s2pp_preds); i++, d++)
+    if (d->code == fcode)
+      return s2pp_expand_predicate_builtin (d->icode, exp, target);
+
+  /* LV* are funky.  We initialized them differently.  */
+  switch (fcode)
+    {
+//    case S2PP_BUILTIN_LAX:
+    case S2PP_BUILTIN_LAX_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_lax_v8hi,
+					exp, target, false);
+    case S2PP_BUILTIN_LAX_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_lax_v16qi,
+					exp, target, false);
+    default:
+      break;
+      /* Fall through.  */
+    }
+
+  *expandedp = false;
+  return NULL_RTX;
+}
+
 
 /* Expand the builtin in EXP and store the result in TARGET.  Store
    true in *EXPANDEDP if we found a builtin to expand.  */
@@ -14016,6 +14402,45 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 	}
       break;
 
+    case S2PP_BUILTIN_MASK_FOR_LOAD:
+    case S2PP_BUILTIN_MASK_FOR_STORE:
+      {
+	int icode = CODE_FOR_s2pp_fxvlax_direct;
+	enum machine_mode tmode = insn_data[icode].operand[0].mode;
+	enum machine_mode mode = insn_data[icode].operand[1].mode;
+	tree arg;
+	rtx op, addr, pat;
+
+	gcc_assert (TARGET_S2PP);
+
+	arg = CALL_EXPR_ARG (exp, 0);
+	gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
+	op = expand_expr (arg, NULL_RTX, Pmode, EXPAND_NORMAL);
+	addr = memory_address (mode, op);
+	if (fcode == S2PP_BUILTIN_MASK_FOR_STORE)
+	  op = addr;
+	else
+	  {
+	    /* For the load case need to negate the address.  */
+	    op = gen_reg_rtx (GET_MODE (addr));
+	    emit_insn (gen_rtx_SET (VOIDmode, op,
+				    gen_rtx_NEG (GET_MODE (addr), addr)));
+	  }
+	op = gen_rtx_MEM (mode, op);
+
+	if (target == 0
+	    || GET_MODE (target) != tmode
+	    || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
+	  target = gen_reg_rtx (tmode);
+
+	pat = GEN_FCN (icode) (target, op);
+	if (!pat)
+	  return 0;
+	emit_insn (pat);
+
+	return target;
+      }
+
     default:
       break;
     }
@@ -14023,6 +14448,14 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
   if (TARGET_ALTIVEC)
     {
       ret = altivec_expand_builtin (exp, target, &success);
+
+      if (success)
+	return ret;
+    }
+
+  if (TARGET_S2PP)
+    {
+      ret = s2pp_expand_builtin (exp, target, &success);
 
       if (success)
 	return ret;
@@ -14109,6 +14542,7 @@ rs6000_init_builtins (void)
   opaque_V2SI_type_node = build_opaque_vector_type (intSI_type_node, 2);
   opaque_p_V2SI_type_node = build_pointer_type (opaque_V2SI_type_node);
   opaque_V4SI_type_node = build_opaque_vector_type (intSI_type_node, 4);
+//  opaque_V16QI_type_node = build_opaque_vector_type (intQI_type_node, 16);
 
   /* We use V1TI mode as a special container to hold __int128_t items that
      must live in VSX registers.  */
@@ -14279,16 +14713,15 @@ rs6000_init_builtins (void)
     paired_init_builtins ();
   if (TARGET_SPE)
     spe_init_builtins ();
+  if (TARGET_S2PP)
+    s2pp_init_builtins ();
   if (TARGET_EXTRA_BUILTINS){
-    if (TARGET_S2PP)
-      s2pp_init_builtins ();
-    else
-      altivec_init_builtins ();
+    altivec_init_builtins ();
   }
   if (TARGET_HTM)
     htm_init_builtins ();
 
-  if (TARGET_EXTRA_BUILTINS || TARGET_SPE || TARGET_PAIRED_FLOAT)
+  if (TARGET_EXTRA_BUILTINS || TARGET_SPE || TARGET_PAIRED_FLOAT || TARGET_S2PP)
     rs6000_common_init_builtins ();
 
   ftype = builtin_function_type (DFmode, DFmode, DFmode, VOIDmode,
@@ -14342,16 +14775,16 @@ rs6000_init_builtins (void)
   SUBTARGET_INIT_BUILTINS;
 #endif
 
-#ifdef OPTION_MASK_S2PP
+/*#ifdef OPTION_MASK_S2PP
   tree pcvoid_type_node
     = build_pointer_type (build_qualified_type (void_type_node,
 						TYPE_QUAL_CONST));
     ftype = build_function_type_list (opaque_V4SI_type_node,
 				long_integer_type_node, pcvoid_type_node,
 				NULL_TREE);
-  def_builtin ("__builtin_s2pp_fxvlax", ftype, S2PP_BUILTIN_FXVLAX);
+  def_builtin ("__builtin_s2pp_lax", ftype, S2PP_BUILTIN_LAX);
 #endif
-
+*/
 
 
 
@@ -15188,104 +15621,47 @@ s2pp_init_builtins (void)
     = build_function_type_list (void_type_node,
 				pcvoid_type_node, integer_type_node,
 				integer_type_node, NULL_TREE);
+  tree opaque_ftype_long_pcvoid
+    = build_function_type_list (opaque_V4SI_type_node,
+				long_integer_type_node, pcvoid_type_node,
+				NULL_TREE);
+  tree void_ftype_opaque_long_pvoid
+    = build_function_type_list (void_type_node,
+				opaque_V4SI_type_node, long_integer_type_node,
+				pvoid_type_node, NULL_TREE);
+  tree opaque_ftype_opaque_int
+    = build_function_type_list (opaque_V4SI_type_node,
+				opaque_V4SI_type_node, integer_type_node, NULL_TREE);
 /*p_o_i*/ 
-  /*def_builtin ("__builtin_altivec_mfvscr", v8hi_ftype_void, ALTIVEC_BUILTIN_MFVSCR);
-  def_builtin ("__builtin_altivec_dssall", void_ftype_void, ALTIVEC_BUILTIN_DSSALL);
-  def_builtin ("__builtin_altivec_dss", void_ftype_int, ALTIVEC_BUILTIN_DSS);
-  def_builtin ("__builtin_altivec_lvsl", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVSL);
-  def_builtin ("__builtin_altivec_lvsr", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVSR);
-  def_builtin ("__builtin_altivec_lvebx", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVEBX);
-  def_builtin ("__builtin_altivec_lvehx", v8hi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVEHX);
-  def_builtin ("__builtin_altivec_lvxl_v8hi", v8hi_ftype_long_pcvoid,
-	       ALTIVEC_BUILTIN_LVXL_V8HI);
-  def_builtin ("__builtin_altivec_lvxl_v16qi", v16qi_ftype_long_pcvoid,
-	       ALTIVEC_BUILTIN_LVXL_V16QI);
-  def_builtin ("__builtin_altivec_lvx_v8hi", v8hi_ftype_long_pcvoid,
-	       ALTIVEC_BUILTIN_LVX_V8HI);
-  def_builtin ("__builtin_altivec_lvx_v16qi", v16qi_ftype_long_pcvoid,
-	       ALTIVEC_BUILTIN_LVX_V16QI);
-  def_builtin ("__builtin_altivec_stvx_v8hi", void_ftype_v8hi_long_pvoid,
-	       ALTIVEC_BUILTIN_STVX_V8HI);
-  def_builtin ("__builtin_altivec_stvx_v16qi", void_ftype_v16qi_long_pvoid,
-	       ALTIVEC_BUILTIN_STVX_V16QI);
-  def_builtin ("__builtin_altivec_stvxl_v8hi", void_ftype_v8hi_long_pvoid,
-	       ALTIVEC_BUILTIN_STVXL_V8HI);
-  def_builtin ("__builtin_altivec_stvxl_v16qi", void_ftype_v16qi_long_pvoid,
-	       ALTIVEC_BUILTIN_STVXL_V16QI);
-  def_builtin ("__builtin_altivec_stvebx", void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_STVEBX);
-  def_builtin ("__builtin_altivec_stvehx", void_ftype_v8hi_long_pvoid, ALTIVEC_BUILTIN_STVEHX);
-  def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LD);
-  def_builtin ("__builtin_vec_lde", opaque_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LDE);
-  def_builtin ("__builtin_vec_ldl", opaque_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LDL);
-  def_builtin ("__builtin_vec_lvsl", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVSL);
-  def_builtin ("__builtin_vec_lvsr", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVSR);
-  def_builtin ("__builtin_vec_lvebx", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVEBX);
-  def_builtin ("__builtin_vec_lvehx", v8hi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVEHX);
-  def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, ALTIVEC_BUILTIN_VEC_ST);
-  def_builtin ("__builtin_vec_ste", void_ftype_opaque_long_pvoid, ALTIVEC_BUILTIN_VEC_STE);
-  def_builtin ("__builtin_vec_stl", void_ftype_opaque_long_pvoid, ALTIVEC_BUILTIN_VEC_STL);
-  def_builtin ("__builtin_vec_stvewx", void_ftype_opaque_long_pvoid, ALTIVEC_BUILTIN_VEC_STVEWX);
-  def_builtin ("__builtin_vec_stvebx", void_ftype_opaque_long_pvoid, ALTIVEC_BUILTIN_VEC_STVEBX);
-  def_builtin ("__builtin_vec_stvehx", void_ftype_opaque_long_pvoid, ALTIVEC_BUILTIN_VEC_STVEHX);
+  def_builtin ("__builtin_s2pp_lax_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_LAX_V8HI);
+  def_builtin ("__builtin_s2pp_lax_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_LAX_V16QI);
+  def_builtin ("__builtin_s2pp_stax_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_STAX_V8HI);
+  def_builtin ("__builtin_s2pp_stax_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_STAX_V16QI);
+  def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_FXVLD);
+  def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_FXVST);
 
-  def_builtin ("__builtin_vsx_lxvw4x_v8hi", v8hi_ftype_long_pcvoid,
-	       VSX_BUILTIN_LXVW4X_V8HI);
-  def_builtin ("__builtin_vsx_lxvw4x_v16qi", v16qi_ftype_long_pcvoid,
-	       VSX_BUILTIN_LXVW4X_V16QI);
-  def_builtin ("__builtin_vsx_stxvw4x_v8hi", void_ftype_v8hi_long_pvoid,
-	       VSX_BUILTIN_STXVW4X_V8HI);
-  def_builtin ("__builtin_vsx_stxvw4x_v16qi", void_ftype_v16qi_long_pvoid,
-	       VSX_BUILTIN_STXVW4X_V16QI);
-  def_builtin ("__builtin_vec_vsx_ld", opaque_ftype_long_pcvoid,
-	       VSX_BUILTIN_VEC_LD);
-  def_builtin ("__builtin_vec_vsx_st", void_ftype_opaque_long_pvoid,
-	       VSX_BUILTIN_VEC_ST);
-*/
-  def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEPX);
+//  def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEPX);
   def_builtin ("__builtin_vec_splats", opaque_ftype_opaque, S2PP_BUILTIN_VEC_SPLATSX);
-  def_builtin ("__builtin_vec_promote", opaque_ftype_opaque, S2PP_BUILTIN_VEC_PROMOTEX);
-/*
-  def_builtin ("__builtin_vec_sld", opaque_ftype_opaque_opaque_int, ALTIVEC_BUILTIN_VEC_SLD);
-  def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_SPLAT);
-  def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_EXTRACT);
-  def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, ALTIVEC_BUILTIN_VEC_INSERT);
-  def_builtin ("__builtin_vec_vspltw", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_VSPLTW);
-  def_builtin ("__builtin_vec_vsplth", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_VSPLTH);
-  def_builtin ("__builtin_vec_vspltb", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_VSPLTB);
-  def_builtin ("__builtin_vec_ctf", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_CTF);
-  def_builtin ("__builtin_vec_vcfsx", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_VCFSX);
-  def_builtin ("__builtin_vec_vcfux", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_VCFUX);
-  def_builtin ("__builtin_vec_cts", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_CTS);
-  def_builtin ("__builtin_vec_ctu", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_CTU);
-*/
-  /* Cell builtins.  */
-/*  def_builtin ("__builtin_altivec_lvlx",  v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVLX);
-  def_builtin ("__builtin_altivec_lvlxl", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVLXL);
-  def_builtin ("__builtin_altivec_lvrx",  v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVRX);
-  def_builtin ("__builtin_altivec_lvrxl", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_LVRXL);
+//  def_builtin ("__builtin_vec_promote", opaque_ftype_opaque, S2PP_BUILTIN_VEC_PROMOTEX);
 
-  def_builtin ("__builtin_vec_lvlx",  v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVLX);
-  def_builtin ("__builtin_vec_lvlxl", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVLXL);
-  def_builtin ("__builtin_vec_lvrx",  v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVRX);
-  def_builtin ("__builtin_vec_lvrxl", v16qi_ftype_long_pcvoid, ALTIVEC_BUILTIN_VEC_LVRXL);
+//  def_builtin ("__builtin_vec_sld", opaque_ftype_opaque_opaque_int, ALTIVEC_BUILTIN_VEC_SLD);
+//  def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_SPLATX);
+//  def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, ALTIVEC_BUILTIN_VEC_EXTRACT);
+//  def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, ALTIVEC_BUILTIN_VEC_INSERT);
+  def_builtin ("__builtin_vec_vsplth", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVSPLTH);
+  def_builtin ("__builtin_vec_vspltb", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVSPLTB);
 
-  def_builtin ("__builtin_altivec_stvlx",  void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_STVLX);
-  def_builtin ("__builtin_altivec_stvlxl", void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_STVLXL);
-  def_builtin ("__builtin_altivec_stvrx",  void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_STVRX);
-  def_builtin ("__builtin_altivec_stvrxl", void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_STVRXL);
-
-  def_builtin ("__builtin_vec_stvlx",  void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_VEC_STVLX);
-  def_builtin ("__builtin_vec_stvlxl", void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_VEC_STVLXL);
-  def_builtin ("__builtin_vec_stvrx",  void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_VEC_STVRX);
-  def_builtin ("__builtin_vec_stvrxl", void_ftype_v16qi_long_pvoid, ALTIVEC_BUILTIN_VEC_STVRXL);
-*/
   /* Add the DST variants.  */
-  d = bdesc_dst;
-  for (i = 0; i < ARRAY_SIZE (bdesc_dst); i++, d++)
-    def_builtin (d->name, void_ftype_pcvoid_int_int, d->code);
+//  d = bdesc_dst;
+//  for (i = 0; i < ARRAY_SIZE (bdesc_dst); i++, d++)
+//    def_builtin (d->name, void_ftype_pcvoid_int_int, d->code);
 
   /* Initialize the predicates.  */
-  /*d = bdesc_altivec_preds;
+/*  d = bdesc_s2pp_preds;
   for (i = 0; i < ARRAY_SIZE (bdesc_s2pp_preds); i++, d++)
     {
       enum machine_mode mode1;
@@ -15315,7 +15691,7 @@ s2pp_init_builtins (void)
     }
 */
   /* Initialize the abs* operators.  */
- /* d = bdesc_abs;
+/*  d = bdesc_abs;
   for (i = 0; i < ARRAY_SIZE (bdesc_abs); i++, d++)
     {
       enum machine_mode mode0;
@@ -15340,17 +15716,17 @@ s2pp_init_builtins (void)
 */
   /* Initialize target builtin that implements
      targetm.vectorize.builtin_mask_for_load.  */
-/*
-  decl = add_builtin_function ("__builtin_altivec_mask_for_load",
+
+  decl = add_builtin_function ("__builtin_s2pp_mask_for_load",
 			       v16qi_ftype_long_pcvoid,
-			       ALTIVEC_BUILTIN_MASK_FOR_LOAD,
+			       S2PP_BUILTIN_MASK_FOR_LOAD,
 			       BUILT_IN_MD, NULL, NULL_TREE);
   TREE_READONLY (decl) = 1;
- */ /* Record the decl. Will be used by rs6000_builtin_mask_for_load.  */
-//  altivec_builtin_mask_for_load = decl;
+ /* Record the decl. Will be used by rs6000_builtin_mask_for_load.  */
+  s2pp_builtin_mask_for_load = decl;
 
   /* Access to the vec_init patterns.  */
-/*  ftype = build_function_type_list (V8HI_type_node, short_integer_type_node,
+  ftype = build_function_type_list (V8HI_type_node, short_integer_type_node,
 				    short_integer_type_node,
 				    short_integer_type_node,
 				    short_integer_type_node,
@@ -15358,7 +15734,7 @@ s2pp_init_builtins (void)
 				    short_integer_type_node,
 				    short_integer_type_node,
 				    short_integer_type_node, NULL_TREE);
-  def_builtin ("__builtin_vec_init_v8hi", ftype, ALTIVEC_BUILTIN_VEC_INIT_V8HI);
+//  def_builtin ("__builtin_vec_init_v8hi", ftype, S2PP_BUILTIN_VEC_INIT_V8HI);
 
   ftype = build_function_type_list (V16QI_type_node, char_type_node,
 				    char_type_node, char_type_node,
@@ -15369,29 +15745,29 @@ s2pp_init_builtins (void)
 				    char_type_node, char_type_node,
 				    char_type_node, char_type_node,
 				    char_type_node, NULL_TREE);
-  def_builtin ("__builtin_vec_init_v16qi", ftype,
-	       ALTIVEC_BUILTIN_VEC_INIT_V16QI);
-*/
+//  def_builtin ("__builtin_vec_init_v16qi", ftype,
+//	       S2PP_BUILTIN_VEC_INIT_V16QI);
+
   /* Access to the vec_set patterns.  */
-/*  ftype = build_function_type_list (V8HI_type_node, V8HI_type_node,
+  ftype = build_function_type_list (V8HI_type_node, V8HI_type_node,
 				    intHI_type_node,
 				    integer_type_node, NULL_TREE);
-  def_builtin ("__builtin_vec_set_v8hi", ftype, ALTIVEC_BUILTIN_VEC_SET_V8HI);
+//  def_builtin ("__builtin_vec_set_v8hi", ftype, S2PP_BUILTIN_VEC_SET_V8HI);
 
   ftype = build_function_type_list (V16QI_type_node, V16QI_type_node,
 				    intQI_type_node,
 				    integer_type_node, NULL_TREE);
-  def_builtin ("__builtin_vec_set_v16qi", ftype, ALTIVEC_BUILTIN_VEC_SET_V16QI);
-*/
+//  def_builtin ("__builtin_vec_set_v16qi", ftype, S2PP_BUILTIN_VEC_SET_V16QI);
+
   /* Access to the vec_extract patterns.  */
-/*  ftype = build_function_type_list (intHI_type_node, V8HI_type_node,
+  ftype = build_function_type_list (intHI_type_node, V8HI_type_node,
 				    integer_type_node, NULL_TREE);
-  def_builtin ("__builtin_vec_ext_v8hi", ftype, ALTIVEC_BUILTIN_VEC_EXT_V8HI);
+//  def_builtin ("__builtin_vec_ext_v8hi", ftype, S2PP_BUILTIN_VEC_EXT_V8HI);
 
   ftype = build_function_type_list (intQI_type_node, V16QI_type_node,
 				    integer_type_node, NULL_TREE);
-  def_builtin ("__builtin_vec_ext_v16qi", ftype, ALTIVEC_BUILTIN_VEC_EXT_V16QI);
-*/
+//  def_builtin ("__builtin_vec_ext_v16qi", ftype, S2PP_BUILTIN_VEC_EXT_V16QI);
+
 }
 
 
@@ -15718,8 +16094,8 @@ rs6000_common_init_builtins (void)
      appropriate compiler option.  Create Altivec and VSX builtins on machines
      with at least the general purpose extensions (970 and newer) to allow the
      use of the target attribute..  */
-
-  if (TARGET_EXTRA_BUILTINS)
+/*poi*/
+  if (TARGET_EXTRA_BUILTINS || TARGET_S2PP)
     builtin_mask |= RS6000_BTM_COMMON;
 
   /* Add the ternary operators.  */

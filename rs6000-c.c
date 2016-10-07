@@ -392,21 +392,29 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
   if (TARGET_FRSQRTES)
     builtin_define ("__RSQRTEF__");
 
+  if (TARGET_S2PP){
+    builtin_define ("__vector=__attribute__((s2pp(vector__)))");
+    builtin_define ("__pixel=__attribute__((s2pp(pixel__))) unsigned short");
+    builtin_define ("__bool=__attribute__((s2pp(bool__))) unsigned");
+    if (!flag_iso){
+      builtin_define ("vector=vector");
+      builtin_define ("pixel=pixel");
+      builtin_define ("bool=bool");
+      builtin_define ("_Bool=_Bool");
+      init_vector_keywords ();
+      /* Enable context-sensitive macros.  */
+      cpp_get_callbacks (pfile)->macro_to_expand = rs6000_macro_to_expand;
+    }
+  }
   if (TARGET_EXTRA_BUILTINS)
     {/*p_o_i*/
 
       /* Define the AltiVec syntactic elements.  */
-      if (TARGET_S2PP){
-      builtin_define ("__vector=__attribute__((s2pp(vector__)))");
-      builtin_define ("__pixel=__attribute__((s2pp(pixel__))) unsigned short");
-      builtin_define ("__bool=__attribute__((s2pp(bool__))) unsigned");
-      }
-      else{
 
       builtin_define ("__vector=__attribute__((altivec(vector__)))");
       builtin_define ("__pixel=__attribute__((altivec(pixel__))) unsigned short");
       builtin_define ("__bool=__attribute__((altivec(bool__))) unsigned");
-      } 
+       
       if (!flag_iso)
 	{
 	  builtin_define ("vector=vector");
@@ -593,54 +601,54 @@ const struct s2pp_builtin_types s2pp_overloaded_builtins[] = {
   { S2PP_BUILTIN_VEC_ADDX, S2PP_BUILTIN_FXVADDHM,
     RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, 0 },
 
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V8HI,
     RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_pixel_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V8HI,
     RS6000_BTI_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V8HI,
     RS6000_BTI_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_INTHI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V8HI,
     RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_unsigned_V8HI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V8HI,
     RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_UINTHI, 0 },
   
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V16QI,
     RS6000_BTI_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V16QI,
     RS6000_BTI_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_INTQI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V16QI,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_unsigned_V16QI, 0 },
-  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_FXVLAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVLD, S2PP_BUILTIN_LAX_V16QI,
     RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_UINTQI, 0 },
 
-  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTB,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTB,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTH,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTH,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTH,
-    RS6000_BTI_pixel_V8HI, RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTB,
+//    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTB,
+//    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTH,
+//    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTH,
+//    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_SPLATX, S2PP_BUILTIN_FXVSPLTH,
+//    RS6000_BTI_pixel_V8HI, RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, 0 },
 
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V8HI,
     RS6000_BTI_void, RS6000_BTI_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_V8HI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V8HI,
     RS6000_BTI_void, RS6000_BTI_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_INTHI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V8HI,
     RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_unsigned_V8HI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V8HI,
     RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_UINTHI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V16QI,
     RS6000_BTI_void, RS6000_BTI_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_V16QI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V16QI,
     RS6000_BTI_void, RS6000_BTI_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_INTQI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V16QI,
     RS6000_BTI_void, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_unsigned_V16QI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V16QI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V16QI,
     RS6000_BTI_void, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, ~RS6000_BTI_UINTQI },
-  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_FXVSTAX_V8HI,
+  { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V8HI,
     RS6000_BTI_void, RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_pixel_V8HI },
 
   { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
@@ -4828,7 +4836,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 
   /* For now use pointer tricks to do the extraction, unless we are on VSX
      extracting a double from a constant offset.  */
-  if (fcode == S2PP_BUILTIN_VEC_EXTRACTX)
+/*  if (fcode == S2PP_BUILTIN_VEC_EXTRACTX)
     {
       tree arg1;
       tree arg1_type;
@@ -4837,9 +4845,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       tree decl, stmt;
       tree innerptrtype;
       enum machine_mode mode;
-
+*/
       /* No second argument. */
-      if (nargs != 2)
+ /*     if (nargs != 2)
 	{
 	  error ("vec_extract only accepts 2 arguments");
 	  return error_mark_node;
@@ -4853,9 +4861,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	goto bad; 
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
 	goto bad; 
-
+*/
       /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2). */
-      arg1_inner_type = TREE_TYPE (arg1_type);
+/*      arg1_inner_type = TREE_TYPE (arg1_type);
       arg2 = build_binary_op (loc, BIT_AND_EXPR, arg2,
 			      build_int_cst (TREE_TYPE (arg2),
 					     TYPE_VECTOR_SUBPARTS (arg1_type)
@@ -4891,10 +4899,10 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 
       return stmt;
     }
-
+*/
   /* For now use pointer tricks to do the insertion, unless we are on VSX
      inserting a double to a constant offset..  */
-  if (fcode == S2PP_BUILTIN_VEC_INSERTX)
+/*  if (fcode == S2PP_BUILTIN_VEC_INSERTX)
     {
       tree arg0;
       tree arg1;
@@ -4904,9 +4912,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       tree decl, stmt;
       tree innerptrtype;
       enum machine_mode mode;
-
+*/
       /* No second or third arguments. */
-      if (nargs != 3)
+/*      if (nargs != 3)
 	{
 	  error ("vec_insert only accepts 3 arguments");
 	  return error_mark_node;
@@ -4921,9 +4929,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	goto bad; 
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
 	goto bad; 
-
+*/
       /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2) = arg0. */
-      arg1_inner_type = TREE_TYPE (arg1_type);
+/*      arg1_inner_type = TREE_TYPE (arg1_type);
       arg2 = build_binary_op (loc, BIT_AND_EXPR, arg2,
 			      build_int_cst (TREE_TYPE (arg2),
 					     TYPE_VECTOR_SUBPARTS (arg1_type)
@@ -4961,7 +4969,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       stmt = build2 (COMPOUND_EXPR, arg1_type, stmt, decl);
       return stmt;
     }
-
+*/
   for (n = 0;
        !VOID_TYPE_P (TREE_VALUE (fnargs)) && n < nargs;
        fnargs = TREE_CHAIN (fnargs), n++)
@@ -5019,14 +5027,14 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
   if (n == 0)
     abort ();
 
-  if (fcode == S2PP_BUILTIN_VEC_STEPX)
+/*  if (fcode == S2PP_BUILTIN_VEC_STEPX)
     {
       if (TREE_CODE (types[0]) != VECTOR_TYPE)
 	goto bad;
 
       return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
     }
-
+*/
   for (desc = s2pp_overloaded_builtins;
        desc->code && desc->code != fcode; desc++)
     continue;
