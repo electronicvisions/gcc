@@ -171,7 +171,7 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 
   /* If the current machine does not have altivec, don't look for the
      keywords.  */
-  if (!TARGET_ALTIVEC){
+  if (!TARGET_ALTIVEC && !TARGET_S2PP){
     fprintf (stderr, "this happens");
     return NULL;
   }
@@ -651,16 +651,16 @@ const struct s2pp_builtin_types s2pp_overloaded_builtins[] = {
   { S2PP_BUILTIN_VEC_FXVST, S2PP_BUILTIN_STAX_V8HI,
     RS6000_BTI_void, RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, ~RS6000_BTI_pixel_V8HI },
 
-  { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
-    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
-    RS6000_BTI_pixel_V8HI, RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_FXVSPLTB, S2PP_BUILTIN_FXVSPLTB,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_INTSI, 0 },
-  { S2PP_BUILTIN_VEC_FXVSPLTB, S2PP_BUILTIN_FXVSPLTB,
-    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
+//    RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
+//    RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_FXVSPLTH, S2PP_BUILTIN_FXVSPLTH,
+//    RS6000_BTI_pixel_V8HI, RS6000_BTI_pixel_V8HI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_FXVSPLTB, S2PP_BUILTIN_FXVSPLTB,
+//    RS6000_BTI_V16QI, RS6000_BTI_V16QI, RS6000_BTI_INTSI, 0 },
+//  { S2PP_BUILTIN_VEC_FXVSPLTB, S2PP_BUILTIN_FXVSPLTB,
+//    RS6000_BTI_unsigned_V16QI, RS6000_BTI_unsigned_V16QI, RS6000_BTI_INTSI, 0 },
 };
 
 
@@ -4790,7 +4790,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	     (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
  
   /* For now treat vec_splats and vec_promote as the same.  */
-  if (fcode == S2PP_BUILTIN_VEC_SPLATSX)
+  if (fcode == S2PP_BUILTIN_VEC_SPLATS)
     {
       tree type, arg;
       int size;
@@ -4836,7 +4836,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 
   /* For now use pointer tricks to do the extraction, unless we are on VSX
      extracting a double from a constant offset.  */
-/*  if (fcode == S2PP_BUILTIN_VEC_EXTRACTX)
+  if (fcode == S2PP_BUILTIN_VEC_EXTRACT)
     {
       tree arg1;
       tree arg1_type;
@@ -4845,9 +4845,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       tree decl, stmt;
       tree innerptrtype;
       enum machine_mode mode;
-*/
+
       /* No second argument. */
- /*     if (nargs != 2)
+      if (nargs != 2)
 	{
 	  error ("vec_extract only accepts 2 arguments");
 	  return error_mark_node;
@@ -4861,9 +4861,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	goto bad; 
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
 	goto bad; 
-*/
+
       /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2). */
-/*      arg1_inner_type = TREE_TYPE (arg1_type);
+      arg1_inner_type = TREE_TYPE (arg1_type);
       arg2 = build_binary_op (loc, BIT_AND_EXPR, arg2,
 			      build_int_cst (TREE_TYPE (arg2),
 					     TYPE_VECTOR_SUBPARTS (arg1_type)
@@ -4899,10 +4899,10 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 
       return stmt;
     }
-*/
+
   /* For now use pointer tricks to do the insertion, unless we are on VSX
      inserting a double to a constant offset..  */
-/*  if (fcode == S2PP_BUILTIN_VEC_INSERTX)
+  if (fcode == S2PP_BUILTIN_VEC_INSERT)
     {
       tree arg0;
       tree arg1;
@@ -4912,9 +4912,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       tree decl, stmt;
       tree innerptrtype;
       enum machine_mode mode;
-*/
+
       /* No second or third arguments. */
-/*      if (nargs != 3)
+      if (nargs != 3)
 	{
 	  error ("vec_insert only accepts 3 arguments");
 	  return error_mark_node;
@@ -4929,9 +4929,9 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	goto bad; 
       if (!INTEGRAL_TYPE_P (TREE_TYPE (arg2)))
 	goto bad; 
-*/
+
       /* Build *(((arg1_inner_type*)&(vector type){arg1})+arg2) = arg0. */
-/*      arg1_inner_type = TREE_TYPE (arg1_type);
+      arg1_inner_type = TREE_TYPE (arg1_type);
       arg2 = build_binary_op (loc, BIT_AND_EXPR, arg2,
 			      build_int_cst (TREE_TYPE (arg2),
 					     TYPE_VECTOR_SUBPARTS (arg1_type)
@@ -4969,7 +4969,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       stmt = build2 (COMPOUND_EXPR, arg1_type, stmt, decl);
       return stmt;
     }
-*/
+
   for (n = 0;
        !VOID_TYPE_P (TREE_VALUE (fnargs)) && n < nargs;
        fnargs = TREE_CHAIN (fnargs), n++)
@@ -5027,14 +5027,14 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
   if (n == 0)
     abort ();
 
-/*  if (fcode == S2PP_BUILTIN_VEC_STEPX)
+  if (fcode == S2PP_BUILTIN_VEC_STEP)
     {
       if (TREE_CODE (types[0]) != VECTOR_TYPE)
 	goto bad;
 
       return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
     }
-*/
+
   for (desc = s2pp_overloaded_builtins;
        desc->code && desc->code != fcode; desc++)
     continue;

@@ -20,16 +20,29 @@
 #define s2pp_lax __builtin_s2pp_lax
 #define vec_st __builtin_vec_st
 #define vec_ld __builtin_vec_ld
-//deprecated
 
 #define vec_splat __builtin_vec_splatx
 #define vec_splats __builtin_vec_splats
-#define vec_splatb __builtin_vec_fxvsplatb
-#define vec_splath __builtin_vec_fxvsplath
+//#define vec_splatb __builtin_vec_fxvsplatb
+//#define vec_splath __builtin_vec_fxvsplath
+#define vec_splatb(x) __builtin_s2pp_fxvsplatb ((x))
+#define vec_splath(x) __builtin_s2pp_fxvsplath ((x))
 
 #define s2pp_fxvaddbm __builtin_vec_fxvaddbm
 #define s2pp_fxvaddhm __builtin_vec_fxvaddhm
 
 #define vec_add __builtin_vec_addx
+
+///* Given the vec_step of a type, return the corresponding bool type.  */
+//template <int STEP> class __s2pp_bool_ret { };
+//template <> class __s2pp_bool_ret <4> {
+//  typedef __vector __bool int __ret;
+//};
+//template <> class __s2pp_bool_ret <8> {
+//  typedef __vector __bool short __ret;
+//};
+//template <> class __s2pp_bool_ret <16> {
+//  typedef __vector __bool char __ret;
+//};
 
 #endif /* _S2PP_H */

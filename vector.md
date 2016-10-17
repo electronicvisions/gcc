@@ -29,6 +29,9 @@
 ;; Vector float modes
 (define_mode_iterator VEC_F [V4SF V2DF])
 
+;; Vector float modes
+(define_mode_iterator VEC_X [V8HI V16QI])
+
 ;; Vector arithmetic modes
 (define_mode_iterator VEC_A [V16QI V8HI V4SI V2DI V4SF V2DF])
 
@@ -184,35 +187,35 @@
 }")
 
 (define_expand "vector_s2pp_load_<mode>"
-  [(set (match_operand:VEC_M 0 "vfloat_operand" "")
-	(match_operand:VEC_M 1 "memory_operand" ""))]
+  [(set (match_operand:VEC_X 0 "vfloat_operand" "")
+	(match_operand:VEC_X 1 "memory_operand" ""))]
   "VECTOR_MEM_S2PP_P (<MODE>mode)"
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
 
-;;  if (VECTOR_MEM_VSX_P (<MODE>mode))
-;;    {
-;;      operands[1] = rs6000_address_for_altivec (operands[1]);
-;;      emit_insn (gen_altivec_lvx_<mode> (operands[0], operands[1]));
-;;      DONE;
+  if (VECTOR_MEM_VSX_P (<MODE>mode))
+    {
+      operands[1] = rs6000_address_for_s2pp (operands[1]);
+      emit_insn (gen_s2pp_lax_<mode> (operands[0], operands[1]));
+      DONE;
     }
 }")
 
 (define_expand "vector_s2pp_store_<mode>"
-  [(set (match_operand:VEC_M 0 "memory_operand" "")
-	(match_operand:VEC_M 1 "vfloat_operand" ""))]
+  [(set (match_operand:VEC_X 0 "memory_operand" "")
+	(match_operand:VEC_X 1 "vfloat_operand" ""))]
   "VECTOR_MEM_S2PP_P (<MODE>mode)"
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
 
-;;  if (VECTOR_MEM_VSX_P (<MODE>mode))
-;;    {
-;;      operands[0] = rs6000_address_for_altivec (operands[0]);
-;;      emit_insn (gen_altivec_stvx_<mode> (operands[0], operands[1]));
-;;      DONE;
-;;    }
+  if (VECTOR_MEM_VSX_P (<MODE>mode))
+    {
+      operands[0] = rs6000_address_for_s2pp (operands[0]);
+      emit_insn (gen_s2pp_stax_<mode> (operands[0], operands[1]));
+      DONE;
+    }
 }")
 
 
@@ -281,14 +284,14 @@
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
 	(plus:VEC_F (match_operand:VEC_F 1 "vfloat_operand" "")
 		    (match_operand:VEC_F 2 "vfloat_operand" "")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
   "")
 
 (define_expand "sub<mode>3"
   [(set (match_operand:VEC_F 0 "vfloat_operand" "")
 	(minus:VEC_F (match_operand:VEC_F 1 "vfloat_operand" "")
 		     (match_operand:VEC_F 2 "vfloat_operand" "")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
   "")
 
 (define_expand "mul<mode>3"
@@ -825,7 +828,7 @@
 (define_expand "vec_init<mode>"
   [(match_operand:VEC_E 0 "vlogical_operand" "")
    (match_operand:VEC_E 1 "" "")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   rs6000_expand_vector_init (operands[0], operands[1]);
   DONE;
@@ -835,7 +838,7 @@
   [(match_operand:VEC_E 0 "vlogical_operand" "")
    (match_operand:<VEC_base> 1 "register_operand" "")
    (match_operand 2 "const_int_operand" "")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   rs6000_expand_vector_set (operands[0], operands[1], INTVAL (operands[2]));
   DONE;
@@ -845,7 +848,7 @@
   [(match_operand:<VEC_base> 0 "register_operand" "")
    (match_operand:VEC_E 1 "vlogical_operand" "")
    (match_operand 2 "const_int_operand" "")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   rs6000_expand_vector_extract (operands[0], operands[1],
 				INTVAL (operands[2]));

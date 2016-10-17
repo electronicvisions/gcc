@@ -48,7 +48,7 @@
 })
 
 ;; Return 1 if op is an S2PP register.
-(define_predicate "fxv_register_operand"
+(define_predicate "s2pp_register_operand"
   (match_operand 0 "register_operand")
 {
   if (GET_CODE (op) == SUBREG)
@@ -555,6 +555,14 @@
       return easy_altivec_constant (op, mode);
     }
 
+  if (VECTOR_MEM_S2PP_P (mode))
+    {
+      if (zero_constant (op, mode))
+	return true;
+
+      return easy_s2pp_constant (op, mode);
+    }
+
   if (SPE_VECTOR_MODE (mode))
     {
       int cst, cst2;
@@ -699,6 +707,12 @@
 {
   op = XEXP (op, 0);
   if (VECTOR_MEM_ALTIVEC_P (mode)
+      && GET_CODE (op) == AND
+      && GET_CODE (XEXP (op, 1)) == CONST_INT
+      && INTVAL (XEXP (op, 1)) == -16)
+    op = XEXP (op, 0);
+
+  if (VECTOR_MEM_S2PP_P (mode)
       && GET_CODE (op) == AND
       && GET_CODE (XEXP (op, 1)) == CONST_INT
       && INTVAL (XEXP (op, 1)) == -16)
