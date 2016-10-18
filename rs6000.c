@@ -341,7 +341,10 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
-#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
+#define IS_STD_REG_TYPE(RTYPE) (TARGET_S2PP ?				    \
+				RTYPE == GPR_REG_TYPE 			    \
+			      : IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE))
+
 
 #define IS_FP_VECT_REG_TYPE(RTYPE) (IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
 
@@ -1324,6 +1327,7 @@ static const struct attribute_spec rs6000_attribute_table[] =
 
 /* The VRSAVE bitmask puts bit %v0 as the most significant bit.  *//*p_o_i*/
 #define ALTIVEC_REG_BIT(REGNO) (0x80000000 >> ((REGNO) - FIRST_ALTIVEC_REGNO))
+#define S2PP_REG_BIT(REGNO) (0x80000000 >> ((REGNO) - FIRST_S2PP_REGNO))
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ATTRIBUTE_TABLE
@@ -2063,17 +2067,11 @@ rs6000_debug_reg_global (void)
 /*p_o_i*/
   fputs ("\nHard register information:\n", stderr);
   rs6000_debug_reg_print (FIRST_GPR_REGNO, LAST_GPR_REGNO, "gr");
-  if (TARGET_S2PP)
-    rs6000_debug_reg_print (FIRST_FPR_REGNO, LAST_FPR_REGNO, "fxv");
-  else
-    rs6000_debug_reg_print (FIRST_FPR_REGNO, LAST_FPR_REGNO, "fp");
+  rs6000_debug_reg_print (FIRST_FPR_REGNO, LAST_FPR_REGNO, "fp");
   rs6000_debug_reg_print (FIRST_ALTIVEC_REGNO,
 			  LAST_ALTIVEC_REGNO,
 			  "vs");
-  //rs6000_debug_reg_print (FIRST_S2PP_REGNO,
-			  //LAST_S2PP_REGNO,
-			  //"fxv");
-  rs6000_debug_reg_print (FIRST_FPR_REGNO, LAST_FPR_REGNO, "k");
+  rs6000_debug_reg_print (FIRST_S2PP_REGNO, LAST_S2PP_REGNO, "k");
   rs6000_debug_reg_print (LR_REGNO, LR_REGNO, "lr");
   rs6000_debug_reg_print (CTR_REGNO, CTR_REGNO, "ctr");
   rs6000_debug_reg_print (CR0_REGNO, CR7_REGNO, "cr");
@@ -2509,8 +2507,12 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   for (r = 1; r < 32; ++r)
     rs6000_regno_regclass[r] = BASE_REGS;
 
-  for (r = 32; r < 64; ++r)
-    rs6000_regno_regclass[r] = FLOAT_REGS;
+  if (!TARGET_S2PP)
+    for (r = 32; r < 64; ++r)
+      rs6000_regno_regclass[r] = FLOAT_REGS;
+  else
+    for (r = 32; r < 64; ++r)
+      rs6000_regno_regclass[r] = S2PP_REGS; //do this because reg+type changes completly
 
   for (r = 64; r < FIRST_PSEUDO_REGISTER; ++r)
     rs6000_regno_regclass[r] = NO_REGS;
@@ -2563,7 +2565,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   else if (TARGET_S2PP)/*p_o_i*/
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = S2PP_REG_TYPE;
-      //reg_class_to_reg_type[(int)ALTIVEC_REGS] = NO_REG_TYPE;
+      reg_class_to_reg_type[(int)ALTIVEC_REGS] = NO_REG_TYPE;
     }
   else
     {
@@ -2644,7 +2646,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	}
     }
   if (TARGET_S2PP)
-    {/*maybe add V4SI type for opaque handling --> no*/
+    {/*maybe add V4SI type for opaque handling --> nope */
       rs6000_vector_unit[V8HImode] = VECTOR_S2PP;
       rs6000_vector_mem[V8HImode] = VECTOR_S2PP;
       rs6000_vector_align[V8HImode] = align32;
@@ -2934,11 +2936,13 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       else if (c == ALTIVEC_REGS)
 	reg_size = UNITS_PER_ALTIVEC_WORD;
 
-      else if (c == S2PP_REGS)
-	reg_size = UNITS_PER_S2PP_WORD;
+      //else if (c == S2PP_REGS)
 
       else if (c == FLOAT_REGS)
-	reg_size = UNITS_PER_FP_WORD;
+	if (TARGET_S2PP)
+	  reg_size = UNITS_PER_S2PP_WORD;
+        else
+	  reg_size = UNITS_PER_FP_WORD;
 
       else
 	reg_size = UNITS_PER_WORD;
@@ -17279,10 +17283,11 @@ register_to_reg_type (rtx reg, bool *is_altivec)
 
   gcc_assert (regno >= 0);
 
-  if (is_altivec && ALTIVEC_REGNO_P (regno))
+  if (is_altivec && (ALTIVEC_REGNO_P (regno) || S2PP_REGNO_P (regno)))
     *is_altivec = true;
 
   rclass = rs6000_regno_regclass[regno];
+  fprintf (stderr, "reg class = %s\n", reg_class_names[rclass]);
   return reg_class_to_reg_type[(int)rclass];
 }
 
@@ -17502,7 +17507,7 @@ rs6000_secondary_reload (bool in_p,
     {
 	    /*p-o-i*/
       enum rs6000_reg_type to_type = reg_class_to_reg_type[(int)rclass];
-      bool altivec_p = (rclass == ALTIVEC_REGS);
+      bool altivec_p = (rclass == ALTIVEC_REGS || rclass == S2PP_REGS);
       enum rs6000_reg_type from_type = register_to_reg_type (x, &altivec_p);
 
       if (!in_p)
@@ -17560,7 +17565,7 @@ rs6000_secondary_reload (bool in_p,
 	    }
          /* Allow scalar loads to/from the traditional floating point
             registers, even if VSX memory is set.  */
-         else if ((rclass == FLOAT_REGS || rclass == NO_REGS)
+         else if ((rclass == FLOAT_REGS || rclass == NO_REGS) && !TARGET_S2PP
                   && (GET_MODE_SIZE (mode) == 4 || GET_MODE_SIZE (mode) == 8)
                   && (legitimate_indirect_address_p (addr, false)
                       || legitimate_indirect_address_p (addr, false)
@@ -17573,9 +17578,11 @@ rs6000_secondary_reload (bool in_p,
             scalar modes loading up the traditional floating point registers
             to use offset addresses.  */
 	  else if (rclass == VSX_REGS || rclass == ALTIVEC_REGS
-		   || rclass == FLOAT_REGS || rclass == NO_REGS || rclass == S2PP_REGS)
+		   || rclass == FLOAT_REGS || rclass == NO_REGS
+		   || rclass == S2PP_REGS)
 	    {
 	      if (!VECTOR_MEM_ALTIVEC_P (mode)
+	          && !VECTOR_MEM_S2PP_P (mode)
 		  && GET_CODE (addr) == AND
 		  && GET_CODE (XEXP (addr, 1)) == CONST_INT
 		  && INTVAL (XEXP (addr, 1)) == -16
@@ -17889,9 +17896,8 @@ rs6000_secondary_reload_inner (rtx reg, rtx mem, rtx scratch, bool store_p)
         /* If we aren't using a VSX load, save the PRE_MODIFY register and use it
   	 as the address later.  */
         if (GET_CODE (addr) == PRE_MODIFY
-  	  && ((ALTIVEC_OR_VSX_VECTOR_MODE (mode)
-  	       && (rclass != FLOAT_REGS
-  		   || (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
+  	  && ((S2PP_VECTOR_MODE (mode)
+  	       && (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8))
   	      || and_op2 != NULL_RTX
   	      || !legitimate_indexed_address_p (XEXP (addr, 1), false)))
   	{
@@ -18137,81 +18143,81 @@ rs6000_secondary_reload_inner (rtx reg, rtx mem, rtx scratch, bool store_p)
 
       break;
 
-   // case S2PP_REGS:
-/*p-o-i*/
-
-   //   /* If we aren't using a VSX load, save the PRE_MODIFY register and use it
-   //      as the address later.  */
-   //   if (GET_CODE (addr) == PRE_MODIFY
-   //       && ((ALTIVEC_OR_VSX_VECTOR_MODE (mode)
-   //            && (rclass != FLOAT_REGS
-   //     	   || (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
-   //           || and_op2 != NULL_RTX
-   //           || !legitimate_indexed_address_p (XEXP (addr, 1), false)))
-   //     {
-   //       scratch_or_premodify = find_replacement (&XEXP (addr, 0));
-   //       if (!legitimate_indirect_address_p (scratch_or_premodify, false))
-   //         rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-
-   //       addr = find_replacement (&XEXP (addr, 1));
-   //       if (GET_CODE (addr) != PLUS)
-   //         rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-   //     }
-
-   //   if (legitimate_indirect_address_p (addr, false)	/* reg */
-   //       || legitimate_indexed_address_p (addr, false)	/* reg+reg */
-   //       || (GET_CODE (addr) == AND			/* Altivec memory */
-   //           && rclass == S2PP_REGS
-   //           && GET_CODE (XEXP (addr, 1)) == CONST_INT
-   //           && INTVAL (XEXP (addr, 1)) == -16
-   //           && (legitimate_indirect_address_p (XEXP (addr, 0), false)
-   //     	  || legitimate_indexed_address_p (XEXP (addr, 0), false))))
-   //     ;
-
-   //   else if (GET_CODE (addr) == PLUS)
-   //     {
-   //       addr_op1 = XEXP (addr, 0);
-   //       addr_op2 = XEXP (addr, 1);
-   //       if (!REG_P (addr_op1))
-   //         rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-
-   //       if (TARGET_DEBUG_ADDR)
-   //         {
-   //           fprintf (stderr, "\nMove plus addr to register %s, mode = %s: ",
-   //     	       rs6000_reg_names[REGNO (scratch)], GET_MODE_NAME (mode));
-   //           debug_rtx (addr_op2);
-   //         }
-   //       rs6000_emit_move (scratch, addr_op2, Pmode);
-   //       emit_insn (gen_rtx_SET (VOIDmode,
-   //     			  scratch_or_premodify,
-   //     			  gen_rtx_PLUS (Pmode,
-   //     					addr_op1,
-   //     					scratch)));
-   //       addr = scratch_or_premodify;
-   //       scratch_or_premodify = scratch;
-   //     }
-
-   //   else if (GET_CODE (addr) == SYMBOL_REF || GET_CODE (addr) == CONST
-   //            || GET_CODE (addr) == CONST_INT || GET_CODE (addr) == LO_SUM
-   //            || REG_P (addr))
-   //     {
-   //       if (TARGET_DEBUG_ADDR)
-   //         {
-   //           fprintf (stderr, "\nMove addr to register %s, mode = %s: ",
-   //     	       rs6000_reg_names[REGNO (scratch_or_premodify)],
-   //     	       GET_MODE_NAME (mode));
-   //           debug_rtx (addr);
-   //         }
-
-   //       rs6000_emit_move (scratch_or_premodify, addr, Pmode);
-   //       addr = scratch_or_premodify;
-   //       scratch_or_premodify = scratch;
-   //     }
-
-   //   else
-   //     rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-
-   //   break;
+//    case S2PP_REGS:
+///*p-o-i*/
+//
+//      /* If we aren't using a VSX load, save the PRE_MODIFY register and use it
+//         as the address later.  */
+//      if (GET_CODE (addr) == PRE_MODIFY
+//          && ((ALTIVEC_OR_VSX_VECTOR_MODE (mode)
+//               && (rclass != FLOAT_REGS
+//        	   || (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
+//              || and_op2 != NULL_RTX
+//              || !legitimate_indexed_address_p (XEXP (addr, 1), false)))
+//        {
+//          scratch_or_premodify = find_replacement (&XEXP (addr, 0));
+//          if (!legitimate_indirect_address_p (scratch_or_premodify, false))
+//            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+//
+//          addr = find_replacement (&XEXP (addr, 1));
+//          if (GET_CODE (addr) != PLUS)
+//            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+//        }
+//
+//      if (legitimate_indirect_address_p (addr, false)	/* reg */
+//          || legitimate_indexed_address_p (addr, false)	/* reg+reg */
+//          || (GET_CODE (addr) == AND			/* Altivec memory */
+//              && rclass == S2PP_REGS
+//              && GET_CODE (XEXP (addr, 1)) == CONST_INT
+//              && INTVAL (XEXP (addr, 1)) == -16
+//              && (legitimate_indirect_address_p (XEXP (addr, 0), false)
+//        	  || legitimate_indexed_address_p (XEXP (addr, 0), false))))
+//        ;
+//
+//      else if (GET_CODE (addr) == PLUS)
+//        {
+//          addr_op1 = XEXP (addr, 0);
+//          addr_op2 = XEXP (addr, 1);
+//          if (!REG_P (addr_op1))
+//            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+//
+//          if (TARGET_DEBUG_ADDR)
+//            {
+//              fprintf (stderr, "\nMove plus addr to register %s, mode = %s: ",
+//        	       rs6000_reg_names[REGNO (scratch)], GET_MODE_NAME (mode));
+//              debug_rtx (addr_op2);
+//            }
+//          rs6000_emit_move (scratch, addr_op2, Pmode);
+//          emit_insn (gen_rtx_SET (VOIDmode,
+//        			  scratch_or_premodify,
+//        			  gen_rtx_PLUS (Pmode,
+//        					addr_op1,
+//        					scratch)));
+//          addr = scratch_or_premodify;
+//          scratch_or_premodify = scratch;
+//        }
+//
+//      else if (GET_CODE (addr) == SYMBOL_REF || GET_CODE (addr) == CONST
+//               || GET_CODE (addr) == CONST_INT || GET_CODE (addr) == LO_SUM
+//               || REG_P (addr))
+//        {
+//          if (TARGET_DEBUG_ADDR)
+//            {
+//              fprintf (stderr, "\nMove addr to register %s, mode = %s: ",
+//        	       rs6000_reg_names[REGNO (scratch_or_premodify)],
+//        	       GET_MODE_NAME (mode));
+//              debug_rtx (addr);
+//            }
+//
+//          rs6000_emit_move (scratch_or_premodify, addr, Pmode);
+//          addr = scratch_or_premodify;
+//          scratch_or_premodify = scratch;
+//        }
+//
+//      else
+//        rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+//
+//      break;
     default:
       rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
     }
@@ -18410,7 +18416,9 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
   if (TARGET_VSX && x == CONST0_RTX (mode) && VSX_REG_CLASS_P (rclass))
     return rclass;
 
-  if (rclass == S2PP_REGS){
+  if ((rclass == S2PP_REGS)
+      && VECTOR_UNIT_S2PP_P (mode)
+      && easy_vector_constant (x, mode)){
     fprintf (stderr, "s2pp reg used"); 
     return S2PP_REGS;
   }
@@ -18458,7 +18466,7 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 
       return rclass;
     }
-
+  fprintf (stderr, "everyhting fails\n");
   return rclass;
 }
 
@@ -18588,7 +18596,7 @@ rs6000_secondary_reload_class (enum reg_class rclass, enum machine_mode mode,
 
   /* Constants, memory, and FP registers can go into FP registers.  */
   if ((regno == -1 || FP_REGNO_P (regno))
-      && (rclass == FLOAT_REGS || rclass == NON_SPECIAL_REGS))
+      && (rclass == FLOAT_REGS || rclass == NON_SPECIAL_REGS) && !TARGET_S2PP)
     return (mode != SDmode || lra_in_progress) ? NO_REGS : GENERAL_REGS;
 
   /* Memory, and FP/altivec registers can go into fp/altivec registers under
@@ -21924,6 +21932,19 @@ first_altivec_reg_to_save (void)
   return i;
 }
 
+static int
+first_s2pp_reg_to_save (void)
+{
+  int i;
+
+  /* Find lowest numbered live register.  */
+  for (i = FIRST_S2PP_REGNO + 20; i <= LAST_S2PP_REGNO; ++i)
+    if (save_reg_p (i))
+      break;
+
+  return i;
+}
+
 /* Return a 32-bit mask of the AltiVec registers we need to set in
    VRSAVE.  Bit n of the return value is 1 if Vn is live.  The MSB in
    the 32-bit word is 0.  */
@@ -22020,7 +22041,7 @@ compute_save_world_info (rs6000_stack_t *info_ptr)
 	 check.  */
       gcc_assert (info_ptr->first_fp_reg_save >= FIRST_SAVED_FP_REGNO
 		  && (info_ptr->first_altivec_reg_save
-		      >= FIRST_SAVED_ALTIVEC_REGNO));
+		      >= FIRST_SAVED_ALTIVEC_REGNO) && (info_ptr->first_s2pp_reg_save >= FIRST_SAVED_S2PP_REGNO));
     }
   return;
 }
@@ -22127,6 +22148,8 @@ rs6000_savres_strategy (rs6000_stack_t *info,
 		strategy |= SAVE_INLINE_GPRS | REST_INLINE_GPRS;
 	    }
 	  if (info->first_altivec_reg_save == LAST_ALTIVEC_REGNO)
+	    strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
+	  if (info->first_s2pp_reg_save == LAST_S2PP_REGNO)
 	    strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
 	}
     }
@@ -22613,6 +22636,7 @@ rs6000_stack_info (void)
 					 + info_ptr->gp_size
 					 + info_ptr->altivec_size
 					 + info_ptr->altivec_padding_size
+					 + info_ptr->s2pp_size
 					 + info_ptr->spe_gp_size
 					 + info_ptr->spe_padding_size
 					 + ehrd_size
@@ -23919,6 +23943,8 @@ rs6000_savres_routine_sym (rs6000_stack_t *info, int sel)
 	       ? info->first_gp_reg_save
 	       : (sel & SAVRES_REG) == SAVRES_FPR
 	       ? info->first_fp_reg_save - 32
+	       : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
+	       ? info->first_s2pp_reg_save - FIRST_S2PP_REGNO
 	       : (sel & SAVRES_REG) == SAVRES_VR
 	       ? info->first_altivec_reg_save - FIRST_ALTIVEC_REGNO
 	       : -1);
@@ -24019,6 +24045,8 @@ rs6000_emit_savres_rtx (rs6000_stack_t *info,
 	       ? info->first_gp_reg_save
 	       : (sel & SAVRES_REG) == SAVRES_FPR
 	       ? info->first_fp_reg_save
+	       : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
+	       ? info->first_s2pp_reg_save
 	       : (sel & SAVRES_REG) == SAVRES_VR
 	       ? info->first_altivec_reg_save
 	       : -1);
@@ -24026,6 +24054,8 @@ rs6000_emit_savres_rtx (rs6000_stack_t *info,
 	     ? 32
 	     : (sel & SAVRES_REG) == SAVRES_FPR
 	     ? 64
+	     : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
+	     ? LAST_S2PP_REGNO + 1
 	     : (sel & SAVRES_REG) == SAVRES_VR
 	     ? LAST_ALTIVEC_REGNO + 1
 	     : -1);
@@ -24298,6 +24328,12 @@ rs6000_emit_prologue (void)
 	  = gen_frame_store (gen_rtx_REG (reg_mode, info->first_gp_reg_save + i),
 			     frame_reg_rtx,
 			     info->gp_save_offset + frame_off + reg_size * i);
+      for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
+	RTVEC_ELT (p, j++)
+	  = gen_frame_store (gen_rtx_REG (V4SImode,
+					  info->first_s2pp_reg_save + i),
+			     frame_reg_rtx,
+			     info->s2pp_save_offset + frame_off + 16 * i);
 
       /* CR register traditionally saved as CR2.  */
       RTVEC_ELT (p, j++)
@@ -24347,6 +24383,7 @@ rs6000_emit_prologue (void)
 	       || info->first_fp_reg_save < 64
 	       || info->first_gp_reg_save < 32
 	       || info->altivec_size != 0
+	       || info->s2pp_size != 0
 	       || info->vrsave_mask != 0
 	       || crtl->calls_eh_return)
 	ptr_regno = 12;
@@ -24372,6 +24409,8 @@ rs6000_emit_prologue (void)
 	    ptr_off = info->gp_save_offset + info->gp_size;
 	  else if (!(strategy & SAVE_INLINE_VRS) && info->altivec_size != 0)
 	    ptr_off = info->altivec_save_offset + info->altivec_size;
+	  else if (!(strategy & SAVE_INLINE_VRS) && info->s2pp_size != 0)
+	    ptr_off = info->s2pp_save_offset + info->s2pp_size;
 	  frame_off = -ptr_off;
 	}
       rs6000_emit_allocate_stack (info->total_size, ptr_reg, ptr_off);
@@ -24877,6 +24916,24 @@ rs6000_emit_prologue (void)
 	  ptr_reg = gen_rtx_REG (Pmode, ptr_regno);
 	  frame_reg_rtx = ptr_reg;
 	  ptr_off = info->altivec_save_offset + info->altivec_size;
+	  frame_off = -ptr_off;
+	}
+      else if ((strategy & SAVE_INLINE_VRS) == 0
+	  || (info->s2pp_size != 0
+	      && (info->s2pp_save_offset + info->s2pp_size - 16
+		  + info->total_size - frame_off) > 32767))
+	{
+	  int sel = SAVRES_SAVE | SAVRES_VR;
+	  unsigned ptr_regno = ptr_regno_for_savres (sel);
+
+	  if (using_static_chain_p
+	      && ptr_regno == STATIC_CHAIN_REGNUM)
+	    ptr_regno = 12;
+	  if (REGNO (frame_reg_rtx) != ptr_regno)
+	    START_USE (ptr_regno);
+	  ptr_reg = gen_rtx_REG (Pmode, ptr_regno);
+	  frame_reg_rtx = ptr_reg;
+	  ptr_off = info->altivec_save_offset + info->s2pp_size;
 	  frame_off = -ptr_off;
 	}
       else if (REGNO (frame_reg_rtx) == 1)
@@ -25449,7 +25506,7 @@ rs6000_emit_epilogue (int sibcall)
 		       + 1
 		       + 32 - info->first_gp_reg_save
 		       + LAST_ALTIVEC_REGNO + 1 - info->first_altivec_reg_save
-		       + 63 + 1 - info->first_fp_reg_save);
+		       + 63 + 1 - info->first_fp_reg_save - info->first_s2pp_reg_save);
 
       strcpy (rname, ((crtl->calls_eh_return) ?
 		      "*eh_rest_world_r10" : "*rest_world"));
@@ -25506,6 +25563,15 @@ rs6000_emit_epilogue (int sibcall)
 				 info->first_fp_reg_save + i);
 	  RTVEC_ELT (p, j++)
 	    = gen_frame_load (reg, frame_reg_rtx, info->fp_save_offset + 8 * i);
+	  if (flag_shrink_wrap)
+	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
+	}
+      for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
+	{
+	  rtx reg = gen_rtx_REG (V4SImode, info->first_s2pp_reg_save + i);
+	  RTVEC_ELT (p, j++)
+	    = gen_frame_load (reg,
+			      frame_reg_rtx, info->s2pp_save_offset + 16 * i);
 	  if (flag_shrink_wrap)
 	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
 	}
@@ -25614,6 +25680,16 @@ rs6000_emit_epilogue (int sibcall)
 		|| (offset_below_red_zone_p
 		    (info->altivec_save_offset
 		     + 16 * (i - info->first_altivec_reg_save)))))
+	  {
+	    rtx reg = gen_rtx_REG (V4SImode, i);
+	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
+	  }
+      for (i = info->first_s2pp_reg_save; i <= LAST_S2PP_REGNO; ++i)
+	if (((strategy & REST_INLINE_VRS) == 0)
+	    && (flag_shrink_wrap
+		|| (offset_below_red_zone_p
+		    (info->s2pp_save_offset
+		     + 16 * (i - info->first_s2pp_reg_save)))))
 	  {
 	    rtx reg = gen_rtx_REG (V4SImode, i);
 	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
@@ -25808,6 +25884,13 @@ rs6000_emit_epilogue (int sibcall)
       for (i = info->first_altivec_reg_save; i <= LAST_ALTIVEC_REGNO; ++i)
 	if (((strategy & REST_INLINE_VRS) == 0
 	     || (info->vrsave_mask & ALTIVEC_REG_BIT (i)) != 0)
+	    && (DEFAULT_ABI == ABI_V4 || flag_shrink_wrap))
+	  {
+	    rtx reg = gen_rtx_REG (V4SImode, i);
+	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
+	  }
+      for (i = info->first_s2pp_reg_save; i <= LAST_S2PP_REGNO; ++i)
+	if (((strategy & REST_INLINE_VRS) == 0)
 	    && (DEFAULT_ABI == ABI_V4 || flag_shrink_wrap))
 	  {
 	    rtx reg = gen_rtx_REG (V4SImode, i);
@@ -33577,7 +33660,7 @@ rtx
 rs6000_address_for_s2pp (rtx x)
 {
   gcc_assert (MEM_P (x));
-/*  if (!altivec_indexed_or_indirect_operand (x, GET_MODE (x)))
+  if (!s2pp_indexed_or_indirect_operand (x, GET_MODE (x)))
     {
       rtx addr = XEXP (x, 0);
       int strict_p = (reload_in_progress || reload_completed);
@@ -33589,7 +33672,7 @@ rs6000_address_for_s2pp (rtx x)
       addr = gen_rtx_AND (Pmode, addr, GEN_INT (-16));
       x = change_address (x, GET_MODE (x), addr);
     }
-*/
+
   return x;
 }
 

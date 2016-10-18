@@ -1061,6 +1061,7 @@ enum data_align { align_abi, align_opt, align_both };
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
+#define FIRST_SAVED_S2PP_REGNO (FIRST_ALTIVEC_REGNO+20)
 #define FIRST_SAVED_FP_REGNO	  (14+32)
 #define FIRST_SAVED_GP_REGNO	  (FIXED_R13 ? 14 : 13)
 
@@ -1171,7 +1172,8 @@ enum data_align { align_abi, align_opt, align_both };
 #define ALTIVEC_REGNO_P(N) ((N) >= FIRST_ALTIVEC_REGNO && (N) <= LAST_ALTIVEC_REGNO)
 
 /* True if register is an s2pp register.  *///s2pp-mark
-#define S2PP_REGNO_P(N) FP_REGNO_P (N)
+#define S2PP_REGNO_P(N) ((N) >= FIRST_S2PP_REGNO && (N) <= LAST_S2PP_REGNO)
+
 
 /* True if register is a VSX register.  */
 #define VSX_REGNO_P(N) (FP_REGNO_P (N) || ALTIVEC_REGNO_P (N))
@@ -1366,8 +1368,8 @@ enum reg_class
   NO_REGS,
   BASE_REGS,
   GENERAL_REGS,
-  FLOAT_REGS,
   S2PP_REGS,  
+  FLOAT_REGS,
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1399,8 +1401,7 @@ enum reg_class
   "NO_REGS",								\
   "BASE_REGS",								\
   "GENERAL_REGS",							\
-  "FLOAT_REGS",								\
-  "S2PP_REGS",								\
+  (TARGET_S2PP ? "FLOAT_REGS" : "S2PP_REGS"),				\
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\
@@ -1435,8 +1436,6 @@ enum reg_class
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
-  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
-  /* S2PP_REGS. should befixed*/					\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
@@ -1743,9 +1742,12 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define ALTIVEC_ARG_NUM_REG (ALTIVEC_ARG_MAX_REG - ALTIVEC_ARG_MIN_REG + 1)
 
 /* Minimum and maximum s2pp registers used to hold arguments.  */
-#define S2PP_ARG_MIN_REG 2 //FP_ARG_MIN_REG //(FIRST_S2PP_REGNO + 2)
-#define S2PP_ARG_MAX_REG 31// FP_ARG_MAX_REG //(S2PP_ARG_MIN_REG + 11)
-#define S2PP_ARG_NUM_REG 31//FP_ARG_NUM_REG //(S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
+#define S2PP_REGS FLOAT_REGS
+#define FIRST_S2PP_REGNO FIRST_FPR_REGNO
+#define LAST_S2PP_REGNO LAST_FPR_REGNO
+#define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
+#define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
+#define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
 
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8

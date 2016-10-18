@@ -171,10 +171,8 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 
   /* If the current machine does not have altivec, don't look for the
      keywords.  */
-  if (!TARGET_ALTIVEC && !TARGET_S2PP){
-    fprintf (stderr, "this happens");
+  if (!TARGET_ALTIVEC && !TARGET_S2PP)
     return NULL;
-  }
   ident = altivec_categorize_keyword (tok);
 
   if (ident != expand_this)
