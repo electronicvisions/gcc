@@ -1482,7 +1482,7 @@ enum reg_class
 //s2pp-mark added s2pp regclass
 //#define S2PP_REGS ALTIVEC_REGS
 
-#define FLOAT_REGS No_REGS
+#define FLOAT_REGS NO_REGS
 
 /* The same information, inverted:
    Return the class number of the smallest class containing

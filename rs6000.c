@@ -29724,7 +29724,7 @@ rs6000_handle_s2pp_attribute (tree *node,
 
   switch (s2pp_type)
     {
-    case 'v': //make 'k' ?
+    case 'k': //make 'k' ?
       unsigned_p = TYPE_UNSIGNED (type);
       switch (mode)
 	{
@@ -29742,20 +29742,6 @@ rs6000_handle_s2pp_attribute (tree *node,
 	default: break;
 	}
       break;
-    case 'b':
-      switch (mode)
-	{
-	case HImode: case V8HImode: result = bool_V8HI_type_node; break;
-	case QImode: case V16QImode: result = bool_V16QI_type_node;
-	default: break;
-	}
-      break;
-    case 'p':
-      switch (mode)
-	{
-	case V8HImode: result = pixel_V8HI_type_node;
-	default: break;
-	}
     default: break;
     }
 
