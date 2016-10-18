@@ -2936,7 +2936,8 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       else if (c == ALTIVEC_REGS)
 	reg_size = UNITS_PER_ALTIVEC_WORD;
 
-      //else if (c == S2PP_REGS)
+      else if (c == S2PP_REGS)
+	reg_size = UNITS_PER_S2PP_WORD;
 
       else if (c == FLOAT_REGS)
 	if (TARGET_S2PP)
@@ -18143,81 +18144,81 @@ rs6000_secondary_reload_inner (rtx reg, rtx mem, rtx scratch, bool store_p)
 
       break;
 
-//    case S2PP_REGS:
-///*p-o-i*/
-//
-//      /* If we aren't using a VSX load, save the PRE_MODIFY register and use it
-//         as the address later.  */
-//      if (GET_CODE (addr) == PRE_MODIFY
-//          && ((ALTIVEC_OR_VSX_VECTOR_MODE (mode)
-//               && (rclass != FLOAT_REGS
-//        	   || (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
-//              || and_op2 != NULL_RTX
-//              || !legitimate_indexed_address_p (XEXP (addr, 1), false)))
-//        {
-//          scratch_or_premodify = find_replacement (&XEXP (addr, 0));
-//          if (!legitimate_indirect_address_p (scratch_or_premodify, false))
-//            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-//
-//          addr = find_replacement (&XEXP (addr, 1));
-//          if (GET_CODE (addr) != PLUS)
-//            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-//        }
-//
-//      if (legitimate_indirect_address_p (addr, false)	/* reg */
-//          || legitimate_indexed_address_p (addr, false)	/* reg+reg */
-//          || (GET_CODE (addr) == AND			/* Altivec memory */
-//              && rclass == S2PP_REGS
-//              && GET_CODE (XEXP (addr, 1)) == CONST_INT
-//              && INTVAL (XEXP (addr, 1)) == -16
-//              && (legitimate_indirect_address_p (XEXP (addr, 0), false)
-//        	  || legitimate_indexed_address_p (XEXP (addr, 0), false))))
-//        ;
-//
-//      else if (GET_CODE (addr) == PLUS)
-//        {
-//          addr_op1 = XEXP (addr, 0);
-//          addr_op2 = XEXP (addr, 1);
-//          if (!REG_P (addr_op1))
-//            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-//
-//          if (TARGET_DEBUG_ADDR)
-//            {
-//              fprintf (stderr, "\nMove plus addr to register %s, mode = %s: ",
-//        	       rs6000_reg_names[REGNO (scratch)], GET_MODE_NAME (mode));
-//              debug_rtx (addr_op2);
-//            }
-//          rs6000_emit_move (scratch, addr_op2, Pmode);
-//          emit_insn (gen_rtx_SET (VOIDmode,
-//        			  scratch_or_premodify,
-//        			  gen_rtx_PLUS (Pmode,
-//        					addr_op1,
-//        					scratch)));
-//          addr = scratch_or_premodify;
-//          scratch_or_premodify = scratch;
-//        }
-//
-//      else if (GET_CODE (addr) == SYMBOL_REF || GET_CODE (addr) == CONST
-//               || GET_CODE (addr) == CONST_INT || GET_CODE (addr) == LO_SUM
-//               || REG_P (addr))
-//        {
-//          if (TARGET_DEBUG_ADDR)
-//            {
-//              fprintf (stderr, "\nMove addr to register %s, mode = %s: ",
-//        	       rs6000_reg_names[REGNO (scratch_or_premodify)],
-//        	       GET_MODE_NAME (mode));
-//              debug_rtx (addr);
-//            }
-//
-//          rs6000_emit_move (scratch_or_premodify, addr, Pmode);
-//          addr = scratch_or_premodify;
-//          scratch_or_premodify = scratch;
-//        }
-//
-//      else
-//        rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
-//
-//      break;
+    case S2PP_REGS:
+/*p-o-i*/
+
+      /* If we aren't using a VSX load, save the PRE_MODIFY register and use it
+         as the address later.  */
+      if (GET_CODE (addr) == PRE_MODIFY
+          && ((S2PP_VECTOR_MODE (mode)
+               && (rclass != FLOAT_REGS
+        	   || (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
+              || and_op2 != NULL_RTX
+              || !legitimate_indexed_address_p (XEXP (addr, 1), false)))
+        {
+          scratch_or_premodify = find_replacement (&XEXP (addr, 0));
+          if (!legitimate_indirect_address_p (scratch_or_premodify, false))
+            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+
+          addr = find_replacement (&XEXP (addr, 1));
+          if (GET_CODE (addr) != PLUS)
+            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+        }
+
+      if (legitimate_indirect_address_p (addr, false)	/* reg */
+          || legitimate_indexed_address_p (addr, false)	/* reg+reg */
+          || (GET_CODE (addr) == AND			/* Altivec memory */
+              && rclass == S2PP_REGS
+              && GET_CODE (XEXP (addr, 1)) == CONST_INT
+              && INTVAL (XEXP (addr, 1)) == -16
+              && (legitimate_indirect_address_p (XEXP (addr, 0), false)
+        	  || legitimate_indexed_address_p (XEXP (addr, 0), false))))
+        ;
+
+      else if (GET_CODE (addr) == PLUS)
+        {
+          addr_op1 = XEXP (addr, 0);
+          addr_op2 = XEXP (addr, 1);
+          if (!REG_P (addr_op1))
+            rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+
+          if (TARGET_DEBUG_ADDR)
+            {
+              fprintf (stderr, "\nMove plus addr to register %s, mode = %s: ",
+        	       rs6000_reg_names[REGNO (scratch)], GET_MODE_NAME (mode));
+              debug_rtx (addr_op2);
+            }
+          rs6000_emit_move (scratch, addr_op2, Pmode);
+          emit_insn (gen_rtx_SET (VOIDmode,
+        			  scratch_or_premodify,
+        			  gen_rtx_PLUS (Pmode,
+        					addr_op1,
+        					scratch)));
+          addr = scratch_or_premodify;
+          scratch_or_premodify = scratch;
+        }
+
+      else if (GET_CODE (addr) == SYMBOL_REF || GET_CODE (addr) == CONST
+               || GET_CODE (addr) == CONST_INT || GET_CODE (addr) == LO_SUM
+               || REG_P (addr))
+        {
+          if (TARGET_DEBUG_ADDR)
+            {
+              fprintf (stderr, "\nMove addr to register %s, mode = %s: ",
+        	       rs6000_reg_names[REGNO (scratch_or_premodify)],
+        	       GET_MODE_NAME (mode));
+              debug_rtx (addr);
+            }
+
+          rs6000_emit_move (scratch_or_premodify, addr, Pmode);
+          addr = scratch_or_premodify;
+          scratch_or_premodify = scratch;
+        }
+
+      else
+        rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
+
+      break;
     default:
       rs6000_secondary_reload_fail (__LINE__, reg, mem, scratch, store_p);
     }
@@ -18410,7 +18411,7 @@ rs6000_instantiate_decls (void)
 static enum reg_class
 rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 {
-  fprintf(stderr,"preferred reload class");
+  fprintf(stderr,"preferred reload class called \n");
   enum machine_mode mode = GET_MODE (x);
 
   if (TARGET_VSX && x == CONST0_RTX (mode) && VSX_REG_CLASS_P (rclass))
@@ -18464,6 +18465,9 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 	  || mode == V1TImode)
 	return ALTIVEC_REGS;
 
+      if (VECTOR_UNIT_S2PP_P (mode) || VECTOR_MEM_S2PP_P (mode))
+	return S2PP_REGS;
+
       return rclass;
     }
   fprintf (stderr, "everyhting fails\n");
@@ -18498,8 +18502,8 @@ rs6000_secondary_memory_needed (enum reg_class from_class,
 				enum machine_mode mode)
 {
   enum rs6000_reg_type from_type, to_type;
-  bool altivec_p = ((from_class == ALTIVEC_REGS)
-		    || (to_class == ALTIVEC_REGS));
+  bool altivec_p = ((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
+		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
 
   /* If a simple/direct move is available, we don't need secondary memory  */
   from_type = reg_class_to_reg_type[(int)from_class];
@@ -19295,13 +19299,22 @@ print_operand (FILE *file, rtx x, int code)
       return;
 
     case 'k':
-      /* X must be a constant.  Write the 1's complement of the
-	 constant.  */
+      /* High-order 16 bits of constant for use in signed operand.  */
       if (! INT_P (x))
 	output_operand_lossage ("invalid %%k value");
       else
-	fprintf (file, HOST_WIDE_INT_PRINT_DEC, ~ INTVAL (x));
+	fprintf (file, HOST_WIDE_INT_PRINT_HEX,
+		 (INTVAL (x) >> 16) & 0xffff);
       return;
+
+//    case 'k':
+//      /* X must be a constant.  Write the 1's complement of the
+//	 constant.  */
+//      if (! INT_P (x))
+//	output_operand_lossage ("invalid %%k value");
+//      else
+//	fprintf (file, HOST_WIDE_INT_PRINT_DEC, ~ INTVAL (x));
+//      return;
 
     case 'K':
       /* X must be a symbolic constant on ELF.  Write an
@@ -19726,12 +19739,14 @@ print_operand (FILE *file, rtx x, int code)
 
 	    /* Fall through.  Must be [reg+reg].  */
 	  }
-	if (VECTOR_MEM_ALTIVEC_P (GET_MODE (x))
+	if ((VECTOR_MEM_ALTIVEC_P (GET_MODE (x)) 
+	      || VECTOR_MEM_S2PP_P (GET_MODE (x)))
 	    && GET_CODE (tmp) == AND
 	    && GET_CODE (XEXP (tmp, 1)) == CONST_INT
 	    && INTVAL (XEXP (tmp, 1)) == -16)
 	  tmp = XEXP (tmp, 0);
-	else if (VECTOR_MEM_VSX_P (GET_MODE (x))
+	else if ((VECTOR_MEM_VSX_P (GET_MODE (x))
+	     	   || VECTOR_MEM_S2PP_P (GET_MODE (x)))
 		 && GET_CODE (tmp) == PRE_MODIFY)
 	  tmp = XEXP (tmp, 1);
 	if (REG_P (tmp))
@@ -31370,7 +31385,7 @@ rs6000_register_move_cost (enum machine_mode mode,
       if (! reg_classes_intersect_p (to, GENERAL_REGS))
 	rclass = to;
 /*p-o-i*/
-      if (rclass == FLOAT_REGS || rclass == ALTIVEC_REGS || rclass == VSX_REGS/* || rclass == S2PP_REGS*/)
+      if (rclass == FLOAT_REGS || rclass == ALTIVEC_REGS || rclass == VSX_REGS || rclass == S2PP_REGS)
 	ret = (rs6000_memory_move_cost (mode, rclass, false)
 	       + rs6000_memory_move_cost (mode, GENERAL_REGS, false));
 

@@ -52,7 +52,8 @@
   "@internal")
 
 ;;s2pp-mark added vector register constraint
-(define_register_constraint "k" "rs6000_constraints[RS6000_CONSTRAINT_k]"
+(define_register_constraint "k" "S2PP_REGS" 
+;;"rs6000_constraints[RS6000_CONSTRAINT_k]"
   "@internal")
 
 

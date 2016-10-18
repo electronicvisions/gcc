@@ -1061,7 +1061,7 @@ enum data_align { align_abi, align_opt, align_both };
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
-#define FIRST_SAVED_S2PP_REGNO (FIRST_ALTIVEC_REGNO+20)
+#define FIRST_SAVED_S2PP_REGNO (FIRST_S2PP_REGNO+20)
 #define FIRST_SAVED_FP_REGNO	  (14+32)
 #define FIRST_SAVED_GP_REGNO	  (FIXED_R13 ? 14 : 13)
 
@@ -1369,7 +1369,7 @@ enum reg_class
   BASE_REGS,
   GENERAL_REGS,
   S2PP_REGS,  
-  FLOAT_REGS,
+  //FLOAT_REGS,
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1391,6 +1391,7 @@ enum reg_class
   ALL_REGS,
   LIM_REG_CLASSES
 };
+//possibly define flaot_regas no_regs
 
 #define N_REG_CLASSES (int) LIM_REG_CLASSES
 
@@ -1480,6 +1481,8 @@ enum reg_class
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	
 //s2pp-mark added s2pp regclass
 //#define S2PP_REGS ALTIVEC_REGS
+
+#define FLOAT_REGS No_REGS
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
@@ -1742,7 +1745,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define ALTIVEC_ARG_NUM_REG (ALTIVEC_ARG_MAX_REG - ALTIVEC_ARG_MIN_REG + 1)
 
 /* Minimum and maximum s2pp registers used to hold arguments.  */
-#define S2PP_REGS FLOAT_REGS
+//#define S2PP_REGS FLOAT_REGS
 #define FIRST_S2PP_REGNO FIRST_FPR_REGNO
 #define LAST_S2PP_REGNO LAST_FPR_REGNO
 #define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
