@@ -1829,6 +1829,7 @@ typedef struct rs6000_args
   int words;			/* # words used for passing GP registers */
   int fregno;			/* next available FP register */
   int vregno;			/* next available AltiVec register */
+  int kregno;			/* next available s2pp register */
   int nargs_prototype;		/* # args left in the current prototype */
   int prototype;		/* Whether a prototype was defined */
   int stdarg;			/* Whether function is a stdarg function.  */
