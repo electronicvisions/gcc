@@ -395,7 +395,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
-#define rs6000_debug 0x6f 
+//#define rs6000_debug 0x6f 
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -464,7 +464,7 @@ extern enum rs6000_vector rs6000_vector_mem[];
 	     (int)VECTOR_ALTIVEC,			\
 	     (int)VECTOR_P8_VECTOR))
 
-#define VECTOR_MEM_S2PP_P(MODE)			\
+#define VECTOR_MEM_S2PP_P(MODE)				\
   (rs6000_vector_mem[(MODE)] == VECTOR_S2PP)
 
 /* Return the alignment of a given vector type, which is set based on the

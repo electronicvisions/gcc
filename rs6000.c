@@ -328,8 +328,8 @@ enum rs6000_reg_type {
   GPR_REG_TYPE,
   VSX_REG_TYPE,
   ALTIVEC_REG_TYPE,
-  FPR_REG_TYPE,
   S2PP_REG_TYPE,
+  FPR_REG_TYPE,
   SPR_REG_TYPE,
   CR_REG_TYPE,
   SPE_ACC_TYPE,
@@ -341,9 +341,7 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
-#define IS_STD_REG_TYPE(RTYPE) (TARGET_S2PP ?				    \
-				RTYPE == GPR_REG_TYPE 			    \
-			      : IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE))
+#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
 
 
 #define IS_FP_VECT_REG_TYPE(RTYPE) (IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
@@ -1828,7 +1826,7 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
 
   /* s2pp only in s2pp/FP registers.  */
   if (S2PP_REGNO_P (regno))
-    return (VECTOR_MEM_S2PP_P (mode));
+    return VECTOR_MEM_S2PP_P (mode);
   
   /* ...but GPRs can hold SIMD data on the SPE in one register.  */
   if (SPE_SIMD_REGNO_P (regno) && TARGET_SPE && SPE_VECTOR_MODE (mode))
@@ -5207,7 +5205,7 @@ vspltis_constant (rtx op, unsigned step, unsigned copies)
 
   val = const_vector_elt_as_int (op, BYTES_BIG_ENDIAN ? nunits - 1 : 0);
   splat_val = val;
-  msb_val = val >= 0 ? 0 : -1;
+  msb_val = (val >= 0 ? 0 : -1);
 
   /* Construct the value to be splatted, if possible.  If not, return 0.  */
   for (i = 2; i <= copies; i *= 2)
@@ -5369,7 +5367,7 @@ gen_easy_altivec_constant (rtx op)
 
 bool
 easy_s2pp_constant (rtx op, enum machine_mode mode)
-{
+{ //cause of problem?
   unsigned step, copies;
 
   if (mode == VOIDmode)
@@ -5379,6 +5377,8 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
 
   step = GET_MODE_NUNITS (mode) / 4;
   copies = 1;
+  
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
 
   /* Then try with a vspltish.  */
   if (step == 1)
@@ -5386,6 +5386,7 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
   if (vspltis_constant (op, step, copies))
     return true;
 
@@ -5395,6 +5396,7 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
   if (vspltis_constant (op, step, copies))
     return true;
 
@@ -9136,6 +9138,7 @@ rs6000_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
       valcum.words = 0;
       valcum.fregno = FP_ARG_MIN_REG;
       valcum.vregno = ALTIVEC_ARG_MIN_REG;
+      valcum.kregno = S2PP_ARG_MIN_REG;
       /* Do a trial code generation as if this were going to be passed
 	 as an argument; if any part goes in memory, we return NULL.  */
       valret = rs6000_darwin64_record_arg (&valcum, type, true, true);
@@ -9246,6 +9249,7 @@ init_cumulative_args (CUMULATIVE_ARGS *cum, tree fntype,
   cum->words = 0;
   cum->fregno = FP_ARG_MIN_REG;
   cum->vregno = ALTIVEC_ARG_MIN_REG;
+  cum->kregno = S2PP_ARG_MIN_REG;
   cum->prototype = (fntype && prototype_p (fntype));
   cum->call_cookie = ((DEFAULT_ABI == ABI_V4 && libcall)
 		      ? CALL_LIBCALL : CALL_NORMAL);
@@ -17288,7 +17292,7 @@ register_to_reg_type (rtx reg, bool *is_altivec)
     *is_altivec = true;
 
   rclass = rs6000_regno_regclass[regno];
-  fprintf (stderr, "reg class = %s\n", reg_class_names[rclass]);
+  //fprintf (stderr, "reg class = %s\n", reg_class_names[rclass]);
   return reg_class_to_reg_type[(int)rclass];
 }
 
@@ -17445,6 +17449,7 @@ rs6000_secondary_reload_move (enum rs6000_reg_type to_type,
 			      secondary_reload_info *sri,
 			      bool altivec_p)
 {
+  //fprintf (stderr, "secondary reload move\n");
   /* Fall back to load/store reloads if either type is not a register.  */
   if (to_type == NO_REG_TYPE || from_type == NO_REG_TYPE)
     return false;
@@ -17494,6 +17499,7 @@ rs6000_secondary_reload (bool in_p,
 			 enum machine_mode mode,
 			 secondary_reload_info *sri)
 {
+  //fprintf (stderr, "secondary reload\n");
   enum reg_class rclass = (enum reg_class) rclass_i;
   reg_class_t ret = ALL_REGS;
   enum insn_code icode;
@@ -18151,8 +18157,7 @@ rs6000_secondary_reload_inner (rtx reg, rtx mem, rtx scratch, bool store_p)
          as the address later.  */
       if (GET_CODE (addr) == PRE_MODIFY
           && ((S2PP_VECTOR_MODE (mode)
-               && (rclass != FLOAT_REGS
-        	   || (GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
+               && ((GET_MODE_SIZE (mode) != 4 && GET_MODE_SIZE (mode) != 8)))
               || and_op2 != NULL_RTX
               || !legitimate_indexed_address_p (XEXP (addr, 1), false)))
         {
@@ -18411,7 +18416,7 @@ rs6000_instantiate_decls (void)
 static enum reg_class
 rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 {
-  fprintf(stderr,"preferred reload class called \n");
+  //fprintf(stderr,"\npreferred reload class called \n");
   enum machine_mode mode = GET_MODE (x);
 
   if (TARGET_VSX && x == CONST0_RTX (mode) && VSX_REG_CLASS_P (rclass))
@@ -18419,7 +18424,7 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 
   if ((rclass == S2PP_REGS)
       && VECTOR_UNIT_S2PP_P (mode)
-      && easy_vector_constant (x, mode)){
+      /*&& easy_vector_constant (x, mode)*/){
     fprintf (stderr, "s2pp reg used"); 
     return S2PP_REGS;
   }
@@ -18465,12 +18470,10 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 	  || mode == V1TImode)
 	return ALTIVEC_REGS;
 
-      if (VECTOR_UNIT_S2PP_P (mode) || VECTOR_MEM_S2PP_P (mode))
-	return S2PP_REGS;
-
       return rclass;
     }
-  fprintf (stderr, "everyhting fails\n");
+  if (rclass==S2PP_REGS)
+    fprintf (stderr, "fall through easy_vector_constant returns: %i\n", easy_vector_constant (x, mode));
   return rclass;
 }
 
@@ -18548,7 +18551,7 @@ static enum reg_class
 rs6000_secondary_reload_class (enum reg_class rclass, enum machine_mode mode,
 			       rtx in)
 {
-  fprintf (stderr, "secondart reoad class called\n");
+  //fprintf (stderr, "secondart reoad class called\n");
 	
   int regno;
 

@@ -544,6 +544,7 @@
 {
   /* As the paired vectors are actually FPRs it seems that there is
      no easy way to load a CONST_VECTOR without using memory.  */
+  fprintf (stderr, "VECTOR_MEM_S2PP_P = %i\n", VECTOR_MEM_S2PP_P (mode));
   if (TARGET_PAIRED_FLOAT)
     return false;
 
@@ -554,7 +555,7 @@
 
       return easy_altivec_constant (op, mode);
     }
-
+  fprintf (stderr, "VECTOR_MEM_S2PP_P = %i\n", VECTOR_MEM_S2PP_P (mode));
   if (VECTOR_MEM_S2PP_P (mode))
     {
       if (zero_constant (op, mode))
