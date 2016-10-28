@@ -1422,7 +1422,7 @@ enum reg_class
   "CA_REGS",								\
   "SPE_HIGH_REGS",							\
   "ALL_REGS"}								
-  //"S2PP_REGS",							\
+  //"S2PP_REGS",							
 //s2pp-mark added s2pp regclass
 /* Define which registers fit in which classes.
    This is an initializer for a vector of HARD_REG_SET
@@ -1477,8 +1477,8 @@ enum reg_class
   /* ALL_REGS.  */							\
   { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0x001fffff }}	
 /*p_o_i*///s2pp-mark
-  ///* S2PP_REGS. should befixed*/					\
-  { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	
+  ///* S2PP_REGS. should befixed*/					
+  //{ 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	
 //s2pp-mark added s2pp regclass
 //#define S2PP_REGS ALTIVEC_REGS
 
@@ -1901,7 +1901,7 @@ typedef struct rs6000_args
        && TARGET_AIX						\
        && (REGNO) == 2))
 
-   //|| (TARGET_S2PP && (REGNO) == VRSAVE_REGNO)			\
+   //|| (TARGET_S2PP && (REGNO) == VRSAVE_REGNO)			
 			       
 
 /* Length in units of the trampoline for entering a nested function.  */
