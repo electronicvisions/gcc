@@ -16,22 +16,22 @@
 			   (V8HI "VECTOR_UNIT_S2PP_P (V8HImode)")])
 
 ;; Vector move instructions.
-;;(define_insn "*s2pp_mov<mode>"
- ;; [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,k,k")
-	;;(match_operand:FXVI 1 "input_operand" "k,Z,k"))]
- ;; "VECTOR_MEM_S2PP_P (<MODE>mode)
- ;;  && (register_operand (operands[0], <MODE>mode) 
- ;;      || register_operand (operands[1], <MODE>mode))"
-;;{
- ;; switch (which_alternative)
- ;;   {
- ;;   case 0: return "fxvstax %1,0,%a0";
- ;;   case 1: return "fxvlax %0,0,%a1";
- ;;   case 2: return "fxvsel %0,%1,%1,1";
- ;;   default: gcc_unreachable ();
- ;;   }
-;;}
- ;; [(set_attr "type" "vecstore,vecload,vecsimple,*")])
+(define_insn "*s2pp_mov<mode>"
+  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,k,k")
+	(match_operand:FXVI 1 "input_operand" "k,Z,k"))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)
+   && (register_operand (operands[0], <MODE>mode) 
+       || register_operand (operands[1], <MODE>mode))"
+{
+  switch (which_alternative)
+    {
+    case 0: return "fxvstax %1,0,%a0";
+    case 1: return "fxvlax %0,0,%a1";
+    case 2: return "fxvsel %0,%1,%1,1";
+    default: gcc_unreachable ();
+    }
+}
+  [(set_attr "type" "vecstore,vecload,vecsimple,*")])
 
 
 (define_expand "s2pp_stax_<mode>"

@@ -164,9 +164,10 @@
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
 %{maltivec: -maltivec} \
+%{ms2pp: -ms2pp} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
-%{mcpu=ppu: -mpower7 -ms2pp} \
+%{mcpu=ppu: -mpower7 -ms2pp -mno-upper-regs -msoft-float} \
 -many"
 /*p_o_i*/
 #define CPP_DEFAULT_SPEC ""
@@ -629,7 +630,7 @@ extern int rs6000_vector_align[];
    VSX.  */
 /*p_o_i*/ 
 #define TARGET_EXTRA_BUILTINS	(!TARGET_SPE && !TARGET_PAIRED_FLOAT	 \
-				 && !TARGET_S2PP && ((TARGET_POWERPC64			 \
+				 && !TARGET_S2PP && ((TARGET_POWERPC64	 \
 				      || TARGET_PPC_GPOPT /* 970/power4 */ \
 				      || TARGET_POPCNTB	  /* ISA 2.02 */ \
 				      || TARGET_CMPB	  /* ISA 2.05 */ \
@@ -1368,8 +1369,13 @@ enum reg_class
   NO_REGS,
   BASE_REGS,
   GENERAL_REGS,
+<<<<<<< HEAD
   FLOAT_REGS,
   S2PP_REGS,  
+=======
+  //S2PP_REGS,  
+  FLOAT_REGS,
+>>>>>>> master
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1397,6 +1403,9 @@ enum reg_class
 
 
 /* Give names of register classes as strings for dump file.  */
+#if TARGET_S2PP
+#define S2PP_REGS FLOAT_REGS
+#endif
 
 #define REG_CLASS_NAMES							\
 {									\
@@ -1404,7 +1413,10 @@ enum reg_class
   "BASE_REGS",								\
   "GENERAL_REGS",							\
   "FLOAT_REGS",								\
+<<<<<<< HEAD
   "S2PP_REGS",								\
+=======
+>>>>>>> master
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\
@@ -1438,8 +1450,13 @@ enum reg_class
   { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
+<<<<<<< HEAD
   /* FLOAT_REGS.  */							\
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
+=======
+  /* FLOAT_REGS/S2PP_REGS.  */						\
+  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
+>>>>>>> master
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
   /* VSX_REGS.  */							\
