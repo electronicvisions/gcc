@@ -93,6 +93,7 @@
 #define min(A,B)	((A) < (B) ? (A) : (B))
 #define max(A,B)	((A) > (B) ? (A) : (B))
 
+
 /* Structure used to define the rs6000 stack */
 typedef struct rs6000_stack {
   int reload_completed;		/* stack info won't change from here on */
@@ -2409,6 +2410,8 @@ rs6000_debug_reg_global (void)
 static void
 rs6000_setup_reg_addr_masks (void)
 {
+  if (TARGET_S2PP)
+    fprintf (stderr, "TARGET_S2PP");
   ssize_t rc, reg, m, nregs;
   addr_mask_type any_addr_mask, addr_mask;
 
@@ -2550,7 +2553,6 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   reg_class_to_reg_type[(int)BASE_REGS] = GPR_REG_TYPE;
   reg_class_to_reg_type[(int)VSX_REGS] = VSX_REG_TYPE;
   reg_class_to_reg_type[(int)S2PP_REGS] = S2PP_REG_TYPE;
-  reg_class_to_reg_type[(int)FLOAT_REGS] = S2PP_REG_TYPE;
   reg_class_to_reg_type[(int)VRSAVE_REGS] = SPR_REG_TYPE;
   reg_class_to_reg_type[(int)VSCR_REGS] = SPR_REG_TYPE;
   reg_class_to_reg_type[(int)LINK_REGS] = SPR_REG_TYPE;
@@ -13920,13 +13922,13 @@ static rtx
 s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 {
   fprintf (stderr, "call expand standard \n");
-  const struct builtin_description *d;
-  size_t i;
-  enum insn_code icode;
+  //const struct builtin_description *d;
+  //size_t i;
+  //enum insn_code icode;
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
-  tree arg0;
-  rtx op0, pat;
-  enum machine_mode tmode, mode0;
+  //tree arg0;
+  //rtx op0, pat;
+  //enum machine_mode tmode, mode0;
   enum rs6000_builtins fcode
     = (enum rs6000_builtins) DECL_FUNCTION_CODE (fndecl);
 
@@ -14941,8 +14943,10 @@ rs6000_init_builtins (void)
     paired_init_builtins ();
   if (TARGET_SPE)
     spe_init_builtins ();
-  if (TARGET_S2PP)
+  if (TARGET_S2PP) {
+    fprintf (stderr, "load s2pp init builtins\n");
     s2pp_init_builtins ();
+  }
   if (TARGET_EXTRA_BUILTINS){
     altivec_init_builtins ();
   }
@@ -15002,19 +15006,6 @@ rs6000_init_builtins (void)
 #ifdef SUBTARGET_INIT_BUILTINS
   SUBTARGET_INIT_BUILTINS;
 #endif
-
-/*#ifdef OPTION_MASK_S2PP
-  tree pcvoid_type_node
-    = build_pointer_type (build_qualified_type (void_type_node,
-						TYPE_QUAL_CONST));
-    ftype = build_function_type_list (opaque_V4SI_type_node,
-				long_integer_type_node, pcvoid_type_node,
-				NULL_TREE);
-  def_builtin ("__builtin_s2pp_lax", ftype, S2PP_BUILTIN_LAX);
-#endif
-*/
-
-
 
 }
 
@@ -32317,7 +32308,7 @@ rs6000_vectorize_vec_perm_const_ok (enum machine_mode vmode,
 				    const unsigned char *sel)
 {
   /* AltiVec (and thus VSX) can handle arbitrary permutations.  */
-  if (TARGET_ALTIVEC)
+  if (TARGET_ALTIVEC || TARGET_S2PP)
     return true;
 
   /* Check for ps_merge* or evmerge* insns.  */

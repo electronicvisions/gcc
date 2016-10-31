@@ -23,10 +23,14 @@
 
 #define vec_splat __builtin_vec_splatx
 #define vec_splats __builtin_vec_splats
-//#define vec_splatb __builtin_vec_fxvsplatb
-//#define vec_splath __builtin_vec_fxvsplath
-#define vec_splatb(x) __builtin_s2pp_fxvsplatb ((x))
-#define vec_splath(x) __builtin_s2pp_fxvsplath ((x))
+#define vec_splatb vec_splat_s8
+#define vec_splath vec_splat_s16
+//#define vec_splatb(x) __builtin_s2pp_fxvsplatb ((x))
+//#define vec_splath(x) __builtin_s2pp_fxvsplath ((x))
+#define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
+#define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
+#define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
+#define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
 
 #define s2pp_fxvaddbm __builtin_vec_fxvaddbm
 #define s2pp_fxvaddhm __builtin_vec_fxvaddhm

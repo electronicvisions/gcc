@@ -4842,7 +4842,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       tree arg1_inner_type;
       tree decl, stmt;
       tree innerptrtype;
-      enum machine_mode mode;
+      //enum machine_mode mode;
 
       /* No second argument. */
       if (nargs != 2)
@@ -4909,7 +4909,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       tree arg1_inner_type;
       tree decl, stmt;
       tree innerptrtype;
-      enum machine_mode mode;
+      //enum machine_mode mode;
 
       /* No second or third arguments. */
       if (nargs != 3)
