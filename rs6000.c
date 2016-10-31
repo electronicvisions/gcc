@@ -2410,8 +2410,6 @@ rs6000_debug_reg_global (void)
 static void
 rs6000_setup_reg_addr_masks (void)
 {
-  if (TARGET_S2PP)
-    fprintf (stderr, "TARGET_S2PP");
   ssize_t rc, reg, m, nregs;
   addr_mask_type any_addr_mask, addr_mask;
 
@@ -14944,7 +14942,6 @@ rs6000_init_builtins (void)
   if (TARGET_SPE)
     spe_init_builtins ();
   if (TARGET_S2PP) {
-    fprintf (stderr, "load s2pp init builtins\n");
     s2pp_init_builtins ();
   }
   if (TARGET_EXTRA_BUILTINS){
@@ -21667,7 +21664,7 @@ rs6000_split_multireg_move (rtx dst, rtx src)
   if (FP_REGNO_P (reg))
     reg_mode = DECIMAL_FLOAT_MODE_P (mode) ? DDmode : 
 	((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT) ? DFmode : SFmode);
-  else if (ALTIVEC_REGNO_P (reg))
+  else if (ALTIVEC_REGNO_P (reg) || S2PP_REGNO_P (reg))
     reg_mode = V16QImode;
   else if (TARGET_E500_DOUBLE && mode == TFmode)
     reg_mode = DFmode;
