@@ -1440,6 +1440,8 @@ enum reg_class
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* S2PP_REGS.  */							\
+  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
   /* VSX_REGS.  */							\
@@ -1477,14 +1479,12 @@ enum reg_class
   /* SPE_HIGH_REGS.  */							\
   { 0x00000000, 0x00000000, 0x00000000, 0xffe00000, 0x001fffff },	\
   /* ALL_REGS.  */							\
-  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0x001fffff }}	
+  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0xffffffff }}	
 /*p_o_i*///s2pp-mark
   ///* S2PP_REGS. should befixed*/					
   //{ 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	
 //s2pp-mark added s2pp regclass
 //#define S2PP_REGS ALTIVEC_REGS
-
-#define FLOAT_REGS NO_REGS
 
 /* The same information, inverted:
    Return the class number of the smallest class containing

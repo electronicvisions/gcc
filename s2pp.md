@@ -16,22 +16,31 @@
 			   (V8HI "VECTOR_UNIT_S2PP_P (V8HImode)")])
 
 ;; Vector move instructions.
-;;(define_insn "*s2pp_mov<mode>"
- ;; [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,k,k")
-	;;(match_operand:FXVI 1 "input_operand" "k,Z,k"))]
- ;; "VECTOR_MEM_S2PP_P (<MODE>mode)
- ;;  && (register_operand (operands[0], <MODE>mode) 
- ;;      || register_operand (operands[1], <MODE>mode))"
-;;{
- ;; switch (which_alternative)
- ;;   {
- ;;   case 0: return "fxvstax %1,0,%a0";
- ;;   case 1: return "fxvlax %0,0,%a1";
- ;;   case 2: return "fxvsel %0,%1,%1,1";
- ;;   default: gcc_unreachable ();
- ;;   }
-;;}
- ;; [(set_attr "type" "vecstore,vecload,vecsimple,*")])
+(define_insn "*s2pp_mov<mode>"
+  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,k,k,*Y,*r,*r,k,k")
+	(match_operand:FXVI 1 "input_operand" "k,Z,k,r,Y,r,j,W"))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)
+   && (register_operand (operands[0], <MODE>mode) 
+       || register_operand (operands[1], <MODE>mode))"
+{
+  switch (which_alternative)
+    {
+    case 0: return "fxvstax %1,0,%a0";
+    case 1: return "fxvlax %0,0,%a1";
+    case 2: return "fxvsel %0,%1,%1,0";
+    case 3: return "#";
+    case 4: return "#";
+    case 5: return "#";
+    case 6: return "fxvsel %0,%0,%0, 1";
+    case 7: return output_vec_const_move (operands);
+    default: gcc_unreachable ();
+    }
+}
+  [(set_attr "type" "vecstore,vecload,vecsimple,store,load,*,vecsimple,*")])
+;; 0 at the end of case 2 in order to return true -> similar to vor(x,x)
+;; alternatively use 3
+;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
+;; alternatively use 2
 
 
 (define_expand "s2pp_stax_<mode>"

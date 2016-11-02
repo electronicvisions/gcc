@@ -98,7 +98,7 @@
 (define_expand "mov<mode>"
   [(set (match_operand:VEC_M 0 "nonimmediate_operand" "")
 	(match_operand:VEC_M 1 "any_operand" ""))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   if (can_create_pseudo_p ())
     {
@@ -126,20 +126,20 @@
 (define_expand "vector_load_<mode>"
   [(set (match_operand:VEC_M 0 "vfloat_operand" "")
 	(match_operand:VEC_M 1 "memory_operand" ""))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
   "")
 
 (define_expand "vector_store_<mode>"
   [(set (match_operand:VEC_M 0 "memory_operand" "")
 	(match_operand:VEC_M 1 "vfloat_operand" ""))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
   "")
 
 ;; Splits if a GPR register was chosen for the move
 (define_split
   [(set (match_operand:VEC_L 0 "nonimmediate_operand" "")
         (match_operand:VEC_L 1 "input_operand" ""))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)
+  "(VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)  || VECTOR_MEM_S2PP_P (<MODE>mode))
    && reload_completed
    && gpr_or_gpr_p (operands[0], operands[1])
    && !direct_move_p (operands[0], operands[1])
@@ -253,7 +253,7 @@
 	(and:P (plus:P (match_operand:P 1 "gpc_reg_operand" "r")
 		       (match_operand:P 2 "reg_or_cint_operand" "rI"))
 	       (const_int -16)))]
-  "(TARGET_ALTIVEC || TARGET_VSX) && (reload_in_progress || reload_completed)"
+  "(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) && (reload_in_progress || reload_completed)"
   "#"
   "&& reload_completed"
   [(set (match_dup 0)
@@ -271,7 +271,7 @@
   [(set (match_operand:P 0 "gpc_reg_operand" "=b")
 	(and:P (match_operand:P 1 "gpc_reg_operand" "r")
 	       (const_int -16)))]
-  "(TARGET_ALTIVEC || TARGET_VSX) && (reload_in_progress || reload_completed)"
+  "(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) && (reload_in_progress || reload_completed)"
   "#"
   "&& reload_completed"
   [(parallel [(set (match_dup 0)
@@ -661,7 +661,7 @@
 		(match_dup 4))
 	 (match_operand:VEC_L 2 "vlogical_operand" "")
 	 (match_operand:VEC_L 1 "vlogical_operand" "")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
   "operands[4] = CONST0_RTX (<MODE>mode);")
 
 (define_expand "vector_select_<mode>_uns"
@@ -671,7 +671,7 @@
 		   (match_dup 4))
 	 (match_operand:VEC_L 2 "vlogical_operand" "")
 	 (match_operand:VEC_L 1 "vlogical_operand" "")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
   "operands[4] = CONST0_RTX (<MODE>mode);")
 
 ;; Expansions that compare vectors producing a vector result and a predicate,
@@ -981,7 +981,7 @@
    (match_operand:VEC_K 1 "vlogical_operand" "")
    (match_operand:VEC_K 2 "vlogical_operand" "")
    (match_operand:V16QI 3 "vlogical_operand" "")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   if (BYTES_BIG_ENDIAN)
     emit_insn (gen_altivec_vperm_<mode> (operands[0], operands[1],

@@ -136,41 +136,6 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define f63	63
 #endif
 
-#ifdef __S2PP__
-#define f32	0
-#define f33	1
-#define f34	2
-#define f35	3
-#define f36	4
-#define f37	5
-#define f38	6
-#define f39	7
-#define f40	8
-#define f41	9
-#define f42	10
-#define f43	11
-#define f44	12
-#define f45	13
-#define f46	14
-#define f47	15
-#define f48	16
-#define f49	17
-#define f50	18
-#define f51	19
-#define f52	20
-#define f53	21
-#define f54	22
-#define f55	23
-#define f56	24
-#define f57	25
-#define f58	26
-#define f59	27
-#define f60	28
-#define f61	29
-#define f62	30
-#define f63	31
-#endif
-
 #ifdef __ALTIVEC__
 #define v0	0
 #define v1	1
