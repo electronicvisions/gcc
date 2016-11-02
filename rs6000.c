@@ -5350,13 +5350,15 @@ gen_easy_altivec_constant (rtx op)
   /* Start with a vspltisw.  */
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V4SImode, gen_lowpart (SImode, val));
+  
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
 
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
     step >>= 1;
-
+  
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V8HImode, gen_lowpart (HImode, val));
 
@@ -5365,7 +5367,7 @@ gen_easy_altivec_constant (rtx op)
     copies <<= 1;
   else
     step >>= 1;
-
+  
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V16QImode, gen_lowpart (QImode, val));
 
@@ -5424,11 +5426,15 @@ gen_easy_s2pp_constant (rtx op)
   unsigned step = nunits / 4;
   unsigned copies = 1;
 
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
+
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
     step >>= 1;
+
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
 
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V8HImode, gen_lowpart (HImode, val));
@@ -5438,6 +5444,8 @@ gen_easy_s2pp_constant (rtx op)
     copies <<= 1;
   else
     step >>= 1;
+
+  fprintf (stderr, "step=%i copies=%i\n", step, copies);
 
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V16QImode, gen_lowpart (QImode, val));
@@ -5473,6 +5481,8 @@ output_vec_const_move (rtx *operands)
       if (zero_constant (vec, mode))
 	return "fxvsel %0, %0, %0, 1";
 
+      fprintf (stderr, "mode = %i\n", GET_MODE (vec));
+      fprintf (stderr, "V16QImode = %i\n", V16QImode);
       splat_vec = gen_easy_s2pp_constant (vec);
       gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
       operands[1] = XEXP (splat_vec, 0);
@@ -5480,10 +5490,10 @@ output_vec_const_move (rtx *operands)
 	return "#";
  
       mode = GET_MODE (splat_vec);
-      fprintf (stderr, "mode = %s\n", mode);
+      fprintf (stderr, "mode = %i\n", mode);
       if (mode == V8HImode)
 	return "fxvsplath %0,%1";
-      else if (mode == V16HImode)
+      else if (mode == V16QImode)
 	return "fxvsplatb %0,%1";
       else
 	gcc_unreachable ();

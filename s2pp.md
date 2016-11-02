@@ -130,16 +130,17 @@
 ;;  emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
 ;;  DONE;
 ;;})
-
+;;
 ;;(define_insn "*s2pp_splatb_internal"
 ;;  [(set (match_operand:V16QI 0 "register_operand" "=k")
-;;        (unspec:V16QI [(match_operand:QI 1 "u5bit_cint_operand" "")]))]
+;;        (vec_duplicate:V16QI 
+;;	 (match_operand:QI 1 "u5bit_cint_operand" "")))]
 ;;  "TARGET_S2PP"
 ;;{
 ;;  return "fxvsplatb %0,%1";
 ;;}
 ;;  [(set_attr "type" "vecperm")])
-
+;;
 ;;(define_insn "s2pp_fxvsplatb_direct"
 ;;  [(set (match_operand:V16QI 0 "register_operand" "=k")
 ;;        (unspec:V16QI [(match_operand:QI 1 "u5bit_cint_operand" "i")]
@@ -147,7 +148,7 @@
 ;;  "TARGET_S2PP"
 ;;  "fxvsplatb %0,%1"
 ;;  [(set_attr "type" "vecperm")])
-
+;;
 ;;(define_expand "s2pp_splath"
 ;;  [(use (match_operand:V8HI 0 "register_operand" ""))
 ;;   (use (match_operand:QI 1 "u5bit_cint_operand" ""))]
@@ -162,16 +163,17 @@
 ;;  emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
 ;;  DONE;
 ;;})
-
+;;
 ;;(define_insn "*s2pp_splath_internal"
 ;;  [(set (match_operand:V8HI 0 "register_operand" "=k")
-;;	 (unspec:V8HI [(match_operand:QI 1 "u5bit_cint_operand" "")]))]
+;;        (vec_duplicate:V8HI 
+;;	 (match_operand:QI 1 "u5bit_cint_operand" "")))]
 ;;  "TARGET_S2PP"
 ;;{
 ;;  return "fxvsplath %0,%1,%2";
 ;;}
 ;;  [(set_attr "type" "vecperm")])
-
+;;
 ;;(define_insn "s2pp_splath_direct"
 ;;  [(set (match_operand:V8HI 0 "register_operand" "=k")
 ;;        (unspec:V8HI [(match_operand:QI 1 "u5bit_cint_operand" "i")]
@@ -179,4 +181,101 @@
 ;;  "TARGET_S2PP"
 ;;  "fxvsplath %0,%1"
 ;;  [(set_attr "type" "vecperm")])
+;;
+
+(define_expand "s2pp_vspltb"
+  [(use (match_operand:V16QI 0 "register_operand" ""))
+   (use (match_operand:V16QI 1 "register_operand" ""))
+   (use (match_operand:QI 2 "u5bit_cint_operand" ""))]
+  "TARGET_S2PP"
+{
+  rtvec v;
+  rtx x;
+
+  /* Special handling for LE with -maltivec=be.  We have to reflect
+     the actual selected index for the splat in the RTL.  */
+  if (!BYTES_BIG_ENDIAN && VECTOR_ELT_ORDER_BIG)
+    operands[2] = GEN_INT (15 - INTVAL (operands[2]));
+
+  v = gen_rtvec (1, operands[2]);
+  x = gen_rtx_VEC_SELECT (QImode, operands[1], gen_rtx_PARALLEL (VOIDmode, v));
+  x = gen_rtx_VEC_DUPLICATE (V16QImode, x);
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
+  DONE;
+})
+
+(define_insn "*s2pp_vspltb_internal"
+  [(set (match_operand:V16QI 0 "register_operand" "=k")
+        (vec_duplicate:V16QI
+	 (vec_select:QI (match_operand:V16QI 1 "register_operand" "k")
+			(parallel
+			 [(match_operand:QI 2 "u5bit_cint_operand" "")]))))]
+  "TARGET_S2PP"
+{
+  /* For true LE, this adjusts the selected index.  For LE with 
+     -maltivec=be, this reverses what was done in the define_expand
+     because the instruction already has big-endian bias.  */
+  if (!BYTES_BIG_ENDIAN)
+    operands[2] = GEN_INT (15 - INTVAL (operands[2]));
+
+  return "fxvstax %1 0 0\n mov r0 %2\n fxvsplatb %0 r0";
+}
+  [(set_attr "type" "vecperm")])
+
+(define_insn "s2pp_vspltb_direct"
+  [(set (match_operand:V16QI 0 "register_operand" "=k")
+        (unspec:V16QI [(match_operand:V16QI 1 "register_operand" "k")
+	               (match_operand:QI 2 "u5bit_cint_operand" "i")]
+                      UNSPEC_FXVSPLT_DIRECT))]
+  "TARGET_S2PP"
+  "vspltb %0,%1,%2"
+  [(set_attr "type" "vecperm")])
+
+(define_expand "s2pp_vsplth"
+  [(use (match_operand:V8HI 0 "register_operand" ""))
+   (use (match_operand:V8HI 1 "register_operand" ""))
+   (use (match_operand:QI 2 "u5bit_cint_operand" ""))]
+  "TARGET_S2PP"
+{
+  rtvec v;
+  rtx x;
+
+  /* Special handling for LE with -maltivec=be.  We have to reflect
+     the actual selected index for the splat in the RTL.  */
+  if (!BYTES_BIG_ENDIAN && VECTOR_ELT_ORDER_BIG)
+    operands[2] = GEN_INT (7 - INTVAL (operands[2]));
+
+  v = gen_rtvec (1, operands[2]);
+  x = gen_rtx_VEC_SELECT (HImode, operands[1], gen_rtx_PARALLEL (VOIDmode, v));
+  x = gen_rtx_VEC_DUPLICATE (V8HImode, x);
+  emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
+  DONE;
+})
+
+(define_insn "*s2pp_vsplth_internal"
+  [(set (match_operand:V8HI 0 "register_operand" "=k")
+	(vec_duplicate:V8HI
+	 (vec_select:HI (match_operand:V8HI 1 "register_operand" "v")
+			(parallel
+			 [(match_operand:QI 2 "u5bit_cint_operand" "")]))))]
+  "TARGET_S2PP"
+{
+  /* For true LE, this adjusts the selected index.  For LE with 
+     -maltivec=be, this reverses what was done in the define_expand
+     because the instruction already has big-endian bias.  */
+  if (!BYTES_BIG_ENDIAN)
+    operands[2] = GEN_INT (7 - INTVAL (operands[2]));
+
+  return "vsplth %0,%1,%2";
+}
+  [(set_attr "type" "vecperm")])
+
+(define_insn "s2pp_vsplth_direct"
+  [(set (match_operand:V8HI 0 "register_operand" "=k")
+        (unspec:V8HI [(match_operand:V8HI 1 "register_operand" "k")
+                      (match_operand:QI 2 "u5bit_cint_operand" "i")]
+                     UNSPEC_FXVSPLT_DIRECT))]
+  "TARGET_S2PP"
+  "vsplth %0,%1,%2"
+  [(set_attr "type" "vecperm")])
 
