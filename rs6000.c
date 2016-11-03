@@ -15882,8 +15882,8 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_SPLAT);
   def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_EXTRACT);
   def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_INSERT);
-  def_builtin ("__builtin_vec_fxvsplath", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATH);
-  def_builtin ("__builtin_vec_fxvsplatb", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATB);
+  //def_builtin ("__builtin_vec_fxvsplath", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATH);
+  //def_builtin ("__builtin_vec_fxvsplatb", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATB);
 
   /* Add the DST variants.  */
 //  d = bdesc_dst;

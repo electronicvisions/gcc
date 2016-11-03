@@ -21,7 +21,7 @@
 #define vec_fxvlax vec_ld
 #define vec_ld __builtin_vec_ld
 
-#define vec_sel __builtin_vec_sel
+#define vec_sel __builtin_vec_fxvsel
 #define vec_splat __builtin_vec_splat
 
 #define vec_extract __builtin_vec_extract
@@ -29,7 +29,7 @@
 #define vec_splats __builtin_vec_splats
 #define vec_promote __builtin_vec_promote
 
-#define vec_add __builtin_vec_add
+#define vec_add __builtin_vec_fxvadd
 #define vec_vaddubm vec_fxvaddbm
 #define vec_vadduhm vec_fxvaddhm
 #define vec_fxvaddbm __builtin_vec_fxvaddbm
