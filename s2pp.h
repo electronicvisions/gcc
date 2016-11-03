@@ -16,18 +16,27 @@
 #define __C_GT		1
 #define __C_LT		2
 
-#define s2pp_stax __builtin_s2pp_stax
-#define s2pp_lax __builtin_s2pp_lax
+#define vec_fxvstax vec_st
 #define vec_st __builtin_vec_st
+#define vec_fxvlax vec_ld
 #define vec_ld __builtin_vec_ld
 
-#define vec_splat __builtin_vec_splatx
-#define vec_splats __builtin_vec_splats
+#define vec_sel __builtin_vec_sel
+#define vec_splat __builtin_vec_splat
 
-//#define vec_splathb vec_splat_s8
-//#define vec_splath vec_splat_s16
-#define vec_fxvspaltb vec_splat_s8
-#define vec_fxvspalth vec_splat_s16
+#define vec_extract __builtin_vec_extract
+#define vec_insert __builtin_vec_insert
+#define vec_splats __builtin_vec_splats
+#define vec_promote __builtin_vec_promote
+
+#define vec_add __builtin_vec_add
+#define vec_vaddubm vec_fxvaddbm
+#define vec_vadduhm vec_fxvaddhm
+#define vec_fxvaddbm __builtin_vec_fxvaddbm
+#define vec_fxvaddhm __builtin_vec_fxvaddhm
+
+#define vec_fxvsplatb vec_splat_s8
+#define vec_fxvsplath vec_splat_s16
 #define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
 #define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
@@ -35,10 +44,7 @@
 //#define vec_splatb(x) __builtin_s2pp_fxvsplatb ((x))
 //#define vec_splath(x) __builtin_s2pp_fxvsplath ((x))
 
-#define s2pp_fxvaddbm __builtin_vec_fxvaddbm
-#define s2pp_fxvaddhm __builtin_vec_fxvaddhm
 
-#define vec_add __builtin_vec_addx
 
 ///* Given the vec_step of a type, return the corresponding bool type.  */
 //template <int STEP> class __s2pp_bool_ret { };

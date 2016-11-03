@@ -197,7 +197,7 @@
   if (VECTOR_MEM_VSX_P (<MODE>mode))
     {
       operands[1] = rs6000_address_for_s2pp (operands[1]);
-      emit_insn (gen_s2pp_lax_<mode> (operands[0], operands[1]));
+      emit_insn (gen_s2pp_fxvlax_<mode> (operands[0], operands[1]));
       DONE;
     }
 }")
@@ -213,7 +213,7 @@
   if (VECTOR_MEM_VSX_P (<MODE>mode))
     {
       operands[0] = rs6000_address_for_s2pp (operands[0]);
-      emit_insn (gen_s2pp_stax_<mode> (operands[0], operands[1]));
+      emit_insn (gen_s2pp_fxvstax_<mode> (operands[0], operands[1]));
       DONE;
     }
 }")

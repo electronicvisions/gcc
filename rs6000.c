@@ -13966,10 +13966,10 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 
   switch (fcode)
     {
-    case S2PP_BUILTIN_STAX_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_stax_v8hi, exp);
-    case S2PP_BUILTIN_STAX_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_stax_v16qi, exp);
+    case S2PP_BUILTIN_FXVSTAX_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v8hi, exp);
+    case S2PP_BUILTIN_FXVSTAX_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v16qi, exp);
 
     case S2PP_BUILTIN_VEC_INIT_V8HI:
     case S2PP_BUILTIN_VEC_INIT_V16QI:
@@ -14004,11 +14004,11 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
   switch (fcode)
     {
 //    case S2PP_BUILTIN_LAX:
-    case S2PP_BUILTIN_LAX_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_lax_v8hi,
+    case S2PP_BUILTIN_FXVLAX_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v8hi,
 					exp, target, false);
-    case S2PP_BUILTIN_LAX_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_lax_v16qi,
+    case S2PP_BUILTIN_FXVLAX_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,
 					exp, target, false);
     default:
       break;
@@ -15863,28 +15863,27 @@ s2pp_init_builtins (void)
     = build_function_type_list (opaque_V4SI_type_node,
 				opaque_V4SI_type_node, opaque_V4SI_type_node,
 				integer_type_node, NULL_TREE);
-/*p_o_i*/ 
-  def_builtin ("__builtin_s2pp_lax_v8hi", v8hi_ftype_long_pcvoid,
-	       S2PP_BUILTIN_LAX_V8HI);
-  def_builtin ("__builtin_s2pp_lax_v16qi", v16qi_ftype_long_pcvoid,
-	       S2PP_BUILTIN_LAX_V16QI);
-  def_builtin ("__builtin_s2pp_stax_v8hi", void_ftype_v8hi_long_pvoid,
-	       S2PP_BUILTIN_STAX_V8HI);
-  def_builtin ("__builtin_s2pp_stax_v16qi", void_ftype_v16qi_long_pvoid,
-	       S2PP_BUILTIN_STAX_V16QI);
-  def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_FXVLD);
-  def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_FXVST);
+
+  def_builtin ("__builtin_s2pp_fxvlax_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVLAX_V8HI);
+  def_builtin ("__builtin_s2pp_fxvlax_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVLAX_V16QI);
+  def_builtin ("__builtin_s2pp_fxvstax_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_FXVSTAX_V8HI);
+  def_builtin ("__builtin_s2pp_fxvstax_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_FXVSTAX_V16QI);
+  def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD);
+  def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST);
 
   def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
   def_builtin ("__builtin_vec_splats", opaque_ftype_opaque, S2PP_BUILTIN_VEC_SPLATS);
   def_builtin ("__builtin_vec_promote", opaque_ftype_opaque, S2PP_BUILTIN_VEC_PROMOTE);
 
-//  def_builtin ("__builtin_vec_sld", opaque_ftype_opaque_opaque_int, ALTIVEC_BUILTIN_VEC_SLD);
   def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_SPLAT);
   def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_EXTRACT);
   def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_INSERT);
-//  def_builtin ("__builtin_vec_vsplth", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVSPLTH);
-//  def_builtin ("__builtin_vec_vspltb", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVSPLTB);
+  def_builtin ("__builtin_vec_fxvsplath", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATH);
+  def_builtin ("__builtin_vec_fxvsplatb", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATB);
 
   /* Add the DST variants.  */
 //  d = bdesc_dst;

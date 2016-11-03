@@ -43,7 +43,7 @@
 ;; alternatively use 2
 
 
-(define_expand "s2pp_stax_<mode>"
+(define_expand "s2pp_fxvstax_<mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "k"))
@@ -52,7 +52,7 @@
 {
 })
 
-(define_insn "*s2pp_stax_<mode>_internal"
+(define_insn "*s2pp_fxvstax_<mode>_internal"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "k"))
@@ -61,7 +61,7 @@
   "fxvstax %1,0,%y0"
   [(set_attr "type" "vecstore")])
 
-;;(define_insn "s2pp_stax_<mode>"
+;;(define_insn "s2pp_fxvstax_<mode>"
 ;;  [(parallel
 ;;    [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 ;;	  (match_operand:FXVI 1 "register_operand" "k"))
@@ -70,7 +70,7 @@
 ;;  "fxvstax %1,0,%a0"
 ;;  [(set_attr "type" "vecstore")])
 
-(define_expand "s2pp_lax_<mode>"
+(define_expand "s2pp_fxvlax_<mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "=k")
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
@@ -79,7 +79,7 @@
 {
 })
 
-(define_insn "*s2pp_lax_<mode>_internal"
+(define_insn "*s2pp_fxvlax_<mode>_internal"
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "=k")
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
