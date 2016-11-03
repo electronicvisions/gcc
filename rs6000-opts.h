@@ -65,9 +65,7 @@ enum processor_type
    PROCESSOR_MPCCORE,
    PROCESSOR_CELL,
    PROCESSOR_PPCA2,
-   PROCESSOR_TITAN,
-
-   PROCESSOR_S2PP //s2pp-mark
+   PROCESSOR_TITAN
 };
 
 

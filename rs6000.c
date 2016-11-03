@@ -1760,8 +1760,6 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
 {
   int last_regno = regno + rs6000_hard_regno_nregs[mode][regno] - 1;
 
-  //if (TARGET_S2PP)
-    //fprintf (stderr, "find hard regno");
   /* PTImode can only go in GPRs.  Quad word memory operations require even/odd
      register combinations, and use PTImode where we need to deal with quad
      word memory operations.  Don't allow quad words in the argument or frame
@@ -1832,10 +1830,8 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
 	    || mode == V1TImode);
 
   /* s2pp only in s2pp/FP registers.  */
-  if (S2PP_REGNO_P (regno))
-	  fprintf (stderr, "s2pp regno");
-  if (S2PP_REGNO_P (regno))
-    return VECTOR_MEM_S2PP_P (mode);
+  //if (S2PP_REGNO_P (regno))
+    //return VECTOR_MEM_S2PP_P (mode);
   
   /* ...but GPRs can hold SIMD data on the SPE in one register.  */
   if (SPE_SIMD_REGNO_P (regno) && TARGET_SPE && SPE_VECTOR_MODE (mode))
@@ -4030,7 +4026,6 @@ rs6000_option_override_internal (bool global_init_p)
 	break;
 
       case PROCESSOR_POWER7:
-      case PROCESSOR_S2PP:
 	rs6000_cost = &power7_cost;
 	break;
 
@@ -5351,8 +5346,6 @@ gen_easy_altivec_constant (rtx op)
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V4SImode, gen_lowpart (SImode, val));
   
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
-
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
@@ -5390,16 +5383,12 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   step = GET_MODE_NUNITS (mode) / 4;
   copies = 1;
   
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
-
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
     step >>= 1;
 
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
-  if (vspltis_constant (op, step, copies))
     return true;
 
   /* And finally a vspltisb.  */
@@ -5408,12 +5397,8 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
-  if (vspltis_constant (op, step, copies))
     return true;
 
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
-  return false;
 }
 
 
@@ -5426,15 +5411,11 @@ gen_easy_s2pp_constant (rtx op)
   unsigned step = nunits / 4;
   unsigned copies = 1;
 
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
-
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
     step >>= 1;
-
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
 
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V8HImode, gen_lowpart (HImode, val));
@@ -5444,8 +5425,6 @@ gen_easy_s2pp_constant (rtx op)
     copies <<= 1;
   else
     step >>= 1;
-
-  fprintf (stderr, "step=%i copies=%i\n", step, copies);
 
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V16QImode, gen_lowpart (QImode, val));
@@ -12077,7 +12056,6 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
 	  || INTVAL (op0) > 15
 	  || INTVAL (op0) < -16)
 	{
-          //fprintf (stderr, "GET_CODE: %s, INTVAL: %s\n", GET_CODE (op0), INTVAL (op0));
 	  error ("argument 1 must be a 5-bit signed literal");
 	  return const0_rtx;
 	}
@@ -12315,7 +12293,6 @@ altivec_expand_predicate_builtin (enum insn_code icode, tree exp, rtx target)
 //static rtx
 //s2pp_expand_predicate_builtin (enum insn_code icode, tree exp, rtx target)
 //{
-//  fprintf (stderr, "call expand predicate \n");
 //  rtx pat, scratch;
 //  tree cr6_form = CALL_EXPR_ARG (exp, 0);
 //  tree arg0 = CALL_EXPR_ARG (exp, 1);
@@ -12577,7 +12554,6 @@ altivec_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 static rtx
 s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 {
-  fprintf (stderr, "call expand lv \n");
   rtx pat, addr;
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
@@ -12741,7 +12717,6 @@ altivec_expand_stv_builtin (enum insn_code icode, tree exp)
 static rtx
 s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
 {
-  fprintf (stderr, "call expand stv \n");
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
   tree arg2 = CALL_EXPR_ARG (exp, 2);
@@ -13735,7 +13710,6 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
 static rtx
 s2pp_expand_ld_builtin (tree exp, rtx target, bool *expandedp)
 {
-  fprintf (stderr, "call expand ld \n");
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
   unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
   tree arg0;
@@ -13783,7 +13757,6 @@ static rtx
 s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
 			   bool *expandedp)
 {
-  fprintf (stderr, "call expand st \n");
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
   unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
   tree arg0, arg1;
@@ -13930,7 +13903,6 @@ s2pp_expand_vec_ext_builtin (tree exp, rtx target)
 static rtx
 s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 {
-  fprintf (stderr, "call expand standard \n");
   //const struct builtin_description *d;
   //size_t i;
   //enum insn_code icode;
@@ -16459,8 +16431,6 @@ rs6000_common_init_builtins (void)
 					  d->code, d->name);
 	}
 
-      if (TARGET_DEBUG_BUILTIN)
-	//fprintf (stderr, "rs6000_builtin, name: %s type: %s code:\n", d->name, type);
       def_builtin (d->name, type, d->code);
     }
 
@@ -17304,7 +17274,6 @@ register_to_reg_type (rtx reg, bool *is_altivec)
     *is_altivec = true;
 
   rclass = rs6000_regno_regclass[regno];
-  //fprintf (stderr, "reg class = %s\n", reg_class_names[rclass]);
   return reg_class_to_reg_type[(int)rclass];
 }
 
@@ -17461,7 +17430,6 @@ rs6000_secondary_reload_move (enum rs6000_reg_type to_type,
 			      secondary_reload_info *sri,
 			      bool altivec_p)
 {
-  //fprintf (stderr, "secondary reload move\n");
   /* Fall back to load/store reloads if either type is not a register.  */
   if (to_type == NO_REG_TYPE || from_type == NO_REG_TYPE)
     return false;
@@ -17511,7 +17479,6 @@ rs6000_secondary_reload (bool in_p,
 			 enum machine_mode mode,
 			 secondary_reload_info *sri)
 {
-  //fprintf (stderr, "secondary reload\n");
   enum reg_class rclass = (enum reg_class) rclass_i;
   reg_class_t ret = ALL_REGS;
   enum insn_code icode;
@@ -18281,7 +18248,6 @@ rs6000_instantiate_decls (void)
 static enum reg_class
 rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
 {
-  //fprintf(stderr,"\npreferred reload class called \n");
   enum machine_mode mode = GET_MODE (x);
 
   if (TARGET_VSX && x == CONST0_RTX (mode) && VSX_REG_CLASS_P (rclass))
@@ -18290,7 +18256,6 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
   if ((rclass == S2PP_REGS)
       && VECTOR_UNIT_S2PP_P (mode)
       && easy_vector_constant (x, mode)){
-    fprintf (stderr, "s2pp reg used"); 
     return S2PP_REGS;
   }
 
@@ -18414,7 +18379,6 @@ static enum reg_class
 rs6000_secondary_reload_class (enum reg_class rclass, enum machine_mode mode,
 			       rtx in)
 {
-  //fprintf (stderr, "secondart reoad class called\n");
 	
   int regno;
 
