@@ -5481,8 +5481,6 @@ output_vec_const_move (rtx *operands)
       if (zero_constant (vec, mode))
 	return "fxvsel %0, %0, %0, 1";
 
-      fprintf (stderr, "mode = %i\n", GET_MODE (vec));
-      fprintf (stderr, "V16QImode = %i\n", V16QImode);
       splat_vec = gen_easy_s2pp_constant (vec);
       gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
       operands[1] = XEXP (splat_vec, 0);
@@ -5490,7 +5488,6 @@ output_vec_const_move (rtx *operands)
 	return "#";
  
       mode = GET_MODE (splat_vec);
-      fprintf (stderr, "mode = %i\n", mode);
       if (mode == V8HImode)
 	return "fxvsplath %0,%1";
       else if (mode == V16QImode)

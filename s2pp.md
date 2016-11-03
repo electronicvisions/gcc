@@ -25,13 +25,13 @@
 {
   switch (which_alternative)
     {
-    case 0: return "fxvstax %1,0,%a0";
-    case 1: return "fxvlax %0,0,%a1";
+    case 0: return "fxvstax %1,%y0";
+    case 1: return "fxvlax %0,%y1";
     case 2: return "fxvsel %0,%1,%1,0";
     case 3: return "#";
     case 4: return "#";
     case 5: return "#";
-    case 6: return "fxvsel %0,%0,%0, 1";
+    case 6: return "fxvsel %0,%0,%0,1";
     case 7: return output_vec_const_move (operands);
     default: gcc_unreachable ();
     }
