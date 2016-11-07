@@ -510,7 +510,6 @@ extern int rs6000_vector_align[];
 #define TARGET_LONG_DOUBLE_128 (rs6000_long_double_type_size == 128)
 #define TARGET_IEEEQUAD rs6000_ieeequad
 #define TARGET_ALTIVEC_ABI rs6000_altivec_abi
-//#define TARGET_S2PP_ABI rs6000_s2pp_abi
 #define TARGET_LDBRX (TARGET_POPCNTD || rs6000_cpu == PROCESSOR_CELL)
 
 #define TARGET_SPE_ABI 0
@@ -629,7 +628,7 @@ extern int rs6000_vector_align[];
    VSX.  */
 /*p_o_i*/ 
 #define TARGET_EXTRA_BUILTINS	(!TARGET_SPE && !TARGET_PAIRED_FLOAT	 \
-				 && !TARGET_S2PP && ((TARGET_POWERPC64			 \
+				  && ((TARGET_POWERPC64			 \
 				      || TARGET_PPC_GPOPT /* 970/power4 */ \
 				      || TARGET_POPCNTB	  /* ISA 2.02 */ \
 				      || TARGET_CMPB	  /* ISA 2.05 */ \
@@ -781,7 +780,7 @@ extern unsigned char rs6000_recip_bits[];
 #define MIN_UNITS_PER_WORD 4
 #endif
 #define UNITS_PER_FP_WORD 8
-#define UNITS_PER_ALTIVEC_WORD 16 /*p_o_i*/ 
+#define UNITS_PER_ALTIVEC_WORD 16
 #define UNITS_PER_S2PP_WORD 16 /*p_o_i*/ 
 #define UNITS_PER_VSX_WORD 16
 #define UNITS_PER_SPE_WORD 8
@@ -1424,7 +1423,6 @@ enum reg_class
   "CA_REGS",								\
   "SPE_HIGH_REGS",							\
   "ALL_REGS"}								
-  //"S2PP_REGS",							
 //s2pp-mark added s2pp regclass
 /* Define which registers fit in which classes.
    This is an initializer for a vector of HARD_REG_SET
@@ -1481,10 +1479,7 @@ enum reg_class
   /* ALL_REGS.  */							\
   { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0xffffffff }}	
 /*p_o_i*///s2pp-mark
-  ///* S2PP_REGS. should befixed*/					
-  //{ 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	
 //s2pp-mark added s2pp regclass
-//#define S2PP_REGS ALTIVEC_REGS
 
 /* The same information, inverted:
    Return the class number of the smallest class containing

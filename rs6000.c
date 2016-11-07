@@ -1329,7 +1329,7 @@ static const struct attribute_spec rs6000_attribute_table[] =
 
 /* The VRSAVE bitmask puts bit %v0 as the most significant bit.  *//*p_o_i*/
 #define ALTIVEC_REG_BIT(REGNO) (0x80000000 >> ((REGNO) - FIRST_ALTIVEC_REGNO))
-#define S2PP_REG_BIT(REGNO) (0x80000000 >> ((REGNO) - FIRST_S2PP_REGNO))
+//#define S2PP_REG_BIT(REGNO) (0x80000000 >> ((REGNO) - FIRST_S2PP_REGNO))
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ATTRIBUTE_TABLE
@@ -1723,10 +1723,15 @@ rs6000_hard_regno_nregs_internal (int regno, enum machine_mode mode)
 {
   unsigned HOST_WIDE_INT reg_size;
 
+  //if (S2PP_REGNO_P (regno) && TARGET_S2PP)
+    //reg_size = UNITS_PER_S2PP_WORD;
+
   /* TF/TD modes are special in that they always take 2 registers.  */
   if (FP_REGNO_P (regno))
     reg_size = ((VECTOR_MEM_VSX_P (mode) && mode != TDmode && mode != TFmode)
 		? UNITS_PER_VSX_WORD
+		: VECTOR_MEM_S2PP_P (mode)
+		? UNITS_PER_S2PP_WORD
 		: UNITS_PER_FP_WORD);
 
   else if (SPE_SIMD_REGNO_P (regno) && TARGET_SPE && SPE_VECTOR_MODE (mode))
@@ -1734,9 +1739,6 @@ rs6000_hard_regno_nregs_internal (int regno, enum machine_mode mode)
 
   else if (ALTIVEC_REGNO_P (regno))
     reg_size = UNITS_PER_ALTIVEC_WORD;
-
-  else if (S2PP_REGNO_P (regno))
-    reg_size = UNITS_PER_S2PP_WORD;
 
   /* The value returned for SCmode in the E500 double case is 2 for
      ABI compatibility; storing an SCmode value in a single register
@@ -1800,6 +1802,10 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
      modes and DImode.  */
   if (FP_REGNO_P (regno))
     {
+      if (S2PP_VECTOR_MODE (mode))
+	return VECTOR_MEM_S2PP_P (mode);
+      //fpregno = s2ppregno
+
       if (SCALAR_FLOAT_MODE_P (mode)
 	  && (mode != TDmode || (regno % 2) == 0)
 	  && FP_REGNO_P (last_regno))
@@ -1813,8 +1819,7 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
 	  && PAIRED_VECTOR_MODE (mode))
 	return 1;
 
-      return VECTOR_MEM_S2PP_P (mode); //fpregno = s2ppregno
-     // return 0;
+      return 0;
     }
 
   /* The CR register can only hold CC modes.  */
@@ -2510,12 +2515,8 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   for (r = 1; r < 32; ++r)
     rs6000_regno_regclass[r] = BASE_REGS;
 
-  if (!TARGET_S2PP)
-    for (r = 32; r < 64; ++r)
-      rs6000_regno_regclass[r] = FLOAT_REGS;
-  else
-    for (r = 32; r < 64; ++r)
-      rs6000_regno_regclass[r] = S2PP_REGS; //do this because reg+type changes completly
+  for (r = 32; r < 64; ++r)
+    rs6000_regno_regclass[r] = FLOAT_REGS;
 
   for (r = 64; r < FIRST_PSEUDO_REGISTER; ++r)
     rs6000_regno_regclass[r] = NO_REGS;
@@ -2565,15 +2566,15 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       reg_class_to_reg_type[(int)FLOAT_REGS] = VSX_REG_TYPE;
       reg_class_to_reg_type[(int)ALTIVEC_REGS] = VSX_REG_TYPE;
     }
-  else if (TARGET_S2PP)/*p_o_i*/
-    {
-      reg_class_to_reg_type[(int)FLOAT_REGS] = NO_REG_TYPE; //S2PP_REG_TYPE;
-      reg_class_to_reg_type[(int)ALTIVEC_REGS] = NO_REG_TYPE;
-    }
   else
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = FPR_REG_TYPE;
       reg_class_to_reg_type[(int)ALTIVEC_REGS] = ALTIVEC_REG_TYPE;
+    }
+
+  if (TARGET_S2PP)/*p_o_i*/
+    {
+      reg_class_to_reg_type[(int)FLOAT_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
     }
 	  
   /* Precalculate the valid memory formats as well as the vector information,
@@ -2758,8 +2759,6 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 
   if (TARGET_S2PP)
     rs6000_constraints[RS6000_CONSTRAINT_k] = S2PP_REGS;
-  //if (TARGET_S2PP)
-    //rs6000_constraints[RS6000_CONSTRAINT_v] = S2PP_REGS;
 
   if (TARGET_MFPGPR)						/* DFmode  */
     rs6000_constraints[RS6000_CONSTRAINT_wg] = FLOAT_REGS;
@@ -2940,7 +2939,10 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	reg_size = UNITS_PER_ALTIVEC_WORD;
 
       else if (c == S2PP_REGS)
-	reg_size = UNITS_PER_S2PP_WORD;
+	if (TARGET_S2PP)
+	  reg_size = UNITS_PER_S2PP_WORD;
+        else
+	  reg_size = UNITS_PER_FP_WORD;
 
       else if (c == FLOAT_REGS)
 	if (TARGET_S2PP)
@@ -3360,12 +3362,6 @@ rs6000_option_override_internal (bool global_init_p)
 	error ("SPE not supported in this target");
     }
 
-/*  if (TARGET_S2PP)
-    {
-      //if (TARGET_S2PP)
-	error ("this is a test"); //s2pp-mark
-    }
-*/
   /* Disable Cell microcode if we are optimizing for the Cell
      and not optimizing for size.  */
   if (rs6000_gen_cell_microcode == -1)
@@ -6103,7 +6099,7 @@ rs6000_data_alignment (tree type, unsigned int align, enum data_align how)
 bool
 rs6000_special_adjust_field_align_p (tree field, unsigned int computed)
 {
-  if ((TARGET_ALTIVEC || TARGET_S2PP) && TREE_CODE (TREE_TYPE (field)) == VECTOR_TYPE)
+  if ((TARGET_ALTIVEC/* || TARGET_S2PP*/) && TREE_CODE (TREE_TYPE (field)) == VECTOR_TYPE)
     {
       if (computed != 128)
 	{
@@ -6394,6 +6390,10 @@ reg_offset_addressing_ok_p (enum machine_mode mode)
     {
     case V16QImode:
     case V8HImode:
+      if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode) || VECTOR_MEM_S2PP_P (mode))
+	return false;
+      break;
+
     case V4SFmode:
     case V4SImode:
     case V2DFmode:
@@ -6404,7 +6404,7 @@ reg_offset_addressing_ok_p (enum machine_mode mode)
 	 TImode is not a vector mode, if we want to use the VSX registers to
 	 move it around, we need to restrict ourselves to reg+reg
 	 addressing.  */
-      if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode) || VECTOR_MEM_S2PP_P (mode))
+      if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode))
 	return false;
       break;
 
@@ -8075,11 +8075,11 @@ rs6000_conditional_register_usage (void)
 
   if (TARGET_ALTIVEC || TARGET_VSX/* || TARGET_S2PP*/)
     global_regs[VSCR_REGNO] = 1;
-
-  if (!TARGET_S2PP) /*disables float for non s2pp?*/
+/*
+  if (!TARGET_S2PP) //disables float for non s2pp?
     for (i = FIRST_S2PP_REGNO; i <= LAST_S2PP_REGNO; ++i)
 	fixed_regs[i] = call_used_regs[i] = call_really_used_regs[i] = 1;
-
+*/
   if (TARGET_ALTIVEC_ABI)
     {
       for (i = FIRST_ALTIVEC_REGNO; i < FIRST_ALTIVEC_REGNO + 20; ++i)
@@ -12715,7 +12715,7 @@ altivec_expand_stv_builtin (enum insn_code icode, tree exp)
 }
 
 static rtx
-s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
+s2pp_expand_stv_builtin (enum insn_code icode, tree exp) //necessary?
 {
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
@@ -14927,7 +14927,7 @@ rs6000_init_builtins (void)
   if (TARGET_S2PP) {
     s2pp_init_builtins ();
   }
-  if (TARGET_EXTRA_BUILTINS){
+  if (TARGET_EXTRA_BUILTINS && !TARGET_S2PP){
     altivec_init_builtins ();
   }
   if (TARGET_HTM)
@@ -17551,7 +17551,7 @@ rs6000_secondary_reload (bool in_p,
 	    }
          /* Allow scalar loads to/from the traditional floating point
             registers, even if VSX memory is set.  */
-         else if ((rclass == FLOAT_REGS || rclass == NO_REGS) && !TARGET_S2PP
+         else if ((rclass == FLOAT_REGS || rclass == NO_REGS) /*&& !TARGET_S2PP*/
                   && (GET_MODE_SIZE (mode) == 4 || GET_MODE_SIZE (mode) == 8)
                   && (legitimate_indirect_address_p (addr, false)
                       || legitimate_indirect_address_p (addr, false)
@@ -21487,9 +21487,9 @@ rs6000_split_multireg_move (rtx dst, rtx src)
   mode = GET_MODE (dst);
   nregs = hard_regno_nregs[reg][mode];
   if (FP_REGNO_P (reg))
-    reg_mode = DECIMAL_FLOAT_MODE_P (mode) ? DDmode : 
+    reg_mode = TARGET_S2PP ? V16QImode : DECIMAL_FLOAT_MODE_P (mode) ? DDmode : 
 	((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT) ? DFmode : SFmode);
-  else if (ALTIVEC_REGNO_P (reg) || S2PP_REGNO_P (reg))
+  else if (ALTIVEC_REGNO_P (reg))
     reg_mode = V16QImode;
   else if (TARGET_E500_DOUBLE && mode == TFmode)
     reg_mode = DFmode;
@@ -29389,7 +29389,8 @@ rs6000_attribute_takes_identifier_p (const_tree attr_id)
 {
   if (TARGET_S2PP)
     return is_attribute_p ("s2pp", attr_id);
-  return is_attribute_p ("altivec", attr_id);
+  else
+    return is_attribute_p ("altivec", attr_id);
 }
 
 /* Handle the "altivec" attribute.  The attribute may have
