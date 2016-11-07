@@ -18493,7 +18493,9 @@ rs6000_cannot_change_mode_class (enum machine_mode from,
 
   if (from_size != to_size)
     {
-      enum reg_class xclass = (TARGET_VSX) ? VSX_REGS : FLOAT_REGS;
+      enum reg_class xclass = (TARGET_S2PP) ? S2PP_REGS 
+		      		: (TARGET_VSX) ? VSX_REGS 
+				: FLOAT_REGS;
 
       if (reg_classes_intersect_p (xclass, rclass))
 	{

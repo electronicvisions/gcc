@@ -41,9 +41,6 @@
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
 #define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
 #define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
-//#define vec_splatb(x) __builtin_s2pp_fxvsplatb ((x))
-//#define vec_splath(x) __builtin_s2pp_fxvsplath ((x))
-
 
 
 ///* Given the vec_step of a type, return the corresponding bool type.  */

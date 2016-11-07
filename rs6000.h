@@ -1367,8 +1367,8 @@ enum reg_class
   NO_REGS,
   BASE_REGS,
   GENERAL_REGS,
-  FLOAT_REGS,
   S2PP_REGS,  
+  FLOAT_REGS,
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1402,8 +1402,8 @@ enum reg_class
   "NO_REGS",								\
   "BASE_REGS",								\
   "GENERAL_REGS",							\
-  "FLOAT_REGS",								\
   "S2PP_REGS",								\
+  "FLOAT_REGS",								\
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\

@@ -61,15 +61,6 @@
   "fxvstax %1,0,%y0"
   [(set_attr "type" "vecstore")])
 
-;;(define_insn "s2pp_fxvstax_<mode>"
-;;  [(parallel
-;;    [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-;;	  (match_operand:FXVI 1 "register_operand" "k"))
-;;     (unspec [(const_int 0)] UNSPEC_STAX)])]
-;;  "TARGET_S2PP"
-;;  "fxvstax %1,0,%a0"
-;;  [(set_attr "type" "vecstore")])
-
 (define_expand "s2pp_fxvlax_<mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "=k")
