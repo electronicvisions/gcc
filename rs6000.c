@@ -2506,6 +2506,9 @@ rs6000_setup_reg_addr_masks (void)
 static void
 rs6000_init_hard_regno_mode_ok (bool global_init_p)
 {
+  if (S2PP_REGS == FLOAT_REGS)
+    fprintf (stderr, "S2PP_REGS == FLOAT_REGS");
+
   ssize_t r, m, c;
   int align64;
   int align32;
@@ -2576,6 +2579,10 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
     }
+  if (S2PP_REGS == FLOAT_REGS)
+    fprintf (stderr, "S2PP_REGS == FLOAT_REGS");
+  if (S2PP_REG_TYPE == FLOAT_REG_TYPE)
+    fprintf (stderr, "S2PP_REG_TYPE == FLOAT_REG_TYPE");
 	  
   /* Precalculate the valid memory formats as well as the vector information,
      this must be set up before the rs6000_hard_regno_nregs_internal calls
@@ -17551,7 +17558,8 @@ rs6000_secondary_reload (bool in_p,
 	    }
          /* Allow scalar loads to/from the traditional floating point
             registers, even if VSX memory is set.  */
-         else if ((rclass == FLOAT_REGS || rclass == NO_REGS) /*&& !TARGET_S2PP*/
+         else if ((rclass == FLOAT_REGS || rclass == NO_REGS)
+		  && !VECTOR_MEM_S2PP_P (mode)
                   && (GET_MODE_SIZE (mode) == 4 || GET_MODE_SIZE (mode) == 8)
                   && (legitimate_indirect_address_p (addr, false)
                       || legitimate_indirect_address_p (addr, false)

@@ -98,6 +98,15 @@
   "fxvadd<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
+;; sub
+(define_insn "sub<mode>3"
+  [(set (match_operand:FXVI 0 "register_operand" "=k")
+        (minus:VI2 (match_operand:FXVI 1 "register_operand" "k")
+		   (match_operand:FXVI 2 "register_operand" "k")))]
+  "<FXVI_unit>"
+  "fxvsub<FXVI_char>m %0,%1,%2"
+  [(set_attr "type" "vecsimple")])
+
 
 (define_insn "s2pp_fxvsplat<FXVI_char>"
   [(set (match_operand:FXVI 0 "register_operand" "=k")
@@ -106,73 +115,6 @@
   "TARGET_S2PP"
   "fxvsplat<FXVI_char> %0,%1"
   [(set_attr "type" "vecperm")])
-
-;;(define_expand "s2pp_splatb"
-;;  [(use (match_operand:V16QI 0 "register_operand" ""))
-;;   (use (match_operand:QI 1 "u5bit_cint_operand" ""))]
-;;  "TARGET_S2PP"
-;;{
-;;  rtvec v;
-;;  rtx x;
-;;
-;;  v = gen_rtvec (1, operands[1]);
-;;  x = gen_rtx_VEC_SELECT (QImode, operands[0], gen_rtx_PARALLEL (VOIDmode, v));
-;;  x = gen_rtx_VEC_DUPLICATE (V16QImode, x);
-;;  emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
-;;  DONE;
-;;})
-;;
-;;(define_insn "*s2pp_splatb_internal"
-;;  [(set (match_operand:V16QI 0 "register_operand" "=k")
-;;        (vec_duplicate:V16QI 
-;;	 (match_operand:QI 1 "u5bit_cint_operand" "")))]
-;;  "TARGET_S2PP"
-;;{
-;;  return "fxvsplatb %0,%1";
-;;}
-;;  [(set_attr "type" "vecperm")])
-;;
-;;(define_insn "s2pp_fxvsplatb_direct"
-;;  [(set (match_operand:V16QI 0 "register_operand" "=k")
-;;        (unspec:V16QI [(match_operand:QI 1 "u5bit_cint_operand" "i")]
-;;                      UNSPEC_FXVSPLT_DIRECT))]
-;;  "TARGET_S2PP"
-;;  "fxvsplatb %0,%1"
-;;  [(set_attr "type" "vecperm")])
-;;
-;;(define_expand "s2pp_splath"
-;;  [(use (match_operand:V8HI 0 "register_operand" ""))
-;;   (use (match_operand:QI 1 "u5bit_cint_operand" ""))]
-;;  "TARGET_S2PP"
-;;{
-;;  rtvec v;
-;;  rtx x;
-;;
-;;  v = gen_rtvec (1, operands[1]);
-;;  x = gen_rtx_VEC_SELECT (HImode, operands[0], gen_rtx_PARALLEL (VOIDmode, v));
-;;  x = gen_rtx_VEC_DUPLICATE (V8HImode, x);
-;;  emit_insn (gen_rtx_SET (VOIDmode, operands[0], x));
-;;  DONE;
-;;})
-;;
-;;(define_insn "*s2pp_splath_internal"
-;;  [(set (match_operand:V8HI 0 "register_operand" "=k")
-;;        (vec_duplicate:V8HI 
-;;	 (match_operand:QI 1 "u5bit_cint_operand" "")))]
-;;  "TARGET_S2PP"
-;;{
-;;  return "fxvsplath %0,%1,%2";
-;;}
-;;  [(set_attr "type" "vecperm")])
-;;
-;;(define_insn "s2pp_splath_direct"
-;;  [(set (match_operand:V8HI 0 "register_operand" "=k")
-;;        (unspec:V8HI [(match_operand:QI 1 "u5bit_cint_operand" "i")]
-;;                     UNSPEC_FXVSPLT_DIRECT))]
-;;  "TARGET_S2PP"
-;;  "fxvsplath %0,%1"
-;;  [(set_attr "type" "vecperm")])
-;;
 
 (define_expand "s2pp_vspltb"
   [(use (match_operand:V16QI 0 "register_operand" ""))
@@ -267,6 +209,45 @@
                       (match_operand:QI 2 "u5bit_cint_operand" "i")]
                      UNSPEC_FXVSPLT_DIRECT))]
   "TARGET_S2PP"
-  "vsplth %0,%1,%2"
+  "fxvsplth %0,%1,%2"
   [(set_attr "type" "vecperm")])
+
+(define_insn "*s2pp_fxvsel<mode>"
+  [(set (match_operand:FXVI 0 "s2pp_register_operand" "=k")
+	(if_then_else:FXVI
+	 (ne:CC (match_operand:FXVI 1 "s2pp_register_operand" "k")
+		(match_operand:FXVI 4 "zero_constant" ""))
+	 (match_operand:FXVI 2 "s2pp_register_operand" "k")
+	 (match_operand:FXVI 3 "s2pp_register_operand" "k")))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "fxvsel %0,%3,%2,%1"
+  [(set_attr "type" "vecperm")])
+
+(define_insn "*s2pp_vsel<mode>_uns"
+  [(set (match_operand:FXVI 0 "s2pp_register_operand" "=k")
+	(if_then_else:FXVI
+	 (ne:CCUNS (match_operand:FXVI 1 "s2pp_register_operand" "k")
+		   (match_operand:FXVI 4 "zero_constant" ""))
+	 (match_operand:FXVI 2 "s2pp_register_operand" "k")
+	 (match_operand:FXVI 3 "s2pp_register_operand" "k")))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "fxvsel %0,%3,%2,%1"
+  [(set_attr "type" "vecperm")])
+
+(define_insn "*s2pp_fxvsh<VI_char>"
+  [(set (match_operand:FXVI 0 "register_operand" "=k")
+        (ashift:FXVI (match_operand:FXVI 1 "register_operand" "k")
+		    (match_operand:FXVI 2 "register_operand" "k")))]
+  "<FXVI_unit>"
+  "fxvsh<FXVI_char> %0,%1,%2"
+  [(set_attr "type" "vecsimple")])
+
+;;(define_insn "s2pp_fxvsh"
+;;  [(set (match_operand:V4SI 0 "register_operand" "=v")
+;;        (unspec:V4SI [(match_operand:V4SI 1 "register_operand" "v")
+;;                      (match_operand:V4SI 2 "register_operand" "v")]
+;;		     UNSPEC_VSLV4SI))]
+;;  "TARGET_ALTIVEC"
+;;  "vsl %0,%1,%2"
+;;  [(set_attr "type" "vecperm")])
 
