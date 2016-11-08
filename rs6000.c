@@ -1740,6 +1740,9 @@ rs6000_hard_regno_nregs_internal (int regno, enum machine_mode mode)
   else if (ALTIVEC_REGNO_P (regno))
     reg_size = UNITS_PER_ALTIVEC_WORD;
 
+  else if (S2PP_REGNO_P (regno))
+    reg_size = UNITS_PER_S2PP_WORD;
+
   /* The value returned for SCmode in the E500 double case is 2 for
      ABI compatibility; storing an SCmode value in a single register
      would require function_arg and rs6000_spe_function_arg to handle
@@ -1822,6 +1825,9 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
       return 0;
     }
 
+    if (S2PP_REG_NO_P (mode))
+      return VECTOR_MEM_S2PP_P (mode);
+      
   /* The CR register can only hold CC modes.  */
   if (CR_REGNO_P (regno))
     return GET_MODE_CLASS (mode) == MODE_CC;
@@ -2581,7 +2587,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
     }
   if (S2PP_REGS == FLOAT_REGS)
     fprintf (stderr, "S2PP_REGS == FLOAT_REGS");
-  if (S2PP_REG_TYPE == FLOAT_REG_TYPE)
+  if (S2PP_REG_TYPE == FPR_REG_TYPE)
     fprintf (stderr, "S2PP_REG_TYPE == FLOAT_REG_TYPE");
 	  
   /* Precalculate the valid memory formats as well as the vector information,
@@ -8025,9 +8031,9 @@ rs6000_conditional_register_usage (void)
   if (TARGET_64BIT)
     fixed_regs[13] = call_used_regs[13]
       = call_really_used_regs[13] = 1;
-
+// free up registers when s2pp used?
   /* Conditionally disable FPRs.  */
-  if ((TARGET_SOFT_FLOAT || !TARGET_FPRS) && !TARGET_S2PP)
+  if ((TARGET_SOFT_FLOAT || !TARGET_FPRS)/* && !TARGET_S2PP*/)
     for (i = 32; i < 64; i++)
       fixed_regs[i] = call_used_regs[i]
 	= call_really_used_regs[i] = 1;
@@ -21499,6 +21505,8 @@ rs6000_split_multireg_move (rtx dst, rtx src)
   if (FP_REGNO_P (reg))
     reg_mode = TARGET_S2PP ? V16QImode : DECIMAL_FLOAT_MODE_P (mode) ? DDmode : 
 	((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT) ? DFmode : SFmode);
+  else if (S2PP_REGNO_P (reg))
+    reg_mode = V16QImode;
   else if (ALTIVEC_REGNO_P (reg))
     reg_mode = V16QImode;
   else if (TARGET_E500_DOUBLE && mode == TFmode)

@@ -163,10 +163,11 @@
 %{mcpu=e500mc64: -me500mc64} \
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
+%{mcpu=ppu: -mpower7 -ms2pp} \
 %{maltivec: -maltivec} \
+%{ms2pp: -ms2pp %{!msoft-float: -msoft-float}} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
-%{mcpu=ppu: -mpower7 -ms2pp} \
 -many"
 /*p_o_i*/
 #define CPP_DEFAULT_SPEC ""
@@ -1437,7 +1438,7 @@ enum reg_class
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* S2PP_REGS.  */							\
-  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
