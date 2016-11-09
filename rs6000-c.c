@@ -404,7 +404,7 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
       cpp_get_callbacks (pfile)->macro_to_expand = rs6000_macro_to_expand;
     }
   }
-  if (TARGET_EXTRA_BUILTINS)
+  if (TARGET_EXTRA_BUILTINS && !TARGET_S2PP)
     {/*p_o_i*/
 
       /* Define the AltiVec syntactic elements.  */
