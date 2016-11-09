@@ -1368,8 +1368,8 @@ enum reg_class
   NO_REGS,
   BASE_REGS,
   GENERAL_REGS,
-  S2PP_REGS,  
   FLOAT_REGS,
+  S2PP_REGS,  
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1403,8 +1403,8 @@ enum reg_class
   "NO_REGS",								\
   "BASE_REGS",								\
   "GENERAL_REGS",							\
-  "S2PP_REGS",								\
   "FLOAT_REGS",								\
+  "S2PP_REGS",								\
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\
@@ -1437,9 +1437,9 @@ enum reg_class
   { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
-  /* S2PP_REGS.  */							\
-  { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
+  { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* S2PP_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\

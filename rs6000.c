@@ -329,8 +329,8 @@ enum rs6000_reg_type {
   GPR_REG_TYPE,
   VSX_REG_TYPE,
   ALTIVEC_REG_TYPE,
-  S2PP_REG_TYPE,
   FPR_REG_TYPE,
+  S2PP_REG_TYPE,
   SPR_REG_TYPE,
   CR_REG_TYPE,
   SPE_ACC_TYPE,
@@ -342,7 +342,7 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
-#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
+#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, S2PP_REG_TYPE)
 
 
 #define IS_FP_VECT_REG_TYPE(RTYPE) (IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
