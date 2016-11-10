@@ -396,7 +396,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
-#define rs6000_debug 0x24
+//#define rs6000_debug 0x24
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -1061,7 +1061,7 @@ enum data_align { align_abi, align_opt, align_both };
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
-#define FIRST_SAVED_S2PP_REGNO (FIRST_S2PP_REGNO+20)
+#define FIRST_SAVED_S2PP_REGNO (FIRST_S2PP_REGNO+19)
 #define FIRST_SAVED_FP_REGNO	  (14+32)
 #define FIRST_SAVED_GP_REGNO	  (FIXED_R13 ? 14 : 13)
 
@@ -1368,8 +1368,8 @@ enum reg_class
   NO_REGS,
   BASE_REGS,
   GENERAL_REGS,
-  FLOAT_REGS,
   S2PP_REGS,  
+  FLOAT_REGS,
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1403,8 +1403,8 @@ enum reg_class
   "NO_REGS",								\
   "BASE_REGS",								\
   "GENERAL_REGS",							\
-  "FLOAT_REGS",								\
   "S2PP_REGS",								\
+  "FLOAT_REGS",								\
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\
@@ -1437,9 +1437,9 @@ enum reg_class
   { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
-  /* FLOAT_REGS.  */							\
-  { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
   /* S2PP_REGS.  */							\
+  { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* FLOAT_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
@@ -1744,7 +1744,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 
 /* Minimum and maximum s2pp registers used to hold arguments.  */
 //#define S2PP_REGS FLOAT_REGS
-#define FIRST_S2PP_REGNO FIRST_FPR_REGNO
+#define FIRST_S2PP_REGNO FIRST_FPR_REGNO + 1
 #define LAST_S2PP_REGNO LAST_FPR_REGNO
 #define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
 #define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)

@@ -728,6 +728,10 @@ BU_S2PP_1 (FXVSPLATH,		"fxvsplath",	CONST,	s2pp_fxvsplath)
 
 BU_S2PP_2 (FXVADDBM,		"fxvaddbm",	CONST,	addv16qi3)
 BU_S2PP_2 (FXVADDHM,		"fxvaddhm",	CONST,	addv8hi3)
+BU_S2PP_2 (FXVSUBBM,	      	"fxvsububm",	CONST,	subv16qi3)
+BU_S2PP_2 (FXVSUBHM,	      	"fxvsubuhm",	CONST,	subv8hi3)
+BU_S2PP_2 (FXVSHB,	      	"fxvshb",	CONST,	vashlv16qi3)
+BU_S2PP_2 (FXVSHH,	      	"fxvshh",	CONST,	vashlv8hi3)
 
 BU_S2PP_3 (FXVSEL_8HI,    	"fxvsel_8hi",	CONST,	vector_select_v8hi)
 BU_S2PP_3 (FXVSEL_16QI,   	"fxvsel_16qi",	CONST,	vector_select_v16qi)
@@ -757,6 +761,13 @@ BU_S2PP_X (VEC_INIT_V16QI,	"vec_init_v16qi",   	CONST)
 BU_S2PP_OVERLOAD_2 (FXVADDBM,	"fxvaddbm")
 BU_S2PP_OVERLOAD_2 (FXVADDHM,	"fxvaddhm")
 BU_S2PP_OVERLOAD_2 (FXVADD,	"fxvadd")
+BU_S2PP_OVERLOAD_2 (FXVSUBBM,	"fxvsubbm")
+BU_S2PP_OVERLOAD_2 (FXVSUBHM,	"fxvsubhm")
+BU_S2PP_OVERLOAD_2 (FXVSUB,	"fxvsub")
+
+BU_S2PP_OVERLOAD_2 (FXVSH,	   "fxvsl")
+BU_S2PP_OVERLOAD_2 (FXVSHB,	   "fxvshb")
+BU_S2PP_OVERLOAD_2 (FXVSHH,	   "fxvshh")
 
 BU_S2PP_OVERLOAD_3 (FXVSEL,	"fxvsel")
 

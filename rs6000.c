@@ -5464,8 +5464,8 @@ output_vec_const_move (rtx *operands)
   if (TARGET_S2PP)
     {
       rtx splat_vec;
-      if (zero_constant (vec, mode))
-	return "fxvsel %0, %0, %0, 1";
+      //if (zero_constant (vec, mode))
+	//return "fxvsel %0, 0, 0, 1";
 
       splat_vec = gen_easy_s2pp_constant (vec);
       gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
@@ -8036,6 +8036,8 @@ rs6000_conditional_register_usage (void)
       fixed_regs[i] = call_used_regs[i]
 	= call_really_used_regs[i] = 1;
 
+  if (TARGET_S2PP)
+    fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
   /* The TOC register is not killed across calls in a way that is
      visible to the compiler.  */
   if (DEFAULT_ABI == ABI_AIX || DEFAULT_ABI == ABI_ELFv2)
