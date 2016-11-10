@@ -5464,15 +5464,16 @@ output_vec_const_move (rtx *operands)
   if (TARGET_S2PP)
     {
       rtx splat_vec;
-      //if (zero_constant (vec, mode))
-	//return "fxvsel %0, 0, 0, 1";
+      if (zero_constant (vec, mode))
+	return "fxvsel %0, 0, 0, 0";
 
       splat_vec = gen_easy_s2pp_constant (vec);
       gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
       operands[1] = XEXP (splat_vec, 0);
-      if (!EASY_VECTOR_15 (INTVAL (operands[1])))
+      if (!EASY_VECTOR_15 (INTVAL (operands[1]))){
+	fprintf (stderr, "noit easz vector in vec_const move\n");
 	return "#";
- 
+      } 
       mode = GET_MODE (splat_vec);
       if (mode == V8HImode)
 	return "fxvsplath %0,%1";

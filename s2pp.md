@@ -31,7 +31,7 @@
     case 3: return "#";
     case 4: return "#";
     case 5: return "#";
-    case 6: return "fxvsel %0,0,0,0";
+    case 6: return output_vec_const_move (operands);
     case 7: return output_vec_const_move (operands);
     default: gcc_unreachable ();
     }
