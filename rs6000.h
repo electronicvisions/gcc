@@ -1174,6 +1174,9 @@ enum data_align { align_abi, align_opt, align_both };
 /* True if register is an s2pp register.  *///s2pp-mark
 #define S2PP_REGNO_P(N) ((N) >= FIRST_S2PP_REGNO && (N) <= LAST_S2PP_REGNO)
 
+#define S2PP_COND_REGNO_P(N) ((N) == S2PP_COND_REGNO)
+
+#define S2PP_ACC_REGNO_P(N) ((N) == S2PP_ACC_REGNO)
 
 /* True if register is a VSX register.  */
 #define VSX_REGNO_P(N) (FP_REGNO_P (N) || ALTIVEC_REGNO_P (N))
@@ -1370,6 +1373,8 @@ enum reg_class
   GENERAL_REGS,
   S2PP_REGS,  
   FLOAT_REGS,
+  S2PP_C_REG,  
+  S2PP_ACC_REG,  
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1405,6 +1410,8 @@ enum reg_class
   "GENERAL_REGS",							\
   "S2PP_REGS",								\
   "FLOAT_REGS",								\
+  "S2PP_C_REG",								\
+  "S2PP_ACC_REG",							\
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\
@@ -1441,6 +1448,10 @@ enum reg_class
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* S2PP_C_REG.  */							\
+  { 0x00000000, 0x00000000, 0x10000000, 0x00000000, 0x00000000 },	\
+  /* S2PP_ACC_REG.  */							\
+  { 0x00000000, 0x00000000, 0x20000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
   /* VSX_REGS.  */							\
@@ -1504,7 +1515,9 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_d,		/* fpr registers for double values */
   RS6000_CONSTRAINT_f,		/* fpr registers for single values */
   RS6000_CONSTRAINT_v,		/* Altivec registers */
-  RS6000_CONSTRAINT_k,		/* s2pp-marker added s2pp vectror register constriant, actually not used (not for now)*/
+  RS6000_CONSTRAINT_kv,		/* s2pp vector regsiters*/
+  RS6000_CONSTRAINT_kc,		/* s2pp conditional register*/
+  RS6000_CONSTRAINT_ka,		/* s2pp accumulator*/
   RS6000_CONSTRAINT_wa,		/* Any VSX register */
   RS6000_CONSTRAINT_wd,		/* VSX register for V2DF */
   RS6000_CONSTRAINT_wf,		/* VSX register for V4SF */
@@ -1749,6 +1762,8 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
 #define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
 #define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
+#define S2PP_COND_REGNO LAST_S2PP_REGNO + 1
+#define S2PP_ACC_REGNO S2PP_COND_REGNO + 1
 
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
@@ -2555,6 +2570,7 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   {"k20", 52}, {"k21", 53}, {"k22", 54}, {"k23", 55},	\
   {"k24", 56}, {"k25", 57}, {"k26", 58}, {"k27", 59},	\
   {"k28", 60}, {"k29", 61}, {"k30", 62}, {"k31", 63},	\
+  {"s2pp_cond", 64}, {"s2pp_acc", 65}				\
 }
 
 /* This is how to output an element of a case-vector that is relative.  */
@@ -2607,7 +2623,7 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
 
 /* Define which CODE values are valid.  */
 
-#define PRINT_OPERAND_PUNCT_VALID_P(CODE)  ((CODE) == '&')
+#define PRINT_OPERAND_PUNCT_VALID_P(CODE)  ((CODE) == '&' || (CODE) == '.')
 
 /* Print a memory address as an operand to reference that memory location.  */
 

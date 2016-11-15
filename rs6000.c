@@ -333,6 +333,8 @@ enum rs6000_reg_type {
   S2PP_REG_TYPE,
   SPR_REG_TYPE,
   CR_REG_TYPE,
+  S2PP_C_REG_TYPE,
+  S2PP_ACC_REG_TYPE,
   SPE_ACC_TYPE,
   SPEFSCR_REG_TYPE
 };
@@ -2084,7 +2086,9 @@ rs6000_debug_reg_global (void)
   rs6000_debug_reg_print (FIRST_ALTIVEC_REGNO,
 			  LAST_ALTIVEC_REGNO,
 			  "vs");
-  rs6000_debug_reg_print (FIRST_S2PP_REGNO, LAST_S2PP_REGNO, "k");
+  rs6000_debug_reg_print (FIRST_S2PP_REGNO, LAST_S2PP_REGNO, "kv");
+  rs6000_debug_reg_print (S2PP_COND_REGNO, S2PP_COND_REGNO, "kc");
+  rs6000_debug_reg_print (S2PP_ACC_REGNO, S2PP_ACC_REGNO, "ka");
   rs6000_debug_reg_print (LR_REGNO, LR_REGNO, "lr");
   rs6000_debug_reg_print (CTR_REGNO, CTR_REGNO, "ctr");
   rs6000_debug_reg_print (CR0_REGNO, CR7_REGNO, "cr");
@@ -2103,7 +2107,9 @@ rs6000_debug_reg_global (void)
 	   "d  reg_class = %s\n"
 	   "f  reg_class = %s\n"
 	   "v  reg_class = %s\n"
-	   "k  reg_class = %s\n"
+	   "kv reg_class = %s\n"
+	   "kc reg_class = %s\n"
+	   "ka reg_class = %s\n"
 	   "wa reg_class = %s\n"
 	   "wd reg_class = %s\n"
 	   "wf reg_class = %s\n"
@@ -2127,7 +2133,9 @@ rs6000_debug_reg_global (void)
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_d]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_f]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_v]],
-	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_k]],
+	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_kv]],
+	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_kc]],
+	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_ka]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_wa]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_wd]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_wf]],
@@ -2588,6 +2596,10 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
       reg_class_to_reg_type[(int)S2PP_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
+      rs6000_regno_regclass[S2PP_COND_REGNO] = S2PP_C_REG;
+      rs6000_regno_regclass[S2PP_ACC_REGNO] = S2PP_ACC_REG;
+      reg_class_to_reg_type[(int)S2PP_C_REG] = S2PP_C_REG_TYPE; //S2PP_REG_TYPE;
+      reg_class_to_reg_type[(int)S2PP_ACC_REG] = S2PP_ACC_REG_TYPE; //S2PP_REG_TYPE;
     }
   if (S2PP_REGS == FLOAT_REGS)
     fprintf (stderr, "S2PP_REGS == FLOAT_REGS");
@@ -2774,8 +2786,11 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   if (TARGET_ALTIVEC)
     rs6000_constraints[RS6000_CONSTRAINT_v] = ALTIVEC_REGS;
 
-  if (TARGET_S2PP)
-    rs6000_constraints[RS6000_CONSTRAINT_k] = S2PP_REGS;
+  if (TARGET_S2PP){
+    rs6000_constraints[RS6000_CONSTRAINT_kv] = S2PP_REGS;
+    rs6000_constraints[RS6000_CONSTRAINT_kc] = S2PP_C_REG;
+    rs6000_constraints[RS6000_CONSTRAINT_ka] = S2PP_ACC_REG;
+  }
 
   if (TARGET_MFPGPR)						/* DFmode  */
     rs6000_constraints[RS6000_CONSTRAINT_wg] = FLOAT_REGS;
@@ -5465,13 +5480,12 @@ output_vec_const_move (rtx *operands)
     {
       rtx splat_vec;
       if (zero_constant (vec, mode))
-	return "fxvsel %0, 0, 0, 0";
+	return "fxvsplatb %0, 0";
 
       splat_vec = gen_easy_s2pp_constant (vec);
       gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
       operands[1] = XEXP (splat_vec, 0);
       if (!EASY_VECTOR_15 (INTVAL (operands[1]))){
-	fprintf (stderr, "noit easz vector in vec_const move\n");
 	return "#";
       } 
       mode = GET_MODE (splat_vec);
@@ -15868,8 +15882,6 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_SPLAT);
   def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_EXTRACT);
   def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_INSERT);
-  //def_builtin ("__builtin_vec_fxvsplath", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATH);
-  //def_builtin ("__builtin_vec_fxvsplatb", opaque_ftype_opaque_int, S2PP_BUILTIN_FXVSPLATB);
 
   /* Add the DST variants.  */
 //  d = bdesc_dst;
@@ -19153,15 +19165,6 @@ print_operand (FILE *file, rtx x, int code)
 		 (INTVAL (x) >> 16) & 0xffff);
       return;
 
-//    case 'k':
-//      /* X must be a constant.  Write the 1's complement of the
-//	 constant.  */
-//      if (! INT_P (x))
-//	output_operand_lossage ("invalid %%k value");
-//      else
-//	fprintf (file, HOST_WIDE_INT_PRINT_DEC, ~ INTVAL (x));
-//      return;
-
     case 'K':
       /* X must be a symbolic constant on ELF.  Write an
 	 expression suitable for an 'addi' that adds in the low 16
@@ -19652,6 +19655,10 @@ print_operand (FILE *file, rtx x, int code)
 
     case '&':
       assemble_name (file, rs6000_get_some_local_dynamic_name ());
+      return;
+
+    case '.':
+      //fprintf (file, "%%f");
       return;
 
     default:

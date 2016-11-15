@@ -31,32 +31,55 @@
 #define vec_promote __builtin_vec_promote
 
 #define vec_add __builtin_vec_fxvadd
-#define fxv_add vec_add
 #define vec_addbm vec_fxvaddbm
 #define vec_addhm vec_fxvaddhm
 #define fxv_addbm __builtin_vec_fxvaddbm
 #define fxv_addhm __builtin_vec_fxvaddhm
+#define vec_addfs __builtin_vec_fxvaddfs
+#define vec_addbfs vec_fxvaddbfs
+#define vec_addhfs vec_fxvaddhfs
+#define fxv_addbfs __builtin_vec_fxvaddbfs
+#define fxv_addhfs __builtin_vec_fxvaddhfs
 
 #define vec_sub __builtin_vec_fxvsub
-#define vec_fxvsub vec_sub
-//#define vec_fxvsubbs __builtin_vec_fxvsubbs
 #define vec_subbm vec_fxvsubbm
 #define vec_subhm vec_fxvsubhm
 #define fxv_subbm __builtin_vec_fxvsubbm
 #define fxv_subhm __builtin_vec_fxvsubhm
-//#define vec_fxvsubhs __builtin_vec_fxvsubhs
+#define vec_subfs __builtin_vec_fxvsubfs
+#define vec_subbfs vec_fxvsubbfs
+#define vec_subhfs vec_fxvsubhfs
+#define fxv_subbfs __builtin_vec_fxvsubbfs
+#define fxv_subhfs __builtin_vec_fxvsubhfs
 
-#define vec_sh __builtin_vec_fxvsh
-#define fxv_shb __builtin_vec_fxvshb
-#define fxv_shh __builtin_vec_fxvshh
+#define vec_mul __builtin_vec_fxvmul
+#define vec_mulbm vec_fxvmulbm
+#define vec_mulhm vec_fxvmulhm
+#define fxv_mulbm __builtin_vec_fxvmulbm
+#define fxv_mulhm __builtin_vec_fxvmulhm
+#define vec_mulfs __builtin_vec_fxvmulfs
+#define vec_mulbfs vec_fxvmulbfs
+#define vec_mulhfs vec_fxvmulhfs
+#define fxv_mulbfs __builtin_vec_fxvmulbfs
+#define fxv_mulhfs __builtin_vec_fxvmulhfs
 
-#define fxv_splatb vec_splat_s8
-#define fxv_splath vec_splat_s16
-#define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
+#define vec_shl __builtin_vec_fxvshl
+#define fxv_shlb __builtin_vec_fxvshlb
+#define fxv_shlh __builtin_vec_fxvshlh
+#define vec_shr __builtin_vec_fxvshr
+#define fxv_shrb __builtin_vec_fxvshrb
+#define fxv_shrh __builtin_vec_fxvshrh
+
+#define fxv_splath vec_splat_u16
+#define fxv_splatb vec_splat_u8
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
-#define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
+#define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
 #define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
+#define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
 
+#define fxv_cmp __builtin_vec_fxvcmp
+#define fxv_cmpb __builtin_vec_fxvcmpb
+#define fxv_cmph __builtin_vec_fxvcmph
 
 ///* Given the vec_step of a type, return the corresponding bool type.  */
 //template <int STEP> class __s2pp_bool_ret { };
