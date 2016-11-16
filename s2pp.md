@@ -9,12 +9,15 @@
    UNSPEC_FXVADD
    UNSPEC_FXVSUB
    UNSPEC_FXVMUL
-   UNSPEC_FXVCMP
    UNSPEC_FXVPACKU
    UNSPEC_FXVPACKL
    UNSPEC_FXVUPACKL
    UNSPEC_FXVUPACKR
 ])  
+
+(define_c_enum "unspecv"
+  [UNSPEC_FXVCMP
+])
 
 ;; Vec int modes
 (define_mode_iterator FXVI [V8HI V16QI])
@@ -186,7 +189,7 @@
 		    (match_operand:FXVI 2 "register_operand" "kv")]
 		   UNSPEC_FXVMUL))]
   "<FXVI_unit>"
-  "fxvmull<FXVI_char>fs %0,%1,%2"
+  "fxvmul<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 ;; splat
@@ -240,12 +243,12 @@
 
 ;;compare
 (define_insn "s2pp_fxvcmp<FXVI_char>"
-  [(set (reg:FXVI 64)
-        (unspec_volatile:FXVI
+  [(set (reg:CC S2PP_COND_REGNO)
+        (unspec_volatile:CC
          [(match_operand:FXVI 0 "register_operand" "kv")] UNSPEC_FXVCMP))]
   "TARGET_S2PP"
   "fxvcmp<FXVI_char> %0"
-  [(set_attr "type" "vecsimple")])
+  [(set_attr "type" "veccompare")])
 
 ;; pack
 ;;(define_insn "s2pp_fxvpckbu"

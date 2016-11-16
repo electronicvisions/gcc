@@ -12743,7 +12743,7 @@ altivec_expand_stv_builtin (enum insn_code icode, tree exp)
 }
 
 static rtx
-s2pp_expand_stv_builtin (enum insn_code icode, tree exp) //necessary?
+s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
 {
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
@@ -13933,11 +13933,11 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 {
   //const struct builtin_description *d;
   //size_t i;
-  //enum insn_code icode;
+  enum insn_code icode;
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
-  //tree arg0;
-  //rtx op0, pat;
-  //enum machine_mode tmode, mode0;
+  tree arg0;
+  rtx op0, pat;
+  enum machine_mode mode0; //, tmode;
   enum rs6000_builtins fcode
     = (enum rs6000_builtins) DECL_FUNCTION_CODE (fndecl);
 
@@ -13982,6 +13982,42 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
     case S2PP_BUILTIN_VEC_EXT_V8HI:
     case S2PP_BUILTIN_VEC_EXT_V16QI:
       return s2pp_expand_vec_ext_builtin (exp, target);
+
+    case S2PP_BUILTIN_FXVCMPB:
+      icode = CODE_FOR_s2pp_fxvcmpb;
+      arg0 = CALL_EXPR_ARG (exp, 0);
+      op0 = expand_normal (arg0);
+      //mode0 = insn_data[icode].operand[0].mode;
+
+      /* If we got invalid arguments bail out before generating bad rtl.  */
+      if (arg0 == error_mark_node)
+	return const0_rtx;
+
+      //if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
+	//op0 = copy_to_mode_reg (mode0, op0);
+
+      pat = GEN_FCN (icode) (op0);
+      if (pat)
+	emit_insn (pat);
+      return NULL_RTX;
+
+    case S2PP_BUILTIN_FXVCMPH:
+      icode = CODE_FOR_s2pp_fxvcmph;
+      arg0 = CALL_EXPR_ARG (exp, 0);
+      op0 = expand_normal (arg0);
+      mode0 = insn_data[icode].operand[0].mode;
+
+      /* If we got invalid arguments bail out before generating bad rtl.  */
+      if (arg0 == error_mark_node)
+	return const0_rtx;
+
+      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
+	op0 = copy_to_mode_reg (mode0, op0);
+
+      pat = GEN_FCN (icode) (op0);
+      if (pat)
+	emit_insn (pat);
+      return NULL_RTX;
 
     default:
       break;
@@ -15863,6 +15899,10 @@ s2pp_init_builtins (void)
     = build_function_type_list (opaque_V4SI_type_node,
 				opaque_V4SI_type_node, opaque_V4SI_type_node,
 				integer_type_node, NULL_TREE);
+  tree void_ftype_v8hi
+    = build_function_type_list (void_type_node, V8HI_type_node, NULL_TREE);
+  tree void_ftype_v16qi
+    = build_function_type_list (void_type_node, V16QI_type_node, NULL_TREE);
 
   def_builtin ("__builtin_s2pp_fxvlax_v8hi", v8hi_ftype_long_pcvoid,
 	       S2PP_BUILTIN_FXVLAX_V8HI);
@@ -15882,6 +15922,10 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_splat", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_SPLAT);
   def_builtin ("__builtin_vec_extract", opaque_ftype_opaque_int, S2PP_BUILTIN_VEC_EXTRACT);
   def_builtin ("__builtin_vec_insert", opaque_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_INSERT);
+
+  //def_builtin ("__builtin_s2pp_fxvcmp", opaque_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_INSERT);
+  def_builtin ("__builtin_s2pp_fxvcmpb", void_ftype_v16qi, S2PP_BUILTIN_FXVCMPB);
+  def_builtin ("__builtin_s2pp_fxvcmph", void_ftype_v8hi, S2PP_BUILTIN_FXVCMPH);
 
   /* Add the DST variants.  */
 //  d = bdesc_dst;

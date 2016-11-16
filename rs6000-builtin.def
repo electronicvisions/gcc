@@ -772,9 +772,9 @@ BU_S2PP_X (VEC_EXT_V16QI,	"vec_ext_v16qi",   	CONST)
 BU_S2PP_X (VEC_INIT_V8HI,	"vec_init_v8hi",    	CONST)
 BU_S2PP_X (VEC_INIT_V16QI,	"vec_init_v16qi",   	CONST)
 
-BU_S2PP_X (FXVCMP,		"s2pp_fxvcmp",		MISC)
-BU_S2PP_X (FXVCMPB,		"s2pp_fxvcmpb",		MISC)
-BU_S2PP_X (FXVCMPH,		"s2pp_fxvcmph",		MISC)
+BU_S2PP_X (FXVCMP,		"fxvcmp",		MISC)
+BU_S2PP_X (FXVCMPB,		"fxvcmpb",		MISC)
+BU_S2PP_X (FXVCMPH,		"fxvcmph",		MISC)
 
 BU_S2PP_OVERLOAD_1 (FXVCMPB,	"fxvcmpb")
 BU_S2PP_OVERLOAD_1 (FXVCMPH,	"fxvcmph")

@@ -1757,13 +1757,13 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 
 /* Minimum and maximum s2pp registers used to hold arguments.  */
 //#define S2PP_REGS FLOAT_REGS
-#define FIRST_S2PP_REGNO FIRST_FPR_REGNO + 1
-#define LAST_S2PP_REGNO LAST_FPR_REGNO
+//#define FIRST_S2PP_REGNO FIRST_FPR_REGNO + 1
+//#define LAST_S2PP_REGNO LAST_FPR_REGNO
 #define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
 #define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
 #define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
-#define S2PP_COND_REGNO LAST_S2PP_REGNO + 1
-#define S2PP_ACC_REGNO S2PP_COND_REGNO + 1
+//#define S2PP_COND_REGNO LAST_S2PP_REGNO + 1
+//#define S2PP_ACC_REGNO S2PP_COND_REGNO + 1
 
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
