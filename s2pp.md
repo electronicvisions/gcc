@@ -245,10 +245,10 @@
 (define_insn "s2pp_fxvcmp<FXVI_char>"
   [(set (reg:CC S2PP_COND_REGNO)
         (unspec_volatile:CC
-         [(match_operand:FXVI 0 "register_operand" "kv")] UNSPEC_FXVCMP))]
+         [(match_operand:FXVI 0 "s2pp_register_operand" "kv")] UNSPEC_FXVCMP))]
   "TARGET_S2PP"
   "fxvcmp<FXVI_char> %0"
-  [(set_attr "type" "veccompare")])
+  [(set_attr "type" "veccmp")])
 
 ;; pack
 ;;(define_insn "s2pp_fxvpckbu"

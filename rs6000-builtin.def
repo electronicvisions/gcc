@@ -726,8 +726,8 @@ BU_SPECIAL_X (RS6000_BUILTIN_NONE, NULL, 0, RS6000_BTC_MISC)
 BU_S2PP_1 (FXVSPLATB,		"fxvsplatb",	CONST,	s2pp_fxvsplatb)
 BU_S2PP_1 (FXVSPLATH,		"fxvsplath",	CONST,	s2pp_fxvsplath)
 
-//BU_S2PP_1 (FXVCMPB,		"fxvcmpb",	CONST,	s2pp_fxvcmpb)
-//BU_S2PP_1 (FXVCMPH,		"fxvcmph",	CONST,	s2pp_fxvcmph)
+BU_S2PP_1 (FXVCMPB,		"fxvcmpb",	VOID | RS6000_BTC_CONST,	s2pp_fxvcmpb)
+BU_S2PP_1 (FXVCMPH,		"fxvcmph",	VOID/* | RS6000_BTC_CONST*/,	s2pp_fxvcmph)
 
 BU_S2PP_2 (FXVADDBM,		"fxvaddbm",	CONST,	addv16qi3)
 BU_S2PP_2 (FXVADDHM,		"fxvaddhm",	CONST,	addv8hi3)
@@ -772,9 +772,9 @@ BU_S2PP_X (VEC_EXT_V16QI,	"vec_ext_v16qi",   	CONST)
 BU_S2PP_X (VEC_INIT_V8HI,	"vec_init_v8hi",    	CONST)
 BU_S2PP_X (VEC_INIT_V16QI,	"vec_init_v16qi",   	CONST)
 
-BU_S2PP_X (FXVCMP,		"fxvcmp",		MISC)
-BU_S2PP_X (FXVCMPB,		"fxvcmpb",		MISC)
-BU_S2PP_X (FXVCMPH,		"fxvcmph",		MISC)
+//BU_S2PP_X (FXVCMP,		"fxvcmp",		VOID)
+//BU_S2PP_X (FXVCMPB,		"fxvcmpb",		VOID)
+//BU_S2PP_X (FXVCMPH,		"fxvcmph",		VOID)
 
 BU_S2PP_OVERLOAD_1 (FXVCMPB,	"fxvcmpb")
 BU_S2PP_OVERLOAD_1 (FXVCMPH,	"fxvcmph")
