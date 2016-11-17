@@ -12089,15 +12089,26 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
 	}
     }
 
+//special handling for void intrinsic
+  if (icode == CODE_FOR_s2pp_fxvcmpb || icode == CODE_FOR_s2pp_fxvcmph){
+    if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
+      op0 = copy_to_mode_reg (mode0, op0);
+    pat = GEN_FCN (icode) (op0);
+    if (! pat)
+      return 0;
+    emit_insn (pat);
+    return NULL_RTX;
+  }
+
   if (target == 0
       || GET_MODE (target) != tmode
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
     target = gen_reg_rtx (tmode);
-
+    
   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
     op0 = copy_to_mode_reg (mode0, op0);
-
   pat = GEN_FCN (icode) (target, op0);
+  
   if (! pat)
     return 0;
   emit_insn (pat);

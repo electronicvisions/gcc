@@ -15,10 +15,6 @@
    UNSPEC_FXVUPACKR
 ])  
 
-(define_c_enum "unspecv"
-  [UNSPEC_FXVCMP
-])
-
 ;; Vec int modes
 (define_mode_iterator FXVI [V8HI V16QI])
 
@@ -244,8 +240,8 @@
 ;;compare
 (define_insn "s2pp_fxvcmp<FXVI_char>"
   [(set (reg:CC S2PP_COND_REGNO)
-        (unspec_volatile:CC
-         [(match_operand:FXVI 0 "s2pp_register_operand" "kv")] UNSPEC_FXVCMP))]
+        (compare:CC (match_operand:FXVI 0 "register_operand" "kv")
+                    (const_int 0)))]
   "TARGET_S2PP"
   "fxvcmp<FXVI_char> %0"
   [(set_attr "type" "veccmp")])
