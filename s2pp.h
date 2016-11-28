@@ -70,6 +70,11 @@
 #define fxv_shrb __builtin_vec_fxvshrb
 #define fxv_shrh __builtin_vec_fxvshrh
 
+#define fxv_pckbu __builtin_vec_fxvpckbu
+#define fxv_pckbl __builtin_vec_fxvpckbl
+#define fxv_upckbl __builtin_vec_fxvupckbl
+#define fxv_upckbr __builtin_vec_fxvupckbr
+
 #define fxv_splath vec_splat_u16
 #define fxv_splatb vec_splat_u8
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
@@ -80,6 +85,47 @@
 #define fxv_cmp __builtin_vec_fxvcmp
 #define fxv_cmpb __builtin_vec_fxvcmpb
 #define fxv_cmph __builtin_vec_fxvcmph
+
+#define fxv_mtac __builtin_vec_fxvmtac
+#define fxv_mtacb __builtin_vec_fxvmtacb
+#define fxv_mtach __builtin_vec_fxvmtach
+#define fxv_mtacf __builtin_vec_fxvmtacf
+#define fxv_mtacbf __builtin_vec_fxvmtacbf
+#define fxv_mtachf __builtin_vec_fxvmtachf
+
+#define fxv_mam __builtin_vec_fxvmam
+#define fxv_mahm __builtin_vec_fxvmahm
+#define fxv_mabm __builtin_vec_fxvmabm
+#define fxv_mafs __builtin_vec_fxvmafs
+#define fxv_mahfs __builtin_vec_fxvmahfs
+#define fxv_mabfs __builtin_vec_fxvmabfs
+#define fxv_matacm __builtin_vec_fxvmatacm
+#define fxv_matachm __builtin_vec_fxvmatachm
+#define fxv_matacbm __builtin_vec_fxvmatacbm
+#define fxv_matacfs __builtin_vec_fxvmatacfs
+#define fxv_matachfs __builtin_vec_fxvmatachfs
+#define fxv_matacbfs __builtin_vec_fxvmatacbfs
+#define fxv_multacm __builtin_vec_fxvmultacm
+#define fxv_multachm __builtin_vec_fxvmultachm
+#define fxv_multacbm __builtin_vec_fxvmultacbm
+#define fxv_multacfs __builtin_vec_fxvmultacfs
+#define fxv_multachfs __builtin_vec_fxvmultachfs
+#define fxv_multacbfs __builtin_vec_fxvmultacbfs
+#define fxv_addactacm __builtin_vec_fxvaddactacm
+#define fxv_addactachm __builtin_vec_fxvaddactachm
+#define fxv_addactacbm __builtin_vec_fxvaddactacbm
+#define fxv_addactacf __builtin_vec_fxvaddactacf
+#define fxv_addactachf __builtin_vec_fxvaddactachf
+#define fxv_addactacbf __builtin_vec_fxvaddactacbf
+#define fxv_addtacm __builtin_vec_fxvaddtacm
+#define fxv_addtachm __builtin_vec_fxvaddtachm
+#define fxv_addtacbm __builtin_vec_fxvaddtacbm
+#define fxv_addacm __builtin_vec_fxvaddacm
+#define fxv_addachm __builtin_vec_fxvaddachm
+#define fxv_addacbm __builtin_vec_fxvaddacbm
+#define fxv_addacfs __builtin_vec_fxvaddacfs
+#define fxv_addachfs __builtin_vec_fxvaddachfs
+#define fxv_addacbfs __builtin_vec_fxvaddacbfs
 
 ///* Given the vec_step of a type, return the corresponding bool type.  */
 //template <int STEP> class __s2pp_bool_ret { };
