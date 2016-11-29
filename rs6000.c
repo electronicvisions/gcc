@@ -13774,6 +13774,12 @@ s2pp_expand_ld_builtin (tree exp, rtx target, bool *expandedp)
     case S2PP_BUILTIN_LD_INTERNAL_8hi:
       icode = CODE_FOR_vector_s2pp_load_v8hi;
       break;
+    case S2PP_BUILTIN_IN_INTERNAL_16qi:
+      icode = CODE_FOR_vector_s2pp_input_v16qi;
+      break;
+    case S2PP_BUILTIN_IN_INTERNAL_8hi:
+      icode = CODE_FOR_vector_s2pp_input_v8hi;
+      break;
     default:
       *expandedp = false;
       return NULL_RTX;
@@ -13820,6 +13826,12 @@ s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
       break;
     case S2PP_BUILTIN_ST_INTERNAL_8hi:
       icode = CODE_FOR_vector_s2pp_store_v8hi;
+      break;
+    case S2PP_BUILTIN_OUT_INTERNAL_16qi:
+      icode = CODE_FOR_vector_s2pp_output_v16qi;
+      break;
+    case S2PP_BUILTIN_OUT_INTERNAL_8hi:
+      icode = CODE_FOR_vector_s2pp_output_v8hi;
       break;
     default:
       *expandedp = false;
@@ -14043,6 +14055,11 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
     case S2PP_BUILTIN_FXVSTAX_V16QI:
       return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v16qi, exp);
 
+    case S2PP_BUILTIN_FXVOUTX_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v8hi, exp);
+    case S2PP_BUILTIN_FXVOUTX_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v16qi, exp);
+
     case S2PP_BUILTIN_VEC_INIT_V8HI:
     case S2PP_BUILTIN_VEC_INIT_V16QI:
       return s2pp_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
@@ -14075,124 +14092,6 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
       return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvaddactacbf, exp);
     case S2PP_BUILTIN_FXVADDACTACHF:
       return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvaddactachf, exp);
-//    case S2PP_BUILTIN_FXVCMPH:
-//      switch (fcode)
-//      {
-//        case S2PP_BUILTIN_FXVCMPB:
-//          icode = CODE_FOR_s2pp_fxvcmpb;
-//	  break;
-//        case S2PP_BUILTIN_FXVCMPH:
-//          icode = CODE_FOR_s2pp_fxvcmph;
-//	  break;
-//	default:
-//	  gcc_unreachable();
-//      }
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      op0 = expand_normal (arg0);
-//      mode0 = insn_data[icode].operand[0].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      pat = GEN_FCN (icode) (op0);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-//
-//    case S2PP_BUILTIN_FXVCMPH:
-//      icode = CODE_FOR_s2pp_fxvcmph;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      op0 = expand_normal (arg0);
-//      mode0 = insn_data[icode].operand[0].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      pat = GEN_FCN (icode) (op0);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-//
-//    case S2PP_BUILTIN_FXVMTACB:
-//      icode = CODE_FOR_s2pp_fxvmtacb;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      op0 = expand_normal (arg0);
-//      mode0 = insn_data[icode].operand[0].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      pat = GEN_FCN (icode) (op0);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-//
-//    case S2PP_BUILTIN_FXVMTACH:
-//      icode = CODE_FOR_s2pp_fxvmtach;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      op0 = expand_normal (arg0);
-//      mode0 = insn_data[icode].operand[0].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      pat = GEN_FCN (icode) (op0);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-//
-//    case S2PP_BUILTIN_FXVMTACBF:
-//      icode = CODE_FOR_s2pp_fxvmtacbf;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      op0 = expand_normal (arg0);
-//      mode0 = insn_data[icode].operand[0].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      pat = GEN_FCN (icode) (op0);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-//
-//    case S2PP_BUILTIN_FXVMTACHF:
-//      icode = CODE_FOR_s2pp_fxvmtachf;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      op0 = expand_normal (arg0);
-//      mode0 = insn_data[icode].operand[0].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      pat = GEN_FCN (icode) (op0);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-
     case S2PP_BUILTIN_FXVMATACHM:
       return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmatachm, exp);
     case S2PP_BUILTIN_FXVMATACBM:
@@ -14213,54 +14112,6 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
       return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddtach, exp);
     case S2PP_BUILTIN_FXVADDTACB:
       return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddtacb, exp);
-        
-//    case S2PP_BUILTIN_FXVMATACHM:
-//      icode = CODE_FOR_s2pp_fxvmatachm;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      arg1 = CALL_EXPR_ARG (exp, 1);
-//      op0 = expand_normal (arg0);
-//      op1 = expand_normal (arg1);
-//      mode0 = insn_data[icode].operand[0].mode;
-//      mode1 = insn_data[icode].operand[1].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node || arg1 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
-//        op1 = copy_to_mode_reg (mode1, op1);
-//
-//      pat = GEN_FCN (icode) (op0, op1);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
-//
-//    case S2PP_BUILTIN_FXVMATACBM:
-//      icode = CODE_FOR_s2pp_fxvmatacbm;
-//      arg0 = CALL_EXPR_ARG (exp, 0);
-//      arg1 = CALL_EXPR_ARG (exp, 1);
-//      op0 = expand_normal (arg0);
-//      op1 = expand_normal (arg1);
-//      mode0 = insn_data[icode].operand[0].mode;
-//      mode1 = insn_data[icode].operand[1].mode;
-//
-//      /* If we got invalid arguments bail out before generating bad rtl.  */
-//      if (arg0 == error_mark_node || arg1 == error_mark_node)
-//        return const0_rtx;
-//
-//      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
-//        op0 = copy_to_mode_reg (mode0, op0);
-//
-//      if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
-//        op1 = copy_to_mode_reg (mode1, op1);
-//
-//      pat = GEN_FCN (icode) (op0, op1);
-//      if (pat)
-//        emit_insn (pat);
-//      return NULL_RTX;
 
     default:
       break;
@@ -14288,6 +14139,12 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 					exp, target, false);
     case S2PP_BUILTIN_FXVLAX_V16QI:
       return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,
+					exp, target, false);
+    case S2PP_BUILTIN_FXVINX_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v8hi,
+					exp, target, false);
+    case S2PP_BUILTIN_FXVINX_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v16qi,
 					exp, target, false);
     default:
       break;
@@ -16157,6 +16014,18 @@ s2pp_init_builtins (void)
 	       S2PP_BUILTIN_FXVSTAX_V16QI);
   def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD);
   def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST);
+
+  def_builtin ("__builtin_s2pp_fxvinx_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_V8HI);
+  def_builtin ("__builtin_s2pp_fxvinx_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_V16QI);
+  def_builtin ("__builtin_s2pp_fxvoutx_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_V8HI);
+  def_builtin ("__builtin_s2pp_fxvoutx_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_V16QI);
+  def_builtin ("__builtin_vec_in", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN);
+  def_builtin ("__builtin_vec_out", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT);
+
 
   def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
   def_builtin ("__builtin_vec_splats", opaque_ftype_opaque, S2PP_BUILTIN_VEC_SPLATS);

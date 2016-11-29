@@ -731,6 +731,8 @@ BU_S2PP_1 (FXVADDACBM,	      	"fxvaddacbm",	CONST,	s2pp_fxvaddacbm)
 BU_S2PP_1 (FXVADDACHFS,	      	"fxvaddachfs",	CONST,	s2pp_fxvaddachfs)
 BU_S2PP_1 (FXVADDACBFS,	      	"fxvaddacbfs",	CONST,	s2pp_fxvaddacbfs)
 
+//BU_S2PP_1 (FXVINALTX,	      	"fxvinaltx",	CONST,	s2pp_fxvinaltx)
+
 BU_S2PP_2 (FXVADDBM,		"fxvaddbm",	CONST,	addv16qi3)
 BU_S2PP_2 (FXVADDHM,		"fxvaddhm",	CONST,	addv8hi3)
 BU_S2PP_2 (FXVADDBFS,	      	"fxvaddbfs",	CONST,	s2pp_fxvaddbfs)
@@ -769,6 +771,13 @@ BU_S2PP_X (FXVSTAX,		"fxvstax",		MEM)
 BU_S2PP_X (FXVSTAX_V8HI,	"fxvstax_v8hi",		MEM)
 BU_S2PP_X (FXVSTAX_V16QI,	"fxvstax_v16qi",	MEM)
 
+BU_S2PP_X (FXVINX,		"fxvinx",		MEM)
+BU_S2PP_X (FXVINX_V8HI,		"fxvinx_v8hi",		MEM)
+BU_S2PP_X (FXVINX_V16QI,	"fxvinx_v16qi",		MEM)
+BU_S2PP_X (FXVOUTX,		"fxvoutx",		MEM)
+BU_S2PP_X (FXVOUTX_V8HI,	"fxvoutx_v8hi",		MEM)
+BU_S2PP_X (FXVOUTX_V16QI,	"fxvoutx_v16qi",	MEM)
+
 BU_S2PP_X (MASK_FOR_LOAD,	"mask_for_load",	MISC)
 BU_S2PP_X (MASK_FOR_STORE,	"mask_for_store",	MISC)
 
@@ -776,6 +785,11 @@ BU_S2PP_X (ST_INTERNAL_8hi,	"st_internal_8hi",	MEM)
 BU_S2PP_X (LD_INTERNAL_8hi,	"ld_internal_8hi",	MEM)
 BU_S2PP_X (ST_INTERNAL_16qi,	"st_internal_16qi",	MEM)
 BU_S2PP_X (LD_INTERNAL_16qi,	"ld_internal_16qi",	MEM)
+
+BU_S2PP_X (OUT_INTERNAL_8hi,	"out_internal_8hi",	MEM)
+BU_S2PP_X (IN_INTERNAL_8hi,	"in_internal_8hi",	MEM)
+BU_S2PP_X (OUT_INTERNAL_16qi,	"out_internal_16qi",	MEM)
+BU_S2PP_X (IN_INTERNAL_16qi,	"in_internal_16qi",	MEM)
 
 BU_S2PP_X (VEC_SET_V8HI,	"vec_set_v8hi",		CONST)
 BU_S2PP_X (VEC_SET_V16QI,	"vec_set_v16qi",   	CONST)
@@ -829,6 +843,8 @@ BU_S2PP_OVERLOAD_1 (FXVADDACM,	"fxvaddacm")
 BU_S2PP_OVERLOAD_1 (FXVADDACHFS,"fxvaddachfs")
 BU_S2PP_OVERLOAD_1 (FXVADDACBFS,"fxvaddacbfs")
 BU_S2PP_OVERLOAD_1 (FXVADDACFS,	"fxvaddacfs")
+
+//BU_S2PP_OVERLOAD_1 (FXVINALTXX,	"fxvinaltxx")
 
 BU_S2PP_OVERLOAD_2 (FXVADDBM,	"fxvaddbm")
 BU_S2PP_OVERLOAD_2 (FXVADDHM,	"fxvaddhm")
@@ -885,6 +901,9 @@ BU_S2PP_OVERLOAD_2 (FXVUPCKBL,	"fxvupckbl")
 BU_S2PP_OVERLOAD_2 (FXVUPCKBR,	"fxvupckbr")
 
 BU_S2PP_OVERLOAD_3 (FXVSEL,	"fxvsel")
+
+BU_S2PP_OVERLOAD_X (OUT,	"out")
+BU_S2PP_OVERLOAD_X (IN,		"in")
 
 BU_S2PP_OVERLOAD_X (ST,		"st")
 BU_S2PP_OVERLOAD_X (LD,		"ld")

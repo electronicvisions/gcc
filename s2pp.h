@@ -21,6 +21,9 @@
 #define fxv_lax vec_ld
 #define vec_ld __builtin_vec_ld
 
+#define fxv_in __builtin_vec_in
+#define fxv_out __builtin_vec_out
+
 #define vec_sel __builtin_vec_fxvsel
 #define fxv_sel vec_sel
 #define vec_splat __builtin_vec_splat

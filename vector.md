@@ -194,12 +194,12 @@
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
 
-  if (VECTOR_MEM_VSX_P (<MODE>mode))
-    {
-      operands[1] = rs6000_address_for_s2pp (operands[1]);
-      emit_insn (gen_s2pp_fxvlax_<mode> (operands[0], operands[1]));
-      DONE;
-    }
+  //if (VECTOR_MEM_VSX_P (<MODE>mode))
+  //  {
+  //    operands[1] = rs6000_address_for_s2pp (operands[1]);
+  //    emit_insn (gen_s2pp_fxvlax_<mode> (operands[0], operands[1]));
+  //    DONE;
+  //  }
 }")
 
 (define_expand "vector_s2pp_store_<mode>"
@@ -210,12 +210,44 @@
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
 
-  if (VECTOR_MEM_VSX_P (<MODE>mode))
-    {
-      operands[0] = rs6000_address_for_s2pp (operands[0]);
-      emit_insn (gen_s2pp_fxvstax_<mode> (operands[0], operands[1]));
-      DONE;
-    }
+  //if (VECTOR_MEM_VSX_P (<MODE>mode))
+  //  {
+  //    operands[0] = rs6000_address_for_s2pp (operands[0]);
+  //    emit_insn (gen_s2pp_fxvstax_<mode> (operands[0], operands[1]));
+  //    DONE;
+  //  }
+}")
+
+(define_expand "vector_s2pp_input_<mode>"
+  [(set (match_operand:VEC_X 0 "vfloat_operand" "")
+	(match_operand:VEC_X 1 "memory_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "
+{
+  gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
+
+  //if (VECTOR_MEM_VSX_P (<MODE>mode))
+  //  {
+  //    operands[1] = rs6000_address_for_s2pp (operands[1]);
+  //    emit_insn (gen_s2pp_fxvlax_<mode> (operands[0], operands[1]));
+  //    DONE;
+  //  }
+}")
+
+(define_expand "vector_s2pp_output_<mode>"
+  [(set (match_operand:VEC_X 0 "memory_operand" "")
+	(match_operand:VEC_X 1 "vfloat_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "
+{
+  gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
+
+  //if (VECTOR_MEM_VSX_P (<MODE>mode))
+  //  {
+  //    operands[0] = rs6000_address_for_s2pp (operands[0]);
+  //    emit_insn (gen_s2pp_fxvstax_<mode> (operands[0], operands[1]));
+  //    DONE;
+  //  }
 }")
 
 

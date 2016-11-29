@@ -171,8 +171,23 @@
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] UNSPEC_FXVINX)])]
   "TARGET_S2PP"
-  "fxvlax %0,%y1"
+  "fxvinx %0,%y1"
   [(set_attr "type" "vecload")])
+
+(define_insn "s2pp_fxvinx_direct"
+  [(set (match_operand:V16QI 0 "register_operand" "=kv")
+	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
+                      UNSPEC_FXVINX))]
+  "TARGET_S2PP"
+  "fxvinx %0,%y1,0"
+  [(set_attr "type" "vecload")])
+
+;;(define_insn "s2pp_fxvin"
+;;    [(set (match_operand:FXVI 0 "register_operand" "=kv")
+;;	  (match_operand:FXVI 1 "memory_operand" "Z"))]
+;;  "TARGET_S2PP"
+;;  "fxvinx %0,%y1"
+;;  [(set_attr "type" "vecload")])
 
 
 ;; add
@@ -452,18 +467,18 @@
 
 ;;unpack
 (define_insn "s2pp_fxvupckbl"
-  [(set (match_operand:V8HI 0 "memory_operand" "=Z")
-	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "kv")
-	 	     (match_operand:V16QI 2 "register_operand" "kv")]
+  [(set (match_operand:V8HI 0 "memory_operand" "=kv")
+	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "a")
+	 	     (match_operand:V16QI 2 "register_operand" "a")]
 		     UNSPEC_FXVUPCKL))]
   "TARGET_S2PP"
   "fxvupckbl %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 (define_insn "s2pp_fxvupckbr"
-  [(set (match_operand:V8HI 0 "memory_operand" "=m")
-	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "kv")
-	 	     (match_operand:V16QI 2 "register_operand" "kv")]
+  [(set (match_operand:V8HI 0 "memory_operand" "=kv")
+	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "a")
+	 	     (match_operand:V16QI 2 "register_operand" "a")]
 		     UNSPEC_FXVUPCKR))]
   "TARGET_S2PP"
   "fxvupckbr %0,%1,%2"
