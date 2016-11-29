@@ -15956,6 +15956,10 @@ s2pp_init_builtins (void)
     = build_function_type_list (V16QI_type_node,
 				long_integer_type_node, pcvoid_type_node,
 				NULL_TREE);
+  tree v16qi_ftype_long_long
+    = build_function_type_list (V16QI_type_node,
+				long_integer_type_node, long_integer_type_node,
+				NULL_TREE);
   tree v8hi_ftype_long_pcvoid
     = build_function_type_list (V8HI_type_node,
 				long_integer_type_node, pcvoid_type_node,
@@ -15964,6 +15968,10 @@ s2pp_init_builtins (void)
     = build_function_type_list (void_type_node,
 				V16QI_type_node, long_integer_type_node,
 				pvoid_type_node, NULL_TREE);
+  tree void_ftype_v16qi_long_long
+    = build_function_type_list (void_type_node,
+				V16QI_type_node, long_integer_type_node,
+				long_integer_type_node, NULL_TREE);
   tree void_ftype_v8hi_long_pvoid
     = build_function_type_list (void_type_node,
 				V8HI_type_node, long_integer_type_node,
@@ -15988,10 +15996,18 @@ s2pp_init_builtins (void)
     = build_function_type_list (opaque_V4SI_type_node,
 				long_integer_type_node, pcvoid_type_node,
 				NULL_TREE);
+  tree opaque_ftype_long_long
+    = build_function_type_list (opaque_V4SI_type_node,
+				long_integer_type_node, long_integer_type_node,
+				NULL_TREE);
   tree void_ftype_opaque_long_pvoid
     = build_function_type_list (void_type_node,
 				opaque_V4SI_type_node, long_integer_type_node,
 				pvoid_type_node, NULL_TREE);
+  tree void_ftype_opaque_long_long
+    = build_function_type_list (void_type_node,
+				opaque_V4SI_type_node, long_integer_type_node,
+				long_integer_type_node, NULL_TREE);
   tree opaque_ftype_opaque_int
     = build_function_type_list (opaque_V4SI_type_node,
 				opaque_V4SI_type_node, integer_type_node, NULL_TREE);
@@ -16017,14 +16033,14 @@ s2pp_init_builtins (void)
 
   def_builtin ("__builtin_s2pp_fxvinx_v8hi", v8hi_ftype_long_pcvoid,
 	       S2PP_BUILTIN_FXVINX_V8HI);
-  def_builtin ("__builtin_s2pp_fxvinx_v16qi", v16qi_ftype_long_pcvoid,
+  def_builtin ("__builtin_s2pp_fxvinx_v16qi", v16qi_ftype_long_long,
 	       S2PP_BUILTIN_FXVINX_V16QI);
   def_builtin ("__builtin_s2pp_fxvoutx_v8hi", void_ftype_v8hi_long_pvoid,
 	       S2PP_BUILTIN_FXVOUTX_V8HI);
-  def_builtin ("__builtin_s2pp_fxvoutx_v16qi", void_ftype_v16qi_long_pvoid,
+  def_builtin ("__builtin_s2pp_fxvoutx_v16qi", void_ftype_v16qi_long_long,
 	       S2PP_BUILTIN_FXVOUTX_V16QI);
-  def_builtin ("__builtin_vec_in", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN);
-  def_builtin ("__builtin_vec_out", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT);
+  def_builtin ("__builtin_vec_in", opaque_ftype_long_long, S2PP_BUILTIN_VEC_IN);
+  def_builtin ("__builtin_vec_out", void_ftype_opaque_long_long, S2PP_BUILTIN_VEC_OUT);
 
 
   def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
