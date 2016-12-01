@@ -448,7 +448,7 @@
 
 ;; pack
 (define_insn "s2pp_fxvpckbu"
-  [(set (match_operand:V16QI 0 "register_operand" "=kv")
+  [(set (match_operand:V16QI 0 "s2pp_register_operand" "=kv")
 	(unspec:V16QI [(match_operand:V8HI 1 "memory_operand" "a")
 		       (match_operand:V8HI 2 "memory_operand" "a")]
 		      UNSPEC_FXVPCKU))]
@@ -459,7 +459,7 @@
 (define_insn "s2pp_fxvpckbl"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
 	(unspec:V16QI [(match_operand:V8HI 1 "memory_operand" "a")
-		      (match_operand:V8HI 2 "memory_operand" "a")]
+		       (match_operand:V8HI 2 "memory_operand" "a")]
 		      UNSPEC_FXVPCKL))]
   "TARGET_S2PP"
   "fxvpckbl %0,%1,%2"
@@ -469,7 +469,7 @@
 (define_insn "s2pp_fxvupckbl"
   [(set (match_operand:V8HI 0 "memory_operand" "=kv")
 	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "a")
-	 	     (match_operand:V16QI 2 "register_operand" "a")]
+	 	      (match_operand:V16QI 2 "register_operand" "a")]
 		     UNSPEC_FXVUPCKL))]
   "TARGET_S2PP"
   "fxvupckbl %0,%1,%2"
@@ -478,7 +478,7 @@
 (define_insn "s2pp_fxvupckbr"
   [(set (match_operand:V8HI 0 "memory_operand" "=kv")
 	(unspec:V8HI [(match_operand:V16QI 1 "register_operand" "a")
-	 	     (match_operand:V16QI 2 "register_operand" "a")]
+	 	      (match_operand:V16QI 2 "register_operand" "a")]
 		     UNSPEC_FXVUPCKR))]
   "TARGET_S2PP"
   "fxvupckbr %0,%1,%2"
