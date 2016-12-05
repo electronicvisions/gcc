@@ -15964,6 +15964,10 @@ s2pp_init_builtins (void)
     = build_function_type_list (V8HI_type_node,
 				long_integer_type_node, pcvoid_type_node,
 				NULL_TREE);
+  tree v8hi_ftype_long_long
+    = build_function_type_list (V8HI_type_node,
+				long_integer_type_node, long_integer_type_node,
+				NULL_TREE);
   tree void_ftype_v16qi_long_pvoid
     = build_function_type_list (void_type_node,
 				V16QI_type_node, long_integer_type_node,
@@ -15976,6 +15980,10 @@ s2pp_init_builtins (void)
     = build_function_type_list (void_type_node,
 				V8HI_type_node, long_integer_type_node,
 				pvoid_type_node, NULL_TREE);
+  tree void_ftype_v8hi_long_long
+    = build_function_type_list (void_type_node,
+				V8HI_type_node, long_integer_type_node,
+				long_integer_type_node, NULL_TREE);
   //tree int_ftype_int_v8hi_v8hi
     //= build_function_type_list (integer_type_node,
 				//integer_type_node, V8HI_type_node,
@@ -16031,11 +16039,11 @@ s2pp_init_builtins (void)
   def_builtin ("__builtin_vec_ld", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD);
   def_builtin ("__builtin_vec_st", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST);
 
-  def_builtin ("__builtin_s2pp_fxvinx_v8hi", v8hi_ftype_long_pcvoid,
+  def_builtin ("__builtin_s2pp_fxvinx_v8hi", v8hi_ftype_long_long,
 	       S2PP_BUILTIN_FXVINX_V8HI);
   def_builtin ("__builtin_s2pp_fxvinx_v16qi", v16qi_ftype_long_long,
 	       S2PP_BUILTIN_FXVINX_V16QI);
-  def_builtin ("__builtin_s2pp_fxvoutx_v8hi", void_ftype_v8hi_long_pvoid,
+  def_builtin ("__builtin_s2pp_fxvoutx_v8hi", void_ftype_v8hi_long_long,
 	       S2PP_BUILTIN_FXVOUTX_V8HI);
   def_builtin ("__builtin_s2pp_fxvoutx_v16qi", void_ftype_v16qi_long_long,
 	       S2PP_BUILTIN_FXVOUTX_V16QI);

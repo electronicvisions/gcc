@@ -731,8 +731,6 @@ BU_S2PP_1 (FXVADDACBM,	      	"fxvaddacbm",	CONST,	s2pp_fxvaddacbm)
 BU_S2PP_1 (FXVADDACHFS,	      	"fxvaddachfs",	CONST,	s2pp_fxvaddachfs)
 BU_S2PP_1 (FXVADDACBFS,	      	"fxvaddacbfs",	CONST,	s2pp_fxvaddacbfs)
 
-//BU_S2PP_1 (FXVINALTX,	      	"fxvinaltx",	CONST,	s2pp_fxvinaltx)
-
 BU_S2PP_2 (FXVADDBM,		"fxvaddbm",	CONST,	addv16qi3)
 BU_S2PP_2 (FXVADDHM,		"fxvaddhm",	CONST,	addv8hi3)
 BU_S2PP_2 (FXVADDBFS,	      	"fxvaddbfs",	CONST,	s2pp_fxvaddbfs)
@@ -751,9 +749,9 @@ BU_S2PP_2 (FXVSHLH,	      	"fxvshlh",	CONST,	s2pp_fxvshlh)
 BU_S2PP_2 (FXVSHRB,	      	"fxvshrb",	CONST,	s2pp_fxvshrb)
 BU_S2PP_2 (FXVSHRH,	      	"fxvshrh",	CONST,	s2pp_fxvshrh)
 
-BU_S2PP_2 (FXVPCKBU,	      	"fxvpckbu",	MEM,	s2pp_fxvpckbu)
-BU_S2PP_2 (FXVPCKBL,	      	"fxvpckbl",	MEM,	s2pp_fxvpckbl)
-BU_S2PP_2 (FXVUPCKBL,	      	"fxvupckbl",	MEM,	s2pp_fxvupckbl)
+BU_S2PP_2 (FXVPCKBU,	      	"fxvpckbu",	CONST,	s2pp_fxvpckbu)
+BU_S2PP_2 (FXVPCKBL,	      	"fxvpckbl",	CONST,	s2pp_fxvpckbl)
+BU_S2PP_2 (FXVUPCKBL,	      	"fxvupckbl",	CONST,	s2pp_fxvupckbl)
 BU_S2PP_2 (FXVUPCKBR,	      	"fxvupckbr",	MEM,	s2pp_fxvupckbr)
 
 BU_S2PP_2 (FXVMAHM,	      	"fxvmahm",	CONST,	s2pp_fxvmahm)
@@ -843,8 +841,6 @@ BU_S2PP_OVERLOAD_1 (FXVADDACM,	"fxvaddacm")
 BU_S2PP_OVERLOAD_1 (FXVADDACHFS,"fxvaddachfs")
 BU_S2PP_OVERLOAD_1 (FXVADDACBFS,"fxvaddacbfs")
 BU_S2PP_OVERLOAD_1 (FXVADDACFS,	"fxvaddacfs")
-
-//BU_S2PP_OVERLOAD_1 (FXVINALTXX,	"fxvinaltxx")
 
 BU_S2PP_OVERLOAD_2 (FXVADDBM,	"fxvaddbm")
 BU_S2PP_OVERLOAD_2 (FXVADDHM,	"fxvaddhm")
