@@ -40,11 +40,11 @@
     {
     case 0: return "fxvstax %1,%y0";
     case 1: return "fxvlax %0,%y1";
-    case 2: return "fxvsel %0,%1,%1,0";
+    case 2: return "fxvsel %0,%1,%1";
     case 3: return "#";
     case 4: return "#";
     case 5: return "#";
-    case 6: return "fxvsel %0,0,0,0";
+    case 6: return "fxvsel %0,0,0";
     default: gcc_unreachable ();
     }
 }
@@ -53,24 +53,6 @@
 ;; alternatively use 3
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
-
-;;(define_split
-;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
-;;	(match_operand:FXVI 1 "input_operand" ""))]
-;;  ""
-;;  [(set (match_dup 2) (match_dup 1)) 
-;;   (set (match_dup 0) (vec_duplicate:FXVI (match_dup 2)))]
-;;{
-;;  rtx dup = gen_easy_s2pp_constant (operands[1]);
-;;  rtx const_vec;
-;;  enum machine_mode op_mode = <MODE>mode;
-;;  const_vec = simplify_rtx (dup);
-;;  operands[3] = const_vec;
-;;  operands[4] = gen_rtx_PLUS (op_mode, operands[0], operands[0]);
-;;}) 
-
-
-
 
 (define_expand "s2pp_fxvstax_<mode>"
   [(parallel
@@ -87,7 +69,7 @@
 	  (match_operand:FXVI 1 "register_operand" "kv"))
      (unspec [(const_int 0)] UNSPEC_FXVSTAX)])]
   "TARGET_S2PP"
-  "fxvstax %1,%y0,0"
+  "fxvstax %1,%y0"
   [(set_attr "type" "vecstore")])
 
 (define_expand "s2pp_fxvlax_<mode>"
@@ -105,7 +87,7 @@
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] UNSPEC_FXVLAX)])]
   "TARGET_S2PP"
-  "fxvlax %0,%y1,0"
+  "fxvlax %0,%y1"
   [(set_attr "type" "vecload")])
 
 (define_insn "s2pp_fxvlax_direct"
@@ -113,7 +95,7 @@
 	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
                       UNSPEC_FXVLAX))]
   "TARGET_S2PP"
-  "fxvlax %0,%y1,0"
+  "fxvlax %0,%y1"
   [(set_attr "type" "vecload")])
 
 ;;synram
@@ -158,7 +140,7 @@
 	(unspec:V16QI [(match_operand:V16QI 1 "memory_operand" "Z")]
                       UNSPEC_FXVINX))]
   "TARGET_S2PP"
-  "fxvinx %0,%y1,0"
+  "fxvinx %0,%y1"
   [(set_attr "type" "vecload")])
 
 ;; add
@@ -167,7 +149,7 @@
         (plus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
 		  (match_operand:FXVI 2 "register_operand" "kv")))]
   "<FXVI_unit>"
-  "fxvadd<FXVI_char>m %0,%1,%2,0"
+  "fxvadd<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvadd<FXVI_char>fs"
@@ -176,7 +158,32 @@
 		    (match_operand:FXVI 2 "register_operand" "kv")]
 		   UNSPEC_FXVADD))]
   "<FXVI_unit>"
-  "fxvadd<FXVI_char>fs %0,%1,%2,0"
+  "fxvadd<FXVI_char>fs %0,%1,%2"
+  [(set_attr "type" "vecsimple")])
+
+(define_insn "fxvadd<FXVI_char>m_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(if_then_else:FXVI
+	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
+		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
+         (plus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+		  (match_operand:FXVI 2 "register_operand" "kv"))
+	 (match_dup 0)))]
+  "<FXVI_unit>"
+  "fxvadd<FXVI_char>m %0,%1,%2,%3"
+  [(set_attr "type" "vecsimple")])
+
+(define_insn "s2pp_fxvadd<FXVI_char>fs_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(if_then_else:FXVI
+	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
+		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
+         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		    (match_operand:FXVI 2 "register_operand" "kv")]
+		   UNSPEC_FXVADD)
+	 (match_dup 0)))]
+  "<FXVI_unit>"
+  "fxvadd<FXVI_char>fs %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
 ;; sub
@@ -197,6 +204,31 @@
   "fxvsub<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
+(define_insn "fxvsub<FXVI_char>m_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(if_then_else:FXVI
+	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
+		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
+         (minus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+		  (match_operand:FXVI 2 "register_operand" "kv"))
+	 (match_dup 0)))]
+  "<FXVI_unit>"
+  "fxvsub<FXVI_char>m %0,%1,%2,%3"
+  [(set_attr "type" "vecsimple")])
+
+(define_insn "s2pp_fxvsub<FXVI_char>fs_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(if_then_else:FXVI
+	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
+		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
+         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		    (match_operand:FXVI 2 "register_operand" "kv")]
+		   UNSPEC_FXVADD)
+	 (match_dup 0)))]
+  "<FXVI_unit>"
+  "fxvsub<FXVI_char>fs %0,%1,%2,%3"
+  [(set_attr "type" "vecsimple")])
+
 ;; multiply
 (define_insn "s2pp_fxvmul<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -213,6 +245,31 @@
 		   UNSPEC_FXVMUL))]
   "<FXVI_unit>"
   "fxvmul<FXVI_char>fs %0,%1,%2"
+  [(set_attr "type" "vecsimple")])
+
+(define_insn "fxvmul<FXVI_char>m_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(if_then_else:FXVI
+	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
+		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
+         (mult:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+		  (match_operand:FXVI 2 "register_operand" "kv"))
+	 (match_dup 0)))]
+  "<FXVI_unit>"
+  "fxvmul<FXVI_char>m %0,%1,%2,%3"
+  [(set_attr "type" "vecsimple")])
+
+(define_insn "s2pp_fxvmul<FXVI_char>fs_c"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+	(if_then_else:FXVI
+	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
+		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
+         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		    (match_operand:FXVI 2 "register_operand" "kv")]
+		   UNSPEC_FXVMUL)
+	 (match_dup 0)))]
+  "<FXVI_unit>"
+  "fxvmul<FXVI_char>fs %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
 ;; splat
@@ -276,9 +333,9 @@
 (define_insn "s2pp_fxvsh<FXVI_char>"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (ashift:FXVI (match_operand:FXVI 1 "register_operand" "kv")
-		     (match_operand:SI 2 "intermediate_operand "i")))]
+		     (match_operand:SI 2 "u_short_cint_operand" "i")))]
   "<FXVI_unit>"
-  "fxvsh<FXVI_char> %0,%1,-1"
+  "fxvsh<FXVI_char> %0,%1,%2"
   [(set_attr "type" "vecperm")])
 
 ;;compare

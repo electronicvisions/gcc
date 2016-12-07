@@ -46,6 +46,25 @@
 #define fxv_addbfs __builtin_vec_fxvaddbfs
 #define fxv_addhfs __builtin_vec_fxvaddhfs
 
+#define fxv_addm_c __builtin_vec_fxvaddm_c
+#define fxv_addbm_c __builtin_vec_fxvaddbm_c
+#define fxv_addhm_c __builtin_vec_fxvaddhm_c
+#define vec_addfs_c __builtin_vec_fxvaddfs_c
+#define fxv_addbfs_c __builtin_vec_fxvaddbfs_c
+#define fxv_addhfs_c __builtin_vec_fxvaddhfs_c
+#define fxv_subm_c __builtin_vec_fxvsubm_c
+#define fxv_subbm_c __builtin_vec_fxvsubbm_c
+#define fxv_subhm_c __builtin_vec_fxvsubhm_c
+#define vec_subfs_c __builtin_vec_fxvsubfs_c
+#define fxv_subbfs_c __builtin_vec_fxvsubbfs_c
+#define fxv_subhfs_c __builtin_vec_fxvsubhfs_c
+#define fxv_mulm_c __builtin_vec_fxvmulm_c
+#define fxv_mulbm_c __builtin_vec_fxvmulbm_c
+#define fxv_mulhm_c __builtin_vec_fxvmulhm_c
+#define vec_mulfs_c __builtin_vec_fxvmulfs_c
+#define fxv_mulbfs_c __builtin_vec_fxvmulbfs_c
+#define fxv_mulhfs_c __builtin_vec_fxvmulhfs_c
+
 #define vec_sub __builtin_vec_fxvsub
 #define vec_subbm vec_fxvsubbm
 #define vec_subhm vec_fxvsubhm
