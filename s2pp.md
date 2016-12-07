@@ -161,7 +161,7 @@
   "fxvadd<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "fxvadd<FXVI_char>m_c"
+(define_insn "s2pp_fxvadd<FXVI_char>m_c"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(if_then_else:FXVI
 	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
@@ -204,7 +204,7 @@
   "fxvsub<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "fxvsub<FXVI_char>m_c"
+(define_insn "s2pp_fxvsub<FXVI_char>m_c"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(if_then_else:FXVI
 	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
@@ -223,7 +223,7 @@
 		(match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVCOND)
          (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		    (match_operand:FXVI 2 "register_operand" "kv")]
-		   UNSPEC_FXVADD)
+		   UNSPEC_FXVSUB)
 	 (match_dup 0)))]
   "<FXVI_unit>"
   "fxvsub<FXVI_char>fs %0,%1,%2,%3"
@@ -247,7 +247,7 @@
   "fxvmul<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "fxvmul<FXVI_char>m_c"
+(define_insn "s2pp_fxvmul<FXVI_char>m_c"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(if_then_else:FXVI
 	 (unspec:CC [(reg:CC S2PP_COND_REGNO)
