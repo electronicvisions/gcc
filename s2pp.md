@@ -28,29 +28,6 @@
 (define_mode_attr FXVI_unit [(V8HI "VECTOR_UNIT_S2PP_P (V8HImode)")
 			   (V16QI "VECTOR_UNIT_S2PP_P (V16QImode)")])
 
-;; Vector move instructions.
-;; last zero constant is set automatically
-;;(define_insn "*s2pp_mov<mode>"
-;;  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv,kv")
-;;	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,j,W"))]
-;;  "VECTOR_MEM_S2PP_P (<MODE>mode)
-;;   && (register_operand (operands[0], <MODE>mode) 
-;;       || register_operand (operands[1], <MODE>mode))"
-;;{
-;;  switch (which_alternative)
-;;    {
-;;    case 0: return "fxvstax %1,%y0";
-;;    case 1: return "fxvlax %0,%y1";
-;;    case 2: return "fxvsel %0,%1,%1,0";
-;;    case 3: return "#";
-;;    case 4: return "#";
-;;    case 5: return "#";
-;;    case 6: return "fxvsel %0,0,0,0";
-;;    case 7: return output_vec_const_move (operands);
-;;    default: gcc_unreachable ();
-;;    }
-;;}
-;;  [(set_attr "type" "vecstore,vecload,vecsimple,store,load,*,vecsimple,*")])
 
 (define_insn "*s2pp_mov<mode>"
   [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv")
@@ -279,28 +256,6 @@
   "fxvsel %0,%1,%2,%3"
   [(set_attr "type" "vecperm")])
 
-(define_insn "s2pp_fxvsel_eq_<mode>"
-  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-	(if_then_else:FXVI
-	 (ne:CC (reg:CC S2PP_COND_REGNO)
-		(const_int 3))
-	 (match_operand:FXVI 1 "register_operand" "kv")
-	 (match_operand:FXVI 2 "register_operand" "kv")))]
-  "VECTOR_MEM_S2PP_P (<MODE>mode)"
-  "fxvsel %0,%1,%2,3"
-  [(set_attr "type" "vecperm")])
-
-;;(define_insn "*s2pp_fxvsel<mode>_uns"
-;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "=kv")
-;;	(if_then_else:FXVI
-;;	 (eq:CC (reg:CC S2PP_COND_REGNO)
-;;		(match_operand:QI 1 "u3bit_cint_operand" "i"))
-;;	 (match_operand:FXVI 2 "s2pp_register_operand" "kv")
-;;	 (match_operand:FXVI 3 "s2pp_register_operand" "kv")))]
-;;  "VECTOR_MEM_S2PP_P (<MODE>mode)"
-;;  "fxvsel %0,%3,%2,%1"
-;;  [(set_attr "type" "vecperm")])
-
 ;; shift
 (define_insn "s2pp_fxvshl<FXVI_char>"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -314,6 +269,14 @@
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (ashift:FXVI (match_operand:FXVI 1 "register_operand" "kv")
 		     (const_int -1)))]
+  "<FXVI_unit>"
+  "fxvsh<FXVI_char> %0,%1,-1"
+  [(set_attr "type" "vecperm")])
+
+(define_insn "s2pp_fxvsh<FXVI_char>"
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+        (ashift:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+		     (match_operand:SI 2 "intermediate_operand "i")))]
   "<FXVI_unit>"
   "fxvsh<FXVI_char> %0,%1,-1"
   [(set_attr "type" "vecperm")])
