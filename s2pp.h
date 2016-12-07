@@ -93,6 +93,9 @@
 #define vec_shr __builtin_vec_fxvshr
 #define fxv_shrb __builtin_vec_fxvshrb
 #define fxv_shrh __builtin_vec_fxvshrh
+#define fxv_sh __builtin_vec_fxvsh
+#define fxv_shb __builtin_vec_fxvshb
+#define fxv_shh __builtin_vec_fxvshh
 
 #define fxv_pckbu __builtin_vec_fxvpckbu
 #define fxv_pckbl __builtin_vec_fxvpckbl
