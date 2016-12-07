@@ -163,11 +163,11 @@
 %{mcpu=e500mc64: -me500mc64} \
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
+%{mcpu=ppu: -mpower7 -ms2pp} \
 %{maltivec: -maltivec} \
-%{ms2pp: -ms2pp} \
+%{ms2pp: -ms2pp %{!msoft-float: -msoft-float}} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
-%{mcpu=ppu: -mpower7 -ms2pp -mno-upper-regs -msoft-float} \
 -many"
 /*p_o_i*/
 #define CPP_DEFAULT_SPEC ""
@@ -396,7 +396,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
-//#define rs6000_debug 0x6f 
+//#define rs6000_debug 0x50
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -511,7 +511,6 @@ extern int rs6000_vector_align[];
 #define TARGET_LONG_DOUBLE_128 (rs6000_long_double_type_size == 128)
 #define TARGET_IEEEQUAD rs6000_ieeequad
 #define TARGET_ALTIVEC_ABI rs6000_altivec_abi
-//#define TARGET_S2PP_ABI rs6000_s2pp_abi
 #define TARGET_LDBRX (TARGET_POPCNTD || rs6000_cpu == PROCESSOR_CELL)
 
 #define TARGET_SPE_ABI 0
@@ -630,7 +629,7 @@ extern int rs6000_vector_align[];
    VSX.  */
 /*p_o_i*/ 
 #define TARGET_EXTRA_BUILTINS	(!TARGET_SPE && !TARGET_PAIRED_FLOAT	 \
-				 && !TARGET_S2PP && ((TARGET_POWERPC64	 \
+				  && ((TARGET_POWERPC64			 \
 				      || TARGET_PPC_GPOPT /* 970/power4 */ \
 				      || TARGET_POPCNTB	  /* ISA 2.02 */ \
 				      || TARGET_CMPB	  /* ISA 2.05 */ \
@@ -782,7 +781,7 @@ extern unsigned char rs6000_recip_bits[];
 #define MIN_UNITS_PER_WORD 4
 #endif
 #define UNITS_PER_FP_WORD 8
-#define UNITS_PER_ALTIVEC_WORD 16 /*p_o_i*/ 
+#define UNITS_PER_ALTIVEC_WORD 16
 #define UNITS_PER_S2PP_WORD 16 /*p_o_i*/ 
 #define UNITS_PER_VSX_WORD 16
 #define UNITS_PER_SPE_WORD 8
@@ -1062,7 +1061,7 @@ enum data_align { align_abi, align_opt, align_both };
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
-#define FIRST_SAVED_S2PP_REGNO (FIRST_S2PP_REGNO+20)
+#define FIRST_SAVED_S2PP_REGNO (FIRST_S2PP_REGNO+19)
 #define FIRST_SAVED_FP_REGNO	  (14+32)
 #define FIRST_SAVED_GP_REGNO	  (FIXED_R13 ? 14 : 13)
 
@@ -1175,6 +1174,9 @@ enum data_align { align_abi, align_opt, align_both };
 /* True if register is an s2pp register.  *///s2pp-mark
 #define S2PP_REGNO_P(N) ((N) >= FIRST_S2PP_REGNO && (N) <= LAST_S2PP_REGNO)
 
+#define S2PP_COND_REGNO_P(N) ((N) == S2PP_COND_REGNO)
+
+#define S2PP_ACC_REGNO_P(N) ((N) == S2PP_ACC_REGNO)
 
 /* True if register is a VSX register.  */
 #define VSX_REGNO_P(N) (FP_REGNO_P (N) || ALTIVEC_REGNO_P (N))
@@ -1369,13 +1371,10 @@ enum reg_class
   NO_REGS,
   BASE_REGS,
   GENERAL_REGS,
-<<<<<<< HEAD
-  FLOAT_REGS,
   S2PP_REGS,  
-=======
-  //S2PP_REGS,  
   FLOAT_REGS,
->>>>>>> master
+  S2PP_C_REG,  
+  S2PP_ACC_REG,  
   ALTIVEC_REGS,
   VSX_REGS,
   VRSAVE_REGS,
@@ -1403,20 +1402,16 @@ enum reg_class
 
 
 /* Give names of register classes as strings for dump file.  */
-#if TARGET_S2PP
-#define S2PP_REGS FLOAT_REGS
-#endif
 
 #define REG_CLASS_NAMES							\
 {									\
   "NO_REGS",								\
   "BASE_REGS",								\
   "GENERAL_REGS",							\
-  "FLOAT_REGS",								\
-<<<<<<< HEAD
   "S2PP_REGS",								\
-=======
->>>>>>> master
+  "FLOAT_REGS",								\
+  "S2PP_C_REG",								\
+  "S2PP_ACC_REG",							\
   "ALTIVEC_REGS",							\
   "VSX_REGS",								\
   "VRSAVE_REGS",							\
@@ -1436,7 +1431,6 @@ enum reg_class
   "CA_REGS",								\
   "SPE_HIGH_REGS",							\
   "ALL_REGS"}								
-  //"S2PP_REGS",							
 //s2pp-mark added s2pp regclass
 /* Define which registers fit in which classes.
    This is an initializer for a vector of HARD_REG_SET
@@ -1450,13 +1444,14 @@ enum reg_class
   { 0xfffffffe, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
-<<<<<<< HEAD
-  /* FLOAT_REGS.  */							\
+  /* S2PP_REGS.  */							\
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
-=======
-  /* FLOAT_REGS/S2PP_REGS.  */						\
+  /* FLOAT_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
->>>>>>> master
+  /* S2PP_C_REG.  */							\
+  { 0x00000000, 0x00000000, 0x10000000, 0x00000000, 0x00000000 },	\
+  /* S2PP_ACC_REG.  */							\
+  { 0x00000000, 0x00000000, 0x20000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
   { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
   /* VSX_REGS.  */							\
@@ -1494,14 +1489,9 @@ enum reg_class
   /* SPE_HIGH_REGS.  */							\
   { 0x00000000, 0x00000000, 0x00000000, 0xffe00000, 0x001fffff },	\
   /* ALL_REGS.  */							\
-  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0x001fffff }}	
+  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffe7ffff, 0xffffffff }}	
 /*p_o_i*///s2pp-mark
-  ///* S2PP_REGS. should befixed*/					
-  //{ 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	
 //s2pp-mark added s2pp regclass
-//#define S2PP_REGS ALTIVEC_REGS
-
-#define FLOAT_REGS NO_REGS
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
@@ -1525,7 +1515,9 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_d,		/* fpr registers for double values */
   RS6000_CONSTRAINT_f,		/* fpr registers for single values */
   RS6000_CONSTRAINT_v,		/* Altivec registers */
-  RS6000_CONSTRAINT_k,		/* s2pp-marker added s2pp vectror register constriant, actually not used (not for now)*/
+  RS6000_CONSTRAINT_kv,		/* s2pp vector regsiters*/
+  RS6000_CONSTRAINT_kc,		/* s2pp conditional register*/
+  RS6000_CONSTRAINT_ka,		/* s2pp accumulator*/
   RS6000_CONSTRAINT_wa,		/* Any VSX register */
   RS6000_CONSTRAINT_wd,		/* VSX register for V2DF */
   RS6000_CONSTRAINT_wf,		/* VSX register for V4SF */
@@ -1765,11 +1757,13 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 
 /* Minimum and maximum s2pp registers used to hold arguments.  */
 //#define S2PP_REGS FLOAT_REGS
-#define FIRST_S2PP_REGNO FIRST_FPR_REGNO
-#define LAST_S2PP_REGNO LAST_FPR_REGNO
+//#define FIRST_S2PP_REGNO FIRST_FPR_REGNO + 1
+//#define LAST_S2PP_REGNO LAST_FPR_REGNO
 #define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
 #define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
 #define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
+//#define S2PP_COND_REGNO LAST_S2PP_REGNO + 1
+//#define S2PP_ACC_REGNO S2PP_COND_REGNO + 1
 
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
@@ -2576,6 +2570,7 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   {"k20", 52}, {"k21", 53}, {"k22", 54}, {"k23", 55},	\
   {"k24", 56}, {"k25", 57}, {"k26", 58}, {"k27", 59},	\
   {"k28", 60}, {"k29", 61}, {"k30", 62}, {"k31", 63},	\
+  {"s2pp_cond", 64}, {"s2pp_acc", 65}				\
 }
 
 /* This is how to output an element of a case-vector that is relative.  */
@@ -2628,7 +2623,7 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
 
 /* Define which CODE values are valid.  */
 
-#define PRINT_OPERAND_PUNCT_VALID_P(CODE)  ((CODE) == '&')
+#define PRINT_OPERAND_PUNCT_VALID_P(CODE)  ((CODE) == '&' || (CODE) == '.')
 
 /* Print a memory address as an operand to reference that memory location.  */
 

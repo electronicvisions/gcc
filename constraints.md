@@ -17,7 +17,7 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
-;; Available constraint letters: "e", "k", "q", "u", "A", "B", "C", "D"
+;; Available constraint letters: "e", "\k", "\q", "u", "A", "B", "C", "D"
 
 ;; Register constraints
 
@@ -52,8 +52,14 @@
   "@internal")
 
 ;;s2pp-mark added vector register constraint
-(define_register_constraint "k" "rs6000_constraints[RS6000_CONSTRAINT_k]" 
-  "@internal")
+(define_register_constraint "kv" "rs6000_constraints[RS6000_CONSTRAINT_kv]" 
+  "s2pp vector register")
+
+(define_register_constraint "kc" "rs6000_constraints[RS6000_CONSTRAINT_kc]" 
+  "s2pp conditional register")
+
+(define_register_constraint "ka" "rs6000_constraints[RS6000_CONSTRAINT_ka]" 
+  "s2pp accumulator")
 
 ;;"rs6000_constraints[RS6000_CONSTRAINT_k]"
 

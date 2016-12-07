@@ -63,6 +63,36 @@
   return S2PP_REGNO_P (REGNO (op));
 })
 
+(define_predicate "s2pp_cond_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    op = SUBREG_REG (op);
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) > LAST_VIRTUAL_REGISTER)
+    return 1;
+
+  return S2PP_COND_REGNO_P (REGNO (op));
+})
+
+(define_predicate "s2pp_acc_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    op = SUBREG_REG (op);
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) > LAST_VIRTUAL_REGISTER)
+    return 1;
+
+  return S2PP_ACC_REGNO_P (REGNO (op));
+})
+
 ;; Return 1 if op is a VSX register.
 (define_predicate "vsx_register_operand"
   (match_operand 0 "register_operand")
