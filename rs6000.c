@@ -5490,7 +5490,7 @@ output_vec_const_move (rtx *operands)
       } 
       mode = GET_MODE (splat_vec);
       if (mode == V8HImode)
-	return "fxvsplath %0,0";
+	return "#";//"fxvsplath %0,0";
       else if (mode == V16QImode)
 	return "#";
       else
