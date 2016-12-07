@@ -344,10 +344,10 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
-#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, S2PP_REG_TYPE)
+#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
 
 
-#define IS_FP_VECT_REG_TYPE(RTYPE) (IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
+#define IS_FP_VECT_REG_TYPE(RTYPE) (IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
 
 
 /* Register classes we care about in secondary reload or go if legitimate
@@ -358,7 +358,7 @@ enum rs6000_reload_reg_type {
   RELOAD_REG_GPR,			/* General purpose registers.  */
   RELOAD_REG_FPR,			/* Traditional floating point regs.  */
   RELOAD_REG_VMX,			/* Altivec (VMX) registers.  */
-  RELOAD_REG_FXV,			/* Altivec (VMX) registers.  */
+  //RELOAD_REG_FXV,			/* Altivec (VMX) registers.  */
   RELOAD_REG_ANY,			/* OR of GPR, FPR, Altivec masks.  */
   N_RELOAD_REG
 };
@@ -367,7 +367,7 @@ enum rs6000_reload_reg_type {
    into real registers, and skip the ANY class, which is just an OR of the
    bits.  */
 #define FIRST_RELOAD_REG_CLASS	RELOAD_REG_GPR
-#define LAST_RELOAD_REG_CLASS	RELOAD_REG_FXV
+#define LAST_RELOAD_REG_CLASS	RELOAD_REG_VMX
 
 /* Map reload register type to a register in the register class.  */
 struct reload_reg_map_type {
