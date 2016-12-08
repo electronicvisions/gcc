@@ -152,14 +152,14 @@
   "fxvadd<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "s2pp_fxvadd<FXVI_char>fs"
-  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
-		    (match_operand:FXVI 2 "register_operand" "kv")]
-		   UNSPEC_FXVADD))]
-  "<FXVI_unit>"
-  "fxvadd<FXVI_char>fs %0,%1,%2"
-  [(set_attr "type" "vecsimple")])
+;;(define_insn "s2pp_fxvadd<FXVI_char>fs"
+;;  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+;;        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+;;		    (match_operand:FXVI 2 "register_operand" "kv")]
+;;		   UNSPEC_FXVADD))]
+;;  "<FXVI_unit>"
+;;  "fxvadd<FXVI_char>fs %0,%1,%2"
+;;  [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvadd<FXVI_char>m_c"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -195,14 +195,14 @@
   "fxvsub<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "s2pp_fxvsub<FXVI_char>fs"
-  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
-                    (match_operand:FXVI 2 "register_operand" "kv")]
-		   UNSPEC_FXVSUB))]
-  "VECTOR_UNIT_S2PP_P (<MODE>mode)"
-  "fxvsub<FXVI_char>fs %0,%1,%2"
-  [(set_attr "type" "vecsimple")])
+;;(define_insn "s2pp_fxvsub<FXVI_char>fs"
+;;  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+;;        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+;;                    (match_operand:FXVI 2 "register_operand" "kv")]
+;;		   UNSPEC_FXVSUB))]
+;;  "VECTOR_UNIT_S2PP_P (<MODE>mode)"
+;;  "fxvsub<FXVI_char>fs %0,%1,%2"
+;;  [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvsub<FXVI_char>m_c"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -238,14 +238,14 @@
   "fxvmul<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "s2pp_fxvmul<FXVI_char>fs"
-  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
-		    (match_operand:FXVI 2 "register_operand" "kv")]
-		   UNSPEC_FXVMUL))]
-  "<FXVI_unit>"
-  "fxvmul<FXVI_char>fs %0,%1,%2"
-  [(set_attr "type" "vecsimple")])
+;;(define_insn "s2pp_fxvmul<FXVI_char>fs"
+;;  [(set (match_operand:FXVI 0 "register_operand" "=kv")
+;;        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+;;		    (match_operand:FXVI 2 "register_operand" "kv")]
+;;		   UNSPEC_FXVMUL))]
+;;  "<FXVI_unit>"
+;;  "fxvmul<FXVI_char>fs %0,%1,%2"
+;;  [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvmul<FXVI_char>m_c"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -281,14 +281,6 @@
   "TARGET_S2PP"
   "fxvsplat<FXVI_char> %0,%1"
   [(set_attr "type" "vecperm")])
-
-;;(define_insn "s2pp_fxvsplat<FXVI_char>"
-;;  [(set (match_operand:FXVI 0 "register_operand" "=kv")
-;;	(vec_duplicate:FXVI
-;;	     (match_operand:SI 1 "register_operand" "r")))]
-;;  "TARGET_S2PP"
-;;  "fxvsplat<FXVI_char> %0,%1"
-;;  [(set_attr "type" "vecperm")])
 
 ;; select
 ;;(define_insn "*s2pp_fxvsel<mode>"
@@ -349,171 +341,239 @@
 
 ;;accumulator insns
 (define_insn "s2pp_fxvmtac<FXVI_char>" 
-  [(parallel
-    [(set (reg:FXVI S2PP_ACC_REGNO)
-          (unspec:FXVI [(match_operand:FXVI 0 "s2pp_register_operand" "kv")]
-		UNSPEC_FXVMTAC))
-     (use (reg:CC S2PP_COND_REGNO))])]
+  [(set	(reg:FXVI S2PP_ACC_REGNO)
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 1 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:FXVI [(match_operand:FXVI 0 "s2pp_register_operand" "kv")]
+		UNSPEC_FXVMTAC)
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmtac<FXVI_char> %0"
+  "fxvmtac<FXVI_char> %0,%1 "
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvma<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-       	(plus:FXVI (reg:FXVI S2PP_ACC_REGNO)
-        	   (mult:FXVI (match_operand:FXVI 1 "register_operand" "kv")
-			     (match_operand:FXVI 2 "register_operand" "kv"))))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+       		(plus:FXVI (reg:FXVI S2PP_ACC_REGNO)
+        	   	   (mult:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+			   (match_operand:FXVI 2 "register_operand" "kv")))
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvma<FXVI_char>m %0,%1,%2,0"
+  "fxvma<FXVI_char>m %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvmatac<FXVI_char>m"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-       	(plus:FXVI (reg:FXVI S2PP_ACC_REGNO)
-        	   (mult:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-			     (match_operand:FXVI 1 "register_operand" "kv"))))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+       		(plus:FXVI (reg:FXVI S2PP_ACC_REGNO)
+        	   	   (mult:FXVI (match_operand:FXVI 0 "register_operand" "kv")
+			   	      (match_operand:FXVI 1 "register_operand" "kv")))
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmatac<FXVI_char>m %0,%1,0"
+  "fxvmatac<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvmultac<FXVI_char>m"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-        (mult:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-		  (match_operand:FXVI 1 "register_operand" "kv")))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+        	(mult:FXVI (match_operand:FXVI 0 "register_operand" "kv")
+		  	   (match_operand:FXVI 1 "register_operand" "kv"))
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmultac<FXVI_char>m %0,%1,0"
+  "fxvmultac<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvaddactac<FXVI_char>m"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-        (plus:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-		  (reg:FXVI S2PP_ACC_REGNO)))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 1 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+        	(plus:FXVI (match_operand:FXVI 0 "register_operand" "kv")
+			   (reg:FXVI S2PP_ACC_REGNO))
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvaddactac<FXVI_char>m %0,0"
+  "fxvaddactac<FXVI_char>m %0,%1"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvaddtac<FXVI_char>"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-        (plus:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-		  (match_operand:FXVI 1 "register_operand" "kv")))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+        	(plus:FXVI (match_operand:FXVI 0 "register_operand" "kv")
+			   (match_operand:FXVI 1 "register_operand" "kv"))
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvaddtac<FXVI_char> %0,%1,0"
+  "fxvaddtac<FXVI_char> %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvaddac<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (plus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
-		  (reg:FXVI S2PP_ACC_REGNO)))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+	        (plus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+			   (reg:FXVI S2PP_ACC_REGNO))
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvaddac<FXVI_char>m %0,%1,0"
+  "fxvaddac<FXVI_char>m %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvmtac<FXVI_char>f" 
-  [(parallel
-    [(set (reg:FXVI S2PP_ACC_REGNO)
-          (unspec:FXVI [(match_operand:FXVI 0 "s2pp_register_operand" "kv")]
-		UNSPEC_FXVMTACF))
-     (use (reg:CC S2PP_COND_REGNO))])]
+  [(set	(reg:FXVI S2PP_ACC_REGNO)
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 1 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:FXVI [(match_operand:FXVI 0 "s2pp_register_operand" "kv")]
+		UNSPEC_FXVMTACF)
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvmtac<FXVI_char>f %0"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvma<FXVI_char>fs"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-       	(unspec:FXVI [(reg:FXVI S2PP_ACC_REGNO)
-        	      (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
-			            (match_operand:FXVI 2 "register_operand" "kv")]
-				     UNSPEC_FXVMUL)]
-		       UNSPEC_FXVADD))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+       		(unspec:FXVI [(reg:FXVI S2PP_ACC_REGNO)
+        	      	      (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+			           	    (match_operand:FXVI 2 "register_operand" "kv")]
+			      UNSPEC_FXVMUL)]
+		UNSPEC_FXVADD)
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvma<FXVI_char>fs %0,%1,%2,0"
+  "fxvma<FXVI_char>fs %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvmatac<FXVI_char>fs"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-       	(unspec:FXVI [(reg:FXVI S2PP_ACC_REGNO)
-        	      (unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
-			            (match_operand:FXVI 1 "register_operand" "kv")]
-				     UNSPEC_FXVMUL)]
-		       UNSPEC_FXVADD))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+       		(unspec:FXVI [(reg:FXVI S2PP_ACC_REGNO)
+        		      (unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
+				            (match_operand:FXVI 1 "register_operand" "kv")]
+			      UNSPEC_FXVMUL)]
+		UNSPEC_FXVADD)
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmatac<FXVI_char>fs %0,%1,0"
+  "fxvmatac<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvmultac<FXVI_char>fs"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-        (unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
-		      (match_operand:FXVI 1 "register_operand" "kv")]
-			UNSPEC_FXVMUL))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+        	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
+			      (match_operand:FXVI 1 "register_operand" "kv")]
+		UNSPEC_FXVMUL)
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmultac<FXVI_char>fs %0,%1,0"
+  "fxvmultac<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvaddactac<FXVI_char>f"
   [(set (reg:FXVI S2PP_ACC_REGNO)
-        (unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
-		      (reg:FXVI S2PP_ACC_REGNO)]
-			UNSPEC_FXVADD))]
+	(if_then_else:FXVI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 1 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+        	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
+			      (reg:FXVI S2PP_ACC_REGNO)]
+		UNSPEC_FXVADD)
+		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvaddactac<FXVI_char>f %0,0"
+  "fxvaddactac<FXVI_char>f %0,%1"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvaddac<FXVI_char>fs"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
-		      (reg:FXVI S2PP_ACC_REGNO)]
-			UNSPEC_FXVADD))]
-  "TARGET_S2PP"
-  "fxvaddac<FXVI_char>fs %0,%1,0"
-  [(set_attr "type" "vecsimple")])
-
-
-(define_insn "s2pp_fxvmtac<FXVI_char>_c" 
-  [(set (reg:FXVI S2PP_ACC_REGNO)
 	(if_then_else:FXVI
-	 (eq:CC (reg:CC S2PP_COND_REGNO)
-		(match_operand:QI 1 "u3bit_cint_operand" "i"))
-        (unspec:FXVI [(match_operand:FXVI 0 "s2pp_register_operand" "kv")]
-		UNSPEC_FXVMTAC)
-	(reg:FXVI S2PP_ACC_REGNO)))]
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 2 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+        	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+			      (reg:FXVI S2PP_ACC_REGNO)]
+		UNSPEC_FXVADD)
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvmtac<FXVI_char> %0,%1"
+  "fxvaddac<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
 ;; pack
 (define_insn "s2pp_fxvpckbu"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
-	(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
-		       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
-		      UNSPEC_FXVPCKU))]
+	(if_then_else:V16QI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVPCKU)
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvpckbu %0,%1,%2"
+  "fxvpckbu %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
 
 (define_insn "s2pp_fxvpckbl"
-  [(set (match_operand:V16QI 0 "s2pp_register_operand" "=kv")
-	(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
-		       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
-		      UNSPEC_FXVPCKL))]
+  [(set (match_operand:V16QI 0 "register_operand" "=kv")
+	(if_then_else:V16QI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVPCKL)
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvpckbl %0,%1,%2"
+  "fxvpckbl %0,%1,%2,%3"
   [(set_attr "type" "vecperm")])
 
 ;;unpack
 (define_insn "s2pp_fxvupckbl"
   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
-	(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
-	 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
-		     UNSPEC_FXVUPCKL))]
+	(if_then_else:V8HI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVUPCKL)
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvupckbl %0,%1,%2"
+  "fxvupckbl %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
 
 (define_insn "s2pp_fxvupckbr"
   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
-	(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
-	 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
-		     UNSPEC_FXVUPCKR))]
+	(if_then_else:V8HI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVUPCKR)
+		(match_dup 0)))]
   "TARGET_S2PP"
-  "fxvupckbr %0,%1,%2"
+  "fxvupckbr %0,%1,%2,%3"
   [(set_attr "type" "vecperm")])

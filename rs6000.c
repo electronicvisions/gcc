@@ -13981,7 +13981,7 @@ s2pp_expand_unaryx_builtin (enum insn_code icode, tree exp)
         emit_insn (pat);
       return NULL_RTX;
 }
-//expand single argument special builtin
+//expand double argument special builtin
 static rtx
 s2pp_expand_binaryx_builtin (enum insn_code icode, tree exp)
 {
@@ -14006,6 +14006,43 @@ s2pp_expand_binaryx_builtin (enum insn_code icode, tree exp)
         op1 = copy_to_mode_reg (mode1, op1);
 
       pat = GEN_FCN (icode) (op0, op1);
+      if (pat)
+        emit_insn (pat);
+      return NULL_RTX;
+}
+//expand triple argument special builtin
+static rtx
+s2pp_expand_ternaryx_builtin (enum insn_code icode, tree exp)
+{
+      tree arg0, arg1, arg2;
+      rtx op0, op1, op2, pat;
+      enum machine_mode mode0, mode1, mode2; //, tmode;
+      arg0 = CALL_EXPR_ARG (exp, 0);
+      arg1 = CALL_EXPR_ARG (exp, 1);
+      arg2 = CALL_EXPR_ARG (exp, 2);
+      op0 = expand_normal (arg0);
+      op1 = expand_normal (arg1);
+      op2 = expand_normal (arg2);
+      mode0 = insn_data[icode].operand[0].mode;
+      mode1 = insn_data[icode].operand[1].mode;
+      mode2 = insn_data[icode].operand[2].mode;
+
+      /* If we got invalid arguments bail out before generating bad rtl.  */
+      if (arg0 == error_mark_node
+	  || arg1 == error_mark_node
+	  || arg2 == error_mark_node)
+        return const0_rtx;
+
+      if (! (*insn_data[icode].operand[0].predicate) (op0, mode0))
+        op0 = copy_to_mode_reg (mode0, op0);
+
+      if (! (*insn_data[icode].operand[1].predicate) (op1, mode1))
+        op1 = copy_to_mode_reg (mode1, op1);
+
+      if (! (*insn_data[icode].operand[2].predicate) (op2, mode2))
+        op2 = copy_to_mode_reg (mode2, op2);
+
+      pat = GEN_FCN (icode) (op0, op1, op2);
       if (pat)
         emit_insn (pat);
       return NULL_RTX;
@@ -14077,41 +14114,41 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
     case S2PP_BUILTIN_FXVCMPH:
       return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvcmph, exp);
     case S2PP_BUILTIN_FXVMTACB:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvmtacb, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtacb, exp);
     case S2PP_BUILTIN_FXVMTACH:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvmtach, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtach, exp);
     case S2PP_BUILTIN_FXVMTACBF:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvmtacbf, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtacbf, exp);
     case S2PP_BUILTIN_FXVMTACHF:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvmtachf, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmtachf, exp);
     case S2PP_BUILTIN_FXVADDACTACBM:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvaddactacbm, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactacbm, exp);
     case S2PP_BUILTIN_FXVADDACTACHM:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvaddactachm, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactachm, exp);
     case S2PP_BUILTIN_FXVADDACTACBF:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvaddactacbf, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactacbf, exp);
     case S2PP_BUILTIN_FXVADDACTACHF:
-      return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvaddactachf, exp);
+      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddactachf, exp);
     case S2PP_BUILTIN_FXVMATACHM:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmatachm, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatachm, exp);
     case S2PP_BUILTIN_FXVMATACBM:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmatacbm, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatacbm, exp);
     case S2PP_BUILTIN_FXVMATACHFS:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmatachfs, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatachfs, exp);
     case S2PP_BUILTIN_FXVMATACBFS:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmatacbfs, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmatacbfs, exp);
     case S2PP_BUILTIN_FXVMULTACHM:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmultachm, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultachm, exp);
     case S2PP_BUILTIN_FXVMULTACBM:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmultacbm, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultacbm, exp);
     case S2PP_BUILTIN_FXVMULTACHFS:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmultachfs, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultachfs, exp);
     case S2PP_BUILTIN_FXVMULTACBFS:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvmultacbfs, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvmultacbfs, exp);
     case S2PP_BUILTIN_FXVADDTACH:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddtach, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvaddtach, exp);
     case S2PP_BUILTIN_FXVADDTACB:
-      return s2pp_expand_binaryx_builtin (CODE_FOR_s2pp_fxvaddtacb, exp);
+      return s2pp_expand_ternaryx_builtin (CODE_FOR_s2pp_fxvaddtacb, exp);
 
     default:
       break;
