@@ -85,6 +85,7 @@
 #define fxv_mulbfs_c __builtin_vec_fxvmulbfs_c
 #define fxv_mulhfs_c __builtin_vec_fxvmulhfs_c
 
+#define vec_sh fxv_sh
 #define fxv_sh __builtin_vec_fxvsh
 #define fxv_shb __builtin_vec_fxvshb
 #define fxv_shh __builtin_vec_fxvshh

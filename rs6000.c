@@ -16065,6 +16065,20 @@ s2pp_init_builtins (void)
   tree void_ftype_v16qi
     = build_function_type_list (void_type_node, V16QI_type_node, NULL_TREE);
 
+  tree void_ftype_v8hi_int
+    = build_function_type_list (void_type_node, V8HI_type_node, integer_type_node, NULL_TREE);
+  tree void_ftype_v16qi_int
+    = build_function_type_list (void_type_node, V16QI_type_node, integer_type_node, NULL_TREE);
+  tree void_ftype_opaque_int
+    = build_function_type_list (void_type_node, opaque_V4SI_type_node, integer_type_node, NULL_TREE);
+
+  tree void_ftype_v8hi_v8hi_int
+    = build_function_type_list (void_type_node, V8HI_type_node, V8HI_type_node, integer_type_node, NULL_TREE);
+  tree void_ftype_v16qi_v16qi_int
+    = build_function_type_list (void_type_node, V16QI_type_node, V16QI_type_node, integer_type_node, NULL_TREE);
+  tree void_ftype_opaque_opaque_int
+    = build_function_type_list (void_type_node, opaque_V4SI_type_node, opaque_V4SI_type_node, integer_type_node, NULL_TREE);
+
   def_builtin ("__builtin_s2pp_fxvlax_v8hi", v8hi_ftype_long_pcvoid,
 	       S2PP_BUILTIN_FXVLAX_V8HI);
   def_builtin ("__builtin_s2pp_fxvlax_v16qi", v16qi_ftype_long_pcvoid,
@@ -16098,24 +16112,57 @@ s2pp_init_builtins (void)
 
   def_builtin ("__builtin_s2pp_fxvcmpb", void_ftype_v16qi, S2PP_BUILTIN_FXVCMPB);
   def_builtin ("__builtin_s2pp_fxvcmph", void_ftype_v8hi, S2PP_BUILTIN_FXVCMPH);
-  def_builtin ("__builtin_s2pp_fxvmtacb", void_ftype_v16qi, S2PP_BUILTIN_FXVMTACB);
-  def_builtin ("__builtin_s2pp_fxvmtach", void_ftype_v8hi, S2PP_BUILTIN_FXVMTACH);
-  def_builtin ("__builtin_s2pp_fxvmtacbf", void_ftype_v16qi, S2PP_BUILTIN_FXVMTACBF);
-  def_builtin ("__builtin_s2pp_fxvmtachf", void_ftype_v8hi, S2PP_BUILTIN_FXVMTACHF);
-  def_builtin ("__builtin_s2pp_fxvmatacbm", void_ftype_v16qi, S2PP_BUILTIN_FXVMATACBM);
-  def_builtin ("__builtin_s2pp_fxvmatachm", void_ftype_v8hi, S2PP_BUILTIN_FXVMATACHM);
-  def_builtin ("__builtin_s2pp_fxvmatacbfs", void_ftype_v16qi, S2PP_BUILTIN_FXVMATACBFS);
-  def_builtin ("__builtin_s2pp_fxvmatachfs", void_ftype_v8hi, S2PP_BUILTIN_FXVMATACHFS);
-  def_builtin ("__builtin_s2pp_fxvmultacbm", void_ftype_v16qi, S2PP_BUILTIN_FXVMULTACBM);
-  def_builtin ("__builtin_s2pp_fxvmultachm", void_ftype_v8hi, S2PP_BUILTIN_FXVMULTACHM);
-  def_builtin ("__builtin_s2pp_fxvmultacbfs", void_ftype_v16qi, S2PP_BUILTIN_FXVMULTACBFS);
-  def_builtin ("__builtin_s2pp_fxvmultachfs", void_ftype_v8hi, S2PP_BUILTIN_FXVMULTACHFS);
-  def_builtin ("__builtin_s2pp_fxvaddactacbm", void_ftype_v16qi, S2PP_BUILTIN_FXVADDACTACBM);
-  def_builtin ("__builtin_s2pp_fxvaddactachm", void_ftype_v8hi, S2PP_BUILTIN_FXVADDACTACHM);
-  def_builtin ("__builtin_s2pp_fxvaddactacbf", void_ftype_v16qi, S2PP_BUILTIN_FXVADDACTACBF);
-  def_builtin ("__builtin_s2pp_fxvaddactachf", void_ftype_v8hi, S2PP_BUILTIN_FXVADDACTACHF);
-  def_builtin ("__builtin_s2pp_fxvaddtacb", void_ftype_v16qi, S2PP_BUILTIN_FXVADDTACB);
-  def_builtin ("__builtin_s2pp_fxvaddtach", void_ftype_v8hi, S2PP_BUILTIN_FXVADDTACH);
+
+  def_builtin ("__builtin_s2pp_fxvmtacb", void_ftype_v16qi_int, S2PP_BUILTIN_FXVMTACB);
+  def_builtin ("__builtin_s2pp_fxvmtach", void_ftype_v8hi_int, S2PP_BUILTIN_FXVMTACH);
+  def_builtin ("__builtin_s2pp_fxvmtacbf", void_ftype_v16qi_int, S2PP_BUILTIN_FXVMTACBF);
+  def_builtin ("__builtin_s2pp_fxvmtachf", void_ftype_v8hi_int, S2PP_BUILTIN_FXVMTACHF);
+  def_builtin ("__builtin_vec_fxvmtac", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVMTAC);
+  def_builtin ("__builtin_vec_fxvmtacf", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVMTACF);
+  def_builtin ("__builtin_vec_fxvmtacb", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVMTACB);
+  def_builtin ("__builtin_vec_fxvmtacbf", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVMTACBF);
+  def_builtin ("__builtin_vec_fxvmtach", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVMTACH);
+  def_builtin ("__builtin_vec_fxvmtachf", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVMTACHF);
+
+  def_builtin ("__builtin_s2pp_fxvaddactacbm", void_ftype_v16qi_int, S2PP_BUILTIN_FXVADDACTACBM);
+  def_builtin ("__builtin_s2pp_fxvaddactachm", void_ftype_v8hi_int, S2PP_BUILTIN_FXVADDACTACHM);
+  def_builtin ("__builtin_s2pp_fxvaddactacbf", void_ftype_v16qi_int, S2PP_BUILTIN_FXVADDACTACBF);
+  def_builtin ("__builtin_s2pp_fxvaddactachf", void_ftype_v8hi_int, S2PP_BUILTIN_FXVADDACTACHF);
+  def_builtin ("__builtin_vec_fxvaddactacm", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVADDACTACM);
+  def_builtin ("__builtin_vec_fxvaddactacf", void_ftype_opaque_int, S2PP_BUILTIN_VEC_FXVADDACTACF);
+  def_builtin ("__builtin_vec_fxvaddactacbm", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVADDACTACBM);
+  def_builtin ("__builtin_vec_fxvaddactacbf", void_ftype_v16qi_int, S2PP_BUILTIN_VEC_FXVADDACTACBF);
+  def_builtin ("__builtin_vec_fxvaddactachm", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVADDACTACHM);
+  def_builtin ("__builtin_vec_fxvaddactachf", void_ftype_v8hi_int, S2PP_BUILTIN_VEC_FXVADDACTACHF);
+
+  def_builtin ("__builtin_s2pp_fxvmatacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMATACBM);
+  def_builtin ("__builtin_s2pp_fxvmatachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMATACHM);
+  def_builtin ("__builtin_s2pp_fxvmatacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMATACBFS);
+  def_builtin ("__builtin_s2pp_fxvmatachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMATACHFS);
+  def_builtin ("__builtin_vec_fxvmatacm", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMATACM);
+  def_builtin ("__builtin_vec_fxvmatacfs", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMATACFS);
+  def_builtin ("__builtin_vec_fxvmatacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMATACBM);
+  def_builtin ("__builtin_vec_fxvmatacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMATACBFS);
+  def_builtin ("__builtin_vec_fxvmatachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMATACHM);
+  def_builtin ("__builtin_vec_fxvmatachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMATACHFS);
+
+  def_builtin ("__builtin_s2pp_fxvmultacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMULTACBM);
+  def_builtin ("__builtin_s2pp_fxvmultachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMULTACHM);
+  def_builtin ("__builtin_s2pp_fxvmultacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVMULTACBFS);
+  def_builtin ("__builtin_s2pp_fxvmultachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVMULTACHFS);
+  def_builtin ("__builtin_vec_fxvmultacm", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMULTACM);
+  def_builtin ("__builtin_vec_fxvmultacfs", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVMULTACFS);
+  def_builtin ("__builtin_vec_fxvmultacbm", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMULTACBM);
+  def_builtin ("__builtin_vec_fxvmultacbfs", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVMULTACBFS);
+  def_builtin ("__builtin_vec_fxvmultachm", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMULTACHM);
+  def_builtin ("__builtin_vec_fxvmultachfs", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVMULTACHFS);
+
+  def_builtin ("__builtin_s2pp_fxvaddtacb", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_FXVADDTACB);
+  def_builtin ("__builtin_s2pp_fxvaddtach", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_FXVADDTACH);
+  def_builtin ("__builtin_vec_fxvaddtac", void_ftype_opaque_opaque_int, S2PP_BUILTIN_VEC_FXVADDTAC);
+  def_builtin ("__builtin_vec_fxvaddtacb", void_ftype_v16qi_v16qi_int, S2PP_BUILTIN_VEC_FXVADDTACB);
+  def_builtin ("__builtin_vec_fxvaddtach", void_ftype_v8hi_v8hi_int, S2PP_BUILTIN_VEC_FXVADDTACH);
+
 
   /* Add the DST variants.  */
 //  d = bdesc_dst;
