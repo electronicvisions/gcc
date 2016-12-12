@@ -183,9 +183,9 @@
 #define fxv_multacfs(x,y) fxv_multacfs_c(x,y,0)
 #define fxv_multachfs(x,y) fxv_multachfs_c(x,y,0)
 #define fxv_multacbfs(x,y) fxv_multacbfs_c(x,y,0)
-#define fxv_addtacm(x,y) fxv_addtacm_c(x,y,0)
-#define fxv_addtachm(x,y) fxv_addtachm_c(x,y,0)
-#define fxv_addtacbm(x,y) fxv_addtacbm_c(x,y,0)
+#define fxv_addtac(x,y) fxv_addtac_c(x,y,0)
+#define fxv_addtach(x,y) fxv_addtach_c(x,y,0)
+#define fxv_addtacb(x,y) fxv_addtacb_c(x,y,0)
 
 #define fxv_matacm_c __builtin_vec_fxvmatacm
 #define fxv_matachm_c __builtin_vec_fxvmatachm
@@ -199,9 +199,9 @@
 #define fxv_multacfs_c __builtin_vec_fxvmultacfs
 #define fxv_multachfs_c __builtin_vec_fxvmultachfs
 #define fxv_multacbfs_c __builtin_vec_fxvmultacbfs
-#define fxv_addtacm_c __builtin_vec_fxvaddtacm
-#define fxv_addtachm_c __builtin_vec_fxvaddtachm
-#define fxv_addtacbm_c __builtin_vec_fxvaddtacbm
+#define fxv_addtac_c __builtin_vec_fxvaddtac
+#define fxv_addtach_c __builtin_vec_fxvaddtach
+#define fxv_addtacb_c __builtin_vec_fxvaddtacb
 
 ///* Given the vec_step of a type, return the corresponding bool type.  */
 //template <int STEP> class __s2pp_bool_ret { };
