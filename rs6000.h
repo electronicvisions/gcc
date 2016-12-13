@@ -396,7 +396,7 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
-//#define rs6000_debug 0x40
+//#define rs6000_debug 0x6f
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -1475,9 +1475,9 @@ enum reg_class
   /* LINK_OR_CTR_REGS.  */						\
   { 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000 },	\
   /* SPECIAL_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000006, 0x00002000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x30000006, 0x00002000, 0x00000000 },	\
   /* SPEC_OR_GEN_REGS.  */						\
-  { 0xffffffff, 0x00000000, 0x0000000e, 0x00022000, 0x00000000 },	\
+  { 0xffffffff, 0x00000000, 0x3000000e, 0x00022000, 0x00000000 },	\
   /* CR0_REGS.  */							\
   { 0x00000000, 0x00000000, 0x00000010, 0x00000000, 0x00000000 },	\
   /* CR_REGS.  */							\
@@ -2423,7 +2423,7 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   &rs6000_reg_names[75][0],	/* cr7  */				\
 									\
   &rs6000_reg_names[76][0],	/* ca  */				\
-	/*p_o_i*/								\
+									\
   &rs6000_reg_names[77][0],	/* v0  */				\
   &rs6000_reg_names[78][0],	/* v1  */				\
   &rs6000_reg_names[79][0],	/* v2  */				\
@@ -2562,15 +2562,15 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   {"rh24", 141}, {"rh25", 142}, {"rh26", 143}, {"rh27", 144},	\
   {"rh28", 145}, {"rh29", 146}, {"rh30", 147}, {"rh31", 148},	\
   /* S2PP registers overlaid on top of FR registers */	\
-  {"k0",  32}, {"k1",  33}, {"k2",  34}, {"k3",  35},	\
-  {"k4",  36}, {"k5",  37}, {"k6",  38}, {"k7",  39},	\
-  {"k8",  40}, {"k9",  41}, {"k10", 42}, {"k11", 43},	\
-  {"k12", 44}, {"k13", 45}, {"k14", 46}, {"k15", 47},	\
-  {"k16", 48}, {"k17", 49}, {"k18", 50}, {"k19", 51},	\
-  {"k20", 52}, {"k21", 53}, {"k22", 54}, {"k23", 55},	\
-  {"k24", 56}, {"k25", 57}, {"k26", 58}, {"k27", 59},	\
-  {"k28", 60}, {"k29", 61}, {"k30", 62}, {"k31", 63},	\
-  {"s2pp_cond", 64}, {"s2pp_acc", 65}				\
+  {"kv00", 32}, {"kv0",  33}, {"kv1",  34}, {"kv2",  35},	\
+  {"kv3",  36}, {"kv4",  37}, {"kv5",  38}, {"kv6",  39},	\
+  {"kv7",  40}, {"kv8",  41}, {"kv9",  42}, {"kv10", 43},	\
+  {"kv11", 44}, {"kv12", 45}, {"kv13", 46}, {"kv14", 47},	\
+  {"kv15", 48}, {"kv16", 49}, {"kv17", 50}, {"kv18", 51},	\
+  {"kv19", 52}, {"kv20", 53}, {"kv21", 54}, {"kv22", 55},	\
+  {"kv23", 56}, {"kv24", 57}, {"kv25", 58}, {"kv26", 59},	\
+  {"kv27", 60}, {"kv28", 61}, {"kv29", 62}, {"kv30", 63},	\
+  {"kc", 64}, {"ka", 65}				\
 }
 
 /* This is how to output an element of a case-vector that is relative.  */

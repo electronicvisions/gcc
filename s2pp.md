@@ -7,6 +7,7 @@
    UNSPEC_FXVINX
    UNSPEC_FXVSPLT_DIRECT
    UNSPEC_FXVADD
+   UNSPEC_FXVADDACTAC
    UNSPEC_FXVSUB
    UNSPEC_FXVMUL
    UNSPEC_FXVMTAC
@@ -350,7 +351,7 @@
 		UNSPEC_FXVMTAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmtac<FXVI_char> %0,%1 "
+  "fxvmtac<FXVI_char> %0,%1"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvma<FXVI_char>m"
@@ -443,7 +444,7 @@
 		UNSPEC_FXVMTACF)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
-  "fxvmtac<FXVI_char>f %0"
+  "fxvmtac<FXVI_char>f %0,%1"
   [(set_attr "type" "vecsimple")])
 
 (define_insn "s2pp_fxvma<FXVI_char>fs"
@@ -500,7 +501,7 @@
 		UNSPEC_FXVCOND)
         	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
 			      (reg:FXVI S2PP_ACC_REGNO)]
-		UNSPEC_FXVADD)
+		UNSPEC_FXVADDACTAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvaddactac<FXVI_char>f %0,%1"
@@ -547,7 +548,7 @@
 		(match_dup 0)))]
   "TARGET_S2PP"
   "fxvpckbl %0,%1,%2,%3"
-  [(set_attr "type" "vecperm")])
+  [(set_attr "type" "vecload")])
 
 ;;unpack
 (define_insn "s2pp_fxvupckbl"
@@ -576,4 +577,4 @@
 		(match_dup 0)))]
   "TARGET_S2PP"
   "fxvupckbr %0,%1,%2,%3"
-  [(set_attr "type" "vecperm")])
+  [(set_attr "type" "vecload")])

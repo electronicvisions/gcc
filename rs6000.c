@@ -347,7 +347,8 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 #define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
 
 
-#define IS_FP_VECT_REG_TYPE(RTYPE) (IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
+#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE)
+//(IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
 
 
 /* Register classes we care about in secondary reload or go if legitimate
@@ -1728,11 +1729,11 @@ rs6000_hard_regno_nregs_internal (int regno, enum machine_mode mode)
     //reg_size = UNITS_PER_S2PP_WORD;
 
   /* TF/TD modes are special in that they always take 2 registers.  */
-  if (FP_REGNO_P (regno))
+  if (FP_REGNO_P (regno) && !TARGET_S2PP)
     reg_size = ((VECTOR_MEM_VSX_P (mode) && mode != TDmode && mode != TFmode)
 		? UNITS_PER_VSX_WORD
-		: VECTOR_MEM_S2PP_P (mode)
-		? UNITS_PER_S2PP_WORD
+		//: VECTOR_MEM_S2PP_P (mode)
+		//? UNITS_PER_S2PP_WORD
 		: UNITS_PER_FP_WORD);
 
   else if (SPE_SIMD_REGNO_P (regno) && TARGET_SPE && SPE_VECTOR_MODE (mode))
@@ -1804,10 +1805,10 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
 
   /* The float registers (except for VSX vector modes) can only hold floating
      modes and DImode.  */
-  if (FP_REGNO_P (regno))
+  if (FP_REGNO_P (regno) && !TARGET_S2PP)
     {
-      if (VECTOR_MEM_S2PP_P (mode))
-	return 1;
+      //if (VECTOR_MEM_S2PP_P (mode))
+	//return 1;
       //fpregno = s2ppregno
 
       if (SCALAR_FLOAT_MODE_P (mode)
@@ -1826,8 +1827,8 @@ rs6000_hard_regno_mode_ok (int regno, enum machine_mode mode)
       return 0;
     }
 
-    if (S2PP_REGNO_P (regno))
-      return VECTOR_MEM_S2PP_P (mode);
+  if (S2PP_REGNO_P (regno))
+    return VECTOR_MEM_S2PP_P (mode);
       
   /* The CR register can only hold CC modes.  */
   if (CR_REGNO_P (regno))
@@ -2519,9 +2520,6 @@ rs6000_setup_reg_addr_masks (void)
 static void
 rs6000_init_hard_regno_mode_ok (bool global_init_p)
 {
-  if (S2PP_REGS == FLOAT_REGS)
-    fprintf (stderr, "S2PP_REGS == FLOAT_REGS");
-
   ssize_t r, m, c;
   int align64;
   int align32;
@@ -2534,9 +2532,11 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   for (r = 32; r < 64; ++r)
     rs6000_regno_regclass[r] = FLOAT_REGS;
 
-  if (TARGET_S2PP)
-    for (r = 32; r < 64; ++r)
+  if (TARGET_S2PP){
+    for (r = 33; r < 64; ++r)
       rs6000_regno_regclass[r] = S2PP_REGS;
+    rs6000_regno_regclass[32] = NO_REGS;
+  }
 
   for (r = 64; r < FIRST_PSEUDO_REGISTER; ++r)
     rs6000_regno_regclass[r] = NO_REGS;
@@ -2594,17 +2594,13 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 
   if (TARGET_S2PP)/*p_o_i*/
     {
-      reg_class_to_reg_type[(int)FLOAT_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
+      reg_class_to_reg_type[(int)FLOAT_REGS] = NO_REG_TYPE; //S2PP_REG_TYPE;
       reg_class_to_reg_type[(int)S2PP_REGS] = S2PP_REG_TYPE; //S2PP_REG_TYPE;
       rs6000_regno_regclass[S2PP_COND_REGNO] = S2PP_C_REG;
       rs6000_regno_regclass[S2PP_ACC_REGNO] = S2PP_ACC_REG;
       reg_class_to_reg_type[(int)S2PP_C_REG] = S2PP_C_REG_TYPE; //S2PP_REG_TYPE;
       reg_class_to_reg_type[(int)S2PP_ACC_REG] = S2PP_ACC_REG_TYPE; //S2PP_REG_TYPE;
     }
-  if (S2PP_REGS == FLOAT_REGS)
-    fprintf (stderr, "S2PP_REGS == FLOAT_REGS");
-  if (S2PP_REG_TYPE == FPR_REG_TYPE)
-    fprintf (stderr, "S2PP_REG_TYPE == FLOAT_REG_TYPE");
 	  
   /* Precalculate the valid memory formats as well as the vector information,
      this must be set up before the rs6000_hard_regno_nregs_internal calls
@@ -2795,7 +2791,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   if (TARGET_MFPGPR)						/* DFmode  */
     rs6000_constraints[RS6000_CONSTRAINT_wg] = FLOAT_REGS;
 
-  if (TARGET_LFIWAX)
+  if (TARGET_LFIWAX && !TARGET_S2PP)
     rs6000_constraints[RS6000_CONSTRAINT_wl] = FLOAT_REGS;	/* DImode  */
 
   if (TARGET_DIRECT_MOVE)
@@ -2825,10 +2821,10 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   else if (TARGET_VSX)
     rs6000_constraints[RS6000_CONSTRAINT_ww] = FLOAT_REGS;
 
-  if (TARGET_STFIWX)
+  if (TARGET_STFIWX && !TARGET_S2PP)
     rs6000_constraints[RS6000_CONSTRAINT_wx] = FLOAT_REGS;	/* DImode  */
 
-  if (TARGET_LFIWZX)
+  if (TARGET_LFIWZX && !TARGET_S2PP)
     rs6000_constraints[RS6000_CONSTRAINT_wz] = FLOAT_REGS;	/* DImode  */
 
   /* Set up the reload helper and direct move functions.  *//*p_o_i*/
@@ -8051,8 +8047,11 @@ rs6000_conditional_register_usage (void)
       fixed_regs[i] = call_used_regs[i]
 	= call_really_used_regs[i] = 1;
 
-  if (TARGET_S2PP)
+  if (TARGET_S2PP){
     fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
+    fixed_regs[64] = call_used_regs[64] = call_really_used_regs[64] = 1;
+    fixed_regs[65] = call_used_regs[65] = call_really_used_regs[65] = 1;
+  }
   /* The TOC register is not killed across calls in a way that is
      visible to the compiler.  */
   if (DEFAULT_ABI == ABI_AIX || DEFAULT_ABI == ABI_ELFv2)
@@ -17577,7 +17576,7 @@ register_to_reg_type (rtx reg, bool *is_altivec)
 
   gcc_assert (regno >= 0);
 
-  if (is_altivec && (ALTIVEC_REGNO_P (regno) || S2PP_REGNO_P (regno)))
+  if (is_altivec && (ALTIVEC_REGNO_P (regno) ))//|| S2PP_REGNO_P (regno)))
     *is_altivec = true;
 
   rclass = rs6000_regno_regclass[regno];
@@ -17706,7 +17705,7 @@ rs6000_secondary_reload_direct_move (enum rs6000_reg_type to_type,
 	 reload support requires a single instruction class in the scratch
 	 register constraint.  However, right now TFmode is not allowed in
 	 Altivec registers, so the pattern will never match.  */
-      if (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE && !altivec_p)
+      if (to_type == VSX_REG_TYPE && from_type == GPR_REG_TYPE && !altivec_p && !TARGET_S2PP)
 	{
 	  cost = 3;			/* 2 mtvsrwz's, 1 fmrgow.  */
 	  icode = reg_addr[mode].reload_fpr_gpr;
@@ -17800,7 +17799,7 @@ rs6000_secondary_reload (bool in_p,
     {
 	    /*p-o-i*/
       enum rs6000_reg_type to_type = reg_class_to_reg_type[(int)rclass];
-      bool altivec_p = (rclass == ALTIVEC_REGS || rclass == S2PP_REGS);
+      bool altivec_p = (rclass == ALTIVEC_REGS);// || rclass == S2PP_REGS);
       enum rs6000_reg_type from_type = register_to_reg_type (x, &altivec_p);
 
       if (!in_p)
@@ -18585,7 +18584,7 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
       return NO_REGS;
     }
 
-  if (GET_MODE_CLASS (mode) == MODE_INT && rclass == NON_SPECIAL_REGS)
+  if (GET_MODE_CLASS (mode) == MODE_INT && rclass == NON_SPECIAL_REGS && rclass != S2PP_REGS)
     return GENERAL_REGS;
 
   /* For VSX, prefer the traditional registers for 64-bit values because we can
@@ -18641,8 +18640,9 @@ rs6000_secondary_memory_needed (enum reg_class from_class,
 				enum machine_mode mode)
 {
   enum rs6000_reg_type from_type, to_type;
-  bool altivec_p = ((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
-		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
+  bool altivec_p = (from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
+	  //((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
+	//	    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
 
   /* If a simple/direct move is available, we don't need secondary memory  */
   from_type = reg_class_to_reg_type[(int)from_class];
