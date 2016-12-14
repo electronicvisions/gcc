@@ -2533,7 +2533,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
     rs6000_regno_regclass[r] = FLOAT_REGS;
 
   if (TARGET_S2PP){
-    for (r = 33; r < 64; ++r)
+    for (r = 32+1; r < 64; ++r)
       rs6000_regno_regclass[r] = S2PP_REGS;
     rs6000_regno_regclass[32] = NO_REGS;
   }
@@ -3627,7 +3627,7 @@ rs6000_option_override_internal (bool global_init_p)
 
       if (TARGET_DEBUG_ADDR)
 	{
-	  targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
+	  //targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
 	  targetm.legitimize_address = rs6000_debug_legitimize_address;
 	  rs6000_secondary_reload_class_ptr
 	    = rs6000_debug_secondary_reload_class;
@@ -8050,7 +8050,7 @@ rs6000_conditional_register_usage (void)
   if (TARGET_S2PP){
     fixed_regs[32] = call_used_regs[32] = call_really_used_regs[32] = 1;
     fixed_regs[64] = call_used_regs[64] = call_really_used_regs[64] = 1;
-    fixed_regs[65] = call_used_regs[65] = call_really_used_regs[65] = 1;
+    //fixed_regs[68] = call_used_regs[68] = call_really_used_regs[68] = 1;
   }
   /* The TOC register is not killed across calls in a way that is
      visible to the compiler.  */
@@ -8196,7 +8196,7 @@ rs6000_emit_set_long_const (rtx dest, HOST_WIDE_INT c1, HOST_WIDE_INT c2)
 					DImode);
       operand2 = operand_subword_force (copy_rtx (dest), WORDS_BIG_ENDIAN != 0,
 					DImode);
-      emit_move_insn (operand1, GEN_INT (c1));
+      emit_move_insn (operand1, GEN_INT (c1)); /*maybe interesting*/
       emit_move_insn (operand2, GEN_INT (c2));
     }
   else
@@ -8482,7 +8482,8 @@ rs6000_emit_move (rtx dest, rtx source, enum machine_mode mode)
 					       ? 32
 					       : MEM_ALIGN (operands[1]))))
       && ! MEM_VOLATILE_P (operands [0])
-      && ! MEM_VOLATILE_P (operands [1]))
+      && ! MEM_VOLATILE_P (operands [1])
+      && !TARGET_S2PP)
     {
       emit_move_insn (adjust_address (operands[0], SImode, 0),
 		      adjust_address (operands[1], SImode, 0));
@@ -11107,6 +11108,7 @@ setup_incoming_varargs (cumulative_args_t cum, enum machine_mode mode,
       && TARGET_HARD_FLOAT && TARGET_FPRS
       && ! no_rtl
       && next_cum.fregno <= FP_ARG_V4_MAX_REG
+      && !TARGET_S2PP
       && cfun->va_list_fpr_size)
     {
       int fregno = next_cum.fregno, nregs;
@@ -18288,7 +18290,6 @@ rs6000_secondary_reload_inner (rtx reg, rtx mem, rtx scratch, bool store_p)
       break;
 
     case S2PP_REGS:
-/*p-o-i*/
 
       /* If we aren't using a VSX load, save the PRE_MODIFY register and use it
          as the address later.  */
@@ -22088,7 +22089,7 @@ first_s2pp_reg_to_save (void)
   int i;
 
   /* Find lowest numbered live register.  */
-  for (i = FIRST_S2PP_REGNO + 20; i <= LAST_S2PP_REGNO; ++i)
+  for (i = FIRST_SAVED_S2PP_REGNO; i <= LAST_S2PP_REGNO; ++i)
     if (save_reg_p (i))
       break;
 
@@ -23901,11 +23902,14 @@ emit_frame_save (rtx frame_reg, enum machine_mode mode,
   /* Some cases that need register indexed addressing.  */
   gcc_checking_assert (!((TARGET_ALTIVEC_ABI && ALTIVEC_VECTOR_MODE (mode))
 			 || (TARGET_VSX && ALTIVEC_OR_VSX_VECTOR_MODE (mode))
-			 || S2PP_VECTOR_MODE (mode)
+			 || (TARGET_S2PP && S2PP_VECTOR_MODE (mode))
 			 || (TARGET_E500_DOUBLE && mode == DFmode)
 			 || (TARGET_SPE_ABI
 			     && SPE_VECTOR_MODE (mode)
 			     && !SPE_CONST_OFFSET_OK (offset))));
+
+  if (TARGET_S2PP && mode == V4SImode)
+    mode = V8HImode;
 
   reg = gen_rtx_REG (mode, regno);
   insn = emit_insn (gen_frame_store (reg, frame_reg, offset));
@@ -24360,6 +24364,8 @@ rs6000_emit_prologue (void)
 #define NOT_INUSE(R) do {} while (0)
 #endif
 
+  fprintf (stderr, "prologue begins\n");
+
   if (DEFAULT_ABI == ABI_ELFv2)
     {
       cfun->machine->r2_setup_needed = df_regs_ever_live_p (TOC_REGNUM);
@@ -24422,6 +24428,7 @@ rs6000_emit_prologue (void)
 	{
 	  insn = emit_move_insn (reg0,
 				 gen_rtx_REG (Pmode, LR_REGNO));
+	  fprintf(stderr, "r saved in r0");
 	  RTX_FRAME_RELATED_P (insn) = 1;
 	}
 
@@ -24460,13 +24467,26 @@ rs6000_emit_prologue (void)
 							    "*save_world"));
       /* We do floats first so that the instruction pattern matches
 	 properly.  */
-      for (i = 0; i < 64 - info->first_fp_reg_save; i++)
-	RTVEC_ELT (p, j++)
-	  = gen_frame_store (gen_rtx_REG (TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
-					  ? DFmode : SFmode,
-					  info->first_fp_reg_save + i),
-			     frame_reg_rtx,
-			     info->fp_save_offset + frame_off + 8 * i);
+      if (!TARGET_S2PP){
+        for (i = 0; i < 64 - info->first_fp_reg_save; i++)
+	  RTVEC_ELT (p, j++)
+	    = gen_frame_store (gen_rtx_REG (TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+					    ? DFmode : SFmode,
+					    info->first_fp_reg_save + i),
+			       frame_reg_rtx,
+			       info->fp_save_offset + frame_off + 8 * i);
+      }
+      else {
+        for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
+  	RTVEC_ELT (p, j++)
+  	  = gen_frame_store (gen_rtx_REG (V4SImode,
+  					  info->first_s2pp_reg_save + i),
+  			     frame_reg_rtx,
+  			     info->s2pp_save_offset + frame_off + 16 * i);
+      }
+  
+      fprintf (stderr, "goes through save world\n");
+
       for (i = 0; info->first_altivec_reg_save + i <= LAST_ALTIVEC_REGNO; i++)
 	RTVEC_ELT (p, j++)
 	  = gen_frame_store (gen_rtx_REG (V4SImode,
@@ -24478,13 +24498,6 @@ rs6000_emit_prologue (void)
 	  = gen_frame_store (gen_rtx_REG (reg_mode, info->first_gp_reg_save + i),
 			     frame_reg_rtx,
 			     info->gp_save_offset + frame_off + reg_size * i);
-      for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
-	RTVEC_ELT (p, j++)
-	  = gen_frame_store (gen_rtx_REG (V4SImode,
-					  info->first_s2pp_reg_save + i),
-			     frame_reg_rtx,
-			     info->s2pp_save_offset + frame_off + 16 * i);
-
       /* CR register traditionally saved as CR2.  */
       RTVEC_ELT (p, j++)
 	= gen_frame_store (gen_rtx_REG (SImode, CR2_REGNO),
@@ -24559,8 +24572,8 @@ rs6000_emit_prologue (void)
 	    ptr_off = info->gp_save_offset + info->gp_size;
 	  else if (!(strategy & SAVE_INLINE_VRS) && info->altivec_size != 0)
 	    ptr_off = info->altivec_save_offset + info->altivec_size;
-	  else if (!(strategy & SAVE_INLINE_VRS) && info->s2pp_size != 0)
-	    ptr_off = info->s2pp_save_offset + info->s2pp_size;
+	  //else if (!(strategy & SAVE_INLINE_VRS) && info->s2pp_size != 0)
+	    //ptr_off = info->s2pp_save_offset + info->s2pp_size;
 	  frame_off = -ptr_off;
 	}
       rs6000_emit_allocate_stack (info->total_size, ptr_reg, ptr_off);
@@ -24572,6 +24585,8 @@ rs6000_emit_prologue (void)
   /* If we use the link register, get it into r0.  */
   if (!WORLD_SAVE_P (info) && info->lr_save_p)
     {
+
+	    /*maybe*/
       rtx addr, reg, mem;
 
       reg = gen_rtx_REG (Pmode, 0);
@@ -24615,18 +24630,110 @@ rs6000_emit_prologue (void)
      it ourselves.  Otherwise, call function.  */
   if (!WORLD_SAVE_P (info) && (strategy & SAVE_INLINE_FPRS))
     {
+      fprintf (stderr, "save fprs eith emit frame save\n");
       int i;
-      for (i = 0; i < 64 - info->first_fp_reg_save; i++)
-	if (save_reg_p (info->first_fp_reg_save + i))
-	  emit_frame_save (frame_reg_rtx,
-			   (TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
-			    ? DFmode : SFmode),
-			   info->first_fp_reg_save + i,
-			   info->fp_save_offset + frame_off + 8 * i,
-			   sp_off - frame_off);
+      if (!TARGET_S2PP){
+        for (i = 0; i < 64 - info->first_fp_reg_save; i++)
+	  if (save_reg_p (info->first_fp_reg_save + i))
+	    emit_frame_save (frame_reg_rtx,
+			    (TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+			     ? DFmode : SFmode),
+			     info->first_fp_reg_save + i,
+			     info->fp_save_offset + frame_off + 8 * i,
+			     sp_off - frame_off);
+      }
+      else{
+        for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
+	  if (save_reg_p (info->first_s2pp_reg_save + i)){
+            int end_save = info->s2pp_save_offset + info->s2pp_size;
+            //int ptr_off;
+            /* Oddly, the vector save/restore functions point r0 at the end
+               of the save area, then use r11 or r12 to load offsets for
+               [reg+reg] addressing.  */
+            rtx ptr_reg = gen_rtx_REG (Pmode, 0);
+            int scratch_regno = ptr_regno_for_savres (SAVRES_SAVE | SAVRES_FPR);
+            rtx scratch_reg = gen_rtx_REG (Pmode, scratch_regno);
+            if (end_save + frame_off != 0)
+              {
+                rtx offset = GEN_INT (end_save + frame_off);
+		
+                emit_insn (gen_add3_insn (ptr_reg, frame_reg_rtx, offset));
+              }
+            else{
+              emit_move_insn (scratch_reg, frame_reg_rtx);
+              emit_move_insn (ptr_reg, frame_reg_rtx);
+//emit_frame_save (rtx frame_reg, enum machine_mode mode,
+		 //unsigned int regno, int offset, HOST_WIDE_INT frame_reg_to_sp)
+  rtx reg, insn;
+
+  /* Some cases that need register indexed addressing.  */
+  gcc_checking_assert (!((TARGET_ALTIVEC_ABI && ALTIVEC_VECTOR_MODE (mode))
+			 || (TARGET_VSX && ALTIVEC_OR_VSX_VECTOR_MODE (mode))
+			 || (TARGET_S2PP && S2PP_VECTOR_MODE (mode))
+			 || (TARGET_E500_DOUBLE && mode == DFmode)
+			 || (TARGET_SPE_ABI
+			     && SPE_VECTOR_MODE (mode)
+			     && !SPE_CONST_OFFSET_OK (offset))));
+
+  
+    mode = V8HImode;
+
+  reg = gen_rtx_REG (mode, regno);
+  rtx addr, mem;
+
+  bool store = true;
+
+  addr = gen_rtx_PLUS (Pmode, frame_reg, GEN_INT (offset));
+  mem = gen_frame_mem (GET_MODE (reg), addr);
+  emit = gen_rtx_SET (VOIDmode, mem, reg);
+
+  insn = emit_insn (emit);
+  rs6000_frame_related (insn, frame_reg, frame_reg_to_sp, NULL_RTX, NULL_RTX, NULL_RTX);
+
+
+	    emit_frame_save (ptr_reg,
+			     V4SImode,
+			     info->first_s2pp_reg_save + i,
+			     info->s2pp_save_offset + frame_off + 16 * i,
+			     sp_off - frame_off);
+	  }
+        //int end_save = info->s2pp_save_offset + info->s2pp_size;
+        //int ptr_off;
+        ///* Oddly, the vector save/restore functions point r0 at the end
+        //   of the save area, then use r11 or r12 to load offsets for
+        //   [reg+reg] addressing.  */
+        //rtx ptr_reg = gen_rtx_REG (Pmode, 0);
+        //int scratch_regno = ptr_regno_for_savres (SAVRES_SAVE | SAVRES_FPR);
+        //rtx scratch_reg = gen_rtx_REG (Pmode, scratch_regno);
+
+        //gcc_checking_assert (scratch_regno == 11 || scratch_regno == 12);
+        //NOT_INUSE (0);
+        //if (end_save + frame_off != 0)
+        //  {
+        //    rtx offset = GEN_INT (end_save + frame_off);
+
+        //    emit_insn (gen_add3_insn (ptr_reg, frame_reg_rtx, offset));
+        //  }
+        //else
+        //  emit_move_insn (ptr_reg, frame_reg_rtx);
+
+        //ptr_off = -end_save;
+        //insn = rs6000_emit_savres_rtx (info, scratch_reg,
+        //  			     info->s2pp_save_offset + ptr_off,
+        //  			     0, V8HImode, SAVRES_SAVE | SAVRES_FPR);
+        //rs6000_frame_related (insn, scratch_reg, sp_off - ptr_off,
+        //  		    NULL_RTX, NULL_RTX, NULL_RTX);
+        //if (REGNO (frame_reg_rtx) == REGNO (scratch_reg))
+        //  {
+        //    /* The oddity mentioned above clobbered our frame reg.  */
+        //    emit_move_insn (frame_reg_rtx, ptr_reg);
+        //    frame_off = ptr_off;
+          
+      }
     }
   else if (!WORLD_SAVE_P (info) && info->first_fp_reg_save != 64)
     {
+      fprintf (stderr, "save fprs by ourselves\n");
       bool lr = (strategy & SAVE_NOINLINE_FPRS_SAVES_LR) != 0;
       int sel = SAVRES_SAVE | SAVRES_FPR | (lr ? SAVRES_LR : 0);
       unsigned ptr_regno = ptr_regno_for_savres (sel);
@@ -24754,6 +24861,8 @@ rs6000_emit_prologue (void)
 	ptr_reg = gen_rtx_REG (Pmode, ptr_regno);
 
       /* Need to adjust r11 (r12) if we saved any FPRs.  */
+      /*maybe*/
+      fprintf (stderr, "save FPRs");
       if (end_save + frame_off != 0)
 	{
 	  rtx offset = GEN_INT (end_save + frame_off);
@@ -25159,7 +25268,7 @@ rs6000_emit_prologue (void)
 	    NOT_INUSE (0);
 	    areg = gen_rtx_REG (Pmode, 0);
 	    emit_move_insn (areg, GEN_INT (offset));
-
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	    /* AltiVec addressing mode is [reg+reg].  */
 	    mem = gen_frame_mem (V4SImode,
 				 gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
