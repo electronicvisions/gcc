@@ -24645,89 +24645,17 @@ rs6000_emit_prologue (void)
       else{
         for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
 	  if (save_reg_p (info->first_s2pp_reg_save + i)){
-            int end_save = info->s2pp_save_offset + info->s2pp_size;
-            //int ptr_off;
-            /* Oddly, the vector save/restore functions point r0 at the end
-               of the save area, then use r11 or r12 to load offsets for
-               [reg+reg] addressing.  */
-            rtx ptr_reg = gen_rtx_REG (Pmode, 0);
-            int scratch_regno = ptr_regno_for_savres (SAVRES_SAVE | SAVRES_FPR);
-            rtx scratch_reg = gen_rtx_REG (Pmode, scratch_regno);
-            if (end_save + frame_off != 0)
-              {
-                rtx offset = GEN_INT (end_save + frame_off);
-		
-                emit_insn (gen_add3_insn (ptr_reg, frame_reg_rtx, offset));
-              }
-            else{
-              emit_move_insn (scratch_reg, frame_reg_rtx);
-              emit_move_insn (ptr_reg, frame_reg_rtx);
-//emit_frame_save (rtx frame_reg, enum machine_mode mode,
-		 //unsigned int regno, int offset, HOST_WIDE_INT frame_reg_to_sp)
-  rtx reg, insn;
+	    
+	    int offset = info->s2pp_save_offset + frame_off + 16 * i;
+	    rtx savereg = gen_rtx_REG (V8HImode, i+info->first_s2pp_reg_save);
+            rtx areg = gen_rtx_REG (Pmode, 0);
+	    emit_move_insn (areg, GEN_INT (offset)); 
+	    rtx mem = gen_frame_mem (V8HImode,gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
+	    insn = emit_move_insn (mem, savereg);
 
-  /* Some cases that need register indexed addressing.  */
-  gcc_checking_assert (!((TARGET_ALTIVEC_ABI && ALTIVEC_VECTOR_MODE (mode))
-			 || (TARGET_VSX && ALTIVEC_OR_VSX_VECTOR_MODE (mode))
-			 || (TARGET_S2PP && S2PP_VECTOR_MODE (mode))
-			 || (TARGET_E500_DOUBLE && mode == DFmode)
-			 || (TARGET_SPE_ABI
-			     && SPE_VECTOR_MODE (mode)
-			     && !SPE_CONST_OFFSET_OK (offset))));
-
-  
-    mode = V8HImode;
-
-  reg = gen_rtx_REG (mode, regno);
-  rtx addr, mem;
-
-  bool store = true;
-
-  addr = gen_rtx_PLUS (Pmode, frame_reg, GEN_INT (offset));
-  mem = gen_frame_mem (GET_MODE (reg), addr);
-  emit = gen_rtx_SET (VOIDmode, mem, reg);
-
-  insn = emit_insn (emit);
-  rs6000_frame_related (insn, frame_reg, frame_reg_to_sp, NULL_RTX, NULL_RTX, NULL_RTX);
-
-
-	    emit_frame_save (ptr_reg,
-			     V4SImode,
-			     info->first_s2pp_reg_save + i,
-			     info->s2pp_save_offset + frame_off + 16 * i,
-			     sp_off - frame_off);
+  	    rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
+			    		GEN_INT(offset), NULL_RTX);
 	  }
-        //int end_save = info->s2pp_save_offset + info->s2pp_size;
-        //int ptr_off;
-        ///* Oddly, the vector save/restore functions point r0 at the end
-        //   of the save area, then use r11 or r12 to load offsets for
-        //   [reg+reg] addressing.  */
-        //rtx ptr_reg = gen_rtx_REG (Pmode, 0);
-        //int scratch_regno = ptr_regno_for_savres (SAVRES_SAVE | SAVRES_FPR);
-        //rtx scratch_reg = gen_rtx_REG (Pmode, scratch_regno);
-
-        //gcc_checking_assert (scratch_regno == 11 || scratch_regno == 12);
-        //NOT_INUSE (0);
-        //if (end_save + frame_off != 0)
-        //  {
-        //    rtx offset = GEN_INT (end_save + frame_off);
-
-        //    emit_insn (gen_add3_insn (ptr_reg, frame_reg_rtx, offset));
-        //  }
-        //else
-        //  emit_move_insn (ptr_reg, frame_reg_rtx);
-
-        //ptr_off = -end_save;
-        //insn = rs6000_emit_savres_rtx (info, scratch_reg,
-        //  			     info->s2pp_save_offset + ptr_off,
-        //  			     0, V8HImode, SAVRES_SAVE | SAVRES_FPR);
-        //rs6000_frame_related (insn, scratch_reg, sp_off - ptr_off,
-        //  		    NULL_RTX, NULL_RTX, NULL_RTX);
-        //if (REGNO (frame_reg_rtx) == REGNO (scratch_reg))
-        //  {
-        //    /* The oddity mentioned above clobbered our frame reg.  */
-        //    emit_move_insn (frame_reg_rtx, ptr_reg);
-        //    frame_off = ptr_off;
           
       }
     }
@@ -25268,7 +25196,7 @@ rs6000_emit_prologue (void)
 	    NOT_INUSE (0);
 	    areg = gen_rtx_REG (Pmode, 0);
 	    emit_move_insn (areg, GEN_INT (offset));
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	    /* AltiVec addressing mode is [reg+reg].  */
 	    mem = gen_frame_mem (V4SImode,
 				 gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
