@@ -7,7 +7,15 @@
    UNSPEC_FXVINX
    UNSPEC_FXVSPLT_DIRECT
    UNSPEC_FXVADD
+   UNSPEC_FXVADDACTACF
    UNSPEC_FXVADDACTAC
+   UNSPEC_FXVMATAC
+   UNSPEC_FXVMATACF
+   UNSPEC_FXVMULTAC
+   UNSPEC_FXVMULTACF
+   UNSPEC_FXVADDTAC
+   UNSPEC_FXVADDAC
+   UNSPEC_FXVADDACF
    UNSPEC_FXVSUB
    UNSPEC_FXVMUL
    UNSPEC_FXVMTAC
@@ -374,9 +382,10 @@
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 2 "u_short_cint_operand" "i")]
 		UNSPEC_FXVCOND)
-       		(plus:FXVI (reg:FXVI S2PP_ACC_REGNO)
+       		(unspec:FXVI [(reg:FXVI S2PP_ACC_REGNO)
         	   	   (mult:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-			   	      (match_operand:FXVI 1 "register_operand" "kv")))
+			   	      (match_operand:FXVI 1 "register_operand" "kv"))]
+		UNSPEC_FXVMATAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvmatac<FXVI_char>m %0,%1,%2"
@@ -388,8 +397,9 @@
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 2 "u_short_cint_operand" "i")]
 		UNSPEC_FXVCOND)
-        	(mult:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-		  	   (match_operand:FXVI 1 "register_operand" "kv"))
+        	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
+		  	     (match_operand:FXVI 1 "register_operand" "kv")]
+		UNSPEC_FXVMULTAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvmultac<FXVI_char>m %0,%1,%2"
@@ -401,8 +411,9 @@
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 1 "u_short_cint_operand" "i")]
 		UNSPEC_FXVCOND)
-        	(plus:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-			   (reg:FXVI S2PP_ACC_REGNO))
+        	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
+			     (reg:FXVI S2PP_ACC_REGNO)]
+		UNSPEC_FXVADDACTAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvaddactac<FXVI_char>m %0,%1"
@@ -414,8 +425,9 @@
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 2 "u_short_cint_operand" "i")]
 		UNSPEC_FXVCOND)
-        	(plus:FXVI (match_operand:FXVI 0 "register_operand" "kv")
-			   (match_operand:FXVI 1 "register_operand" "kv"))
+        	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
+			     (match_operand:FXVI 1 "register_operand" "kv")]
+		UNSPEC_FXVADDTAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvaddtac<FXVI_char> %0,%1,%2"
@@ -427,8 +439,9 @@
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 2 "u_short_cint_operand" "i")]
 		UNSPEC_FXVCOND)
-	        (plus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
-			   (reg:FXVI S2PP_ACC_REGNO))
+	        (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+			     (reg:FXVI S2PP_ACC_REGNO)]
+		UNSPEC_FXVADDAC)
 		(match_dup 0)))]
   "TARGET_S2PP"
   "fxvaddac<FXVI_char>m %0,%1,%2"
@@ -473,7 +486,7 @@
         		      (unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
 				            (match_operand:FXVI 1 "register_operand" "kv")]
 			      UNSPEC_FXVMUL)]
-		UNSPEC_FXVADD)
+		UNSPEC_FXVMATAC)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvmatac<FXVI_char>fs %0,%1,%2"
@@ -487,7 +500,7 @@
 		UNSPEC_FXVCOND)
         	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
 			      (match_operand:FXVI 1 "register_operand" "kv")]
-		UNSPEC_FXVMUL)
+		UNSPEC_FXVMULTACF)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvmultac<FXVI_char>fs %0,%1,%2"
@@ -501,7 +514,7 @@
 		UNSPEC_FXVCOND)
         	(unspec:FXVI [(match_operand:FXVI 0 "register_operand" "kv")
 			      (reg:FXVI S2PP_ACC_REGNO)]
-		UNSPEC_FXVADDACTAC)
+		UNSPEC_FXVADDACTACF)
 		(reg:FXVI S2PP_ACC_REGNO)))]
   "TARGET_S2PP"
   "fxvaddactac<FXVI_char>f %0,%1"
@@ -515,7 +528,7 @@
 		UNSPEC_FXVCOND)
         	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 			      (reg:FXVI S2PP_ACC_REGNO)]
-		UNSPEC_FXVADD)
+		UNSPEC_FXVADDACF)
 		(match_dup 0)))]
   "TARGET_S2PP"
   "fxvaddac<FXVI_char>fs %0,%1,%2"

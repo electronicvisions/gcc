@@ -16046,18 +16046,18 @@ s2pp_init_builtins (void)
     = build_function_type_list (opaque_V4SI_type_node,
 				long_integer_type_node, pvoid_type_node,
 				NULL_TREE);
-  tree opaque_ftype_long_long
-    = build_function_type_list (opaque_V4SI_type_node,
-				long_integer_type_node, long_integer_type_node,
-				NULL_TREE);
+  //tree opaque_ftype_long_long
+    //= build_function_type_list (opaque_V4SI_type_node,
+				//long_integer_type_node, long_integer_type_node,
+				//NULL_TREE);
   tree void_ftype_opaque_long_pvoid
     = build_function_type_list (void_type_node,
 				opaque_V4SI_type_node, long_integer_type_node,
 				pvoid_type_node, NULL_TREE);
-  tree void_ftype_opaque_long_long
-    = build_function_type_list (void_type_node,
-				opaque_V4SI_type_node, long_integer_type_node,
-				long_integer_type_node, NULL_TREE);
+  //tree void_ftype_opaque_long_long
+    //= build_function_type_list (void_type_node,
+				//opaque_V4SI_type_node, long_integer_type_node,
+				//long_integer_type_node, NULL_TREE);
   tree opaque_ftype_opaque_int
     = build_function_type_list (opaque_V4SI_type_node,
 				opaque_V4SI_type_node, integer_type_node, NULL_TREE);
