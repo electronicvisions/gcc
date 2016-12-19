@@ -22,6 +22,8 @@
 #define vec_ld __builtin_vec_ld
 
 #define fxv_in __builtin_vec_in
+//#define fxv_in_8 __builtin_vec_fxvin_v16qi
+//#define fxv_in_16 __builtin_vec_fxvin_v8hi
 #define fxv_out __builtin_vec_out
 
 #define vec_splat __builtin_vec_splat

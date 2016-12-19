@@ -3627,7 +3627,7 @@ rs6000_option_override_internal (bool global_init_p)
 
       if (TARGET_DEBUG_ADDR)
 	{
-	  //targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
+	  targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
 	  targetm.legitimize_address = rs6000_debug_legitimize_address;
 	  rs6000_secondary_reload_class_ptr
 	    = rs6000_debug_secondary_reload_class;
@@ -11572,7 +11572,7 @@ def_builtin (const char *name, tree type, enum rs6000_builtins code)
       /* const function, function only depends on the inputs.  */
       TREE_READONLY (t) = 1;
       TREE_NOTHROW (t) = 1;
-      attr_string = ", pure";
+      attr_string = ", const";
     }
   else if ((classify & RS6000_BTC_PURE) != 0)
     {
@@ -11580,7 +11580,7 @@ def_builtin (const char *name, tree type, enum rs6000_builtins code)
 	 external state.  */
       DECL_PURE_P (t) = 1;
       TREE_NOTHROW (t) = 1;
-      attr_string = ", const";
+      attr_string = ", pure";
     }
   else if ((classify & RS6000_BTC_FP) != 0)
     {
@@ -16042,6 +16042,10 @@ s2pp_init_builtins (void)
     = build_function_type_list (opaque_V4SI_type_node,
 				long_integer_type_node, pcvoid_type_node,
 				NULL_TREE);
+  tree opaque_ftype_long_pvoid
+    = build_function_type_list (opaque_V4SI_type_node,
+				long_integer_type_node, pvoid_type_node,
+				NULL_TREE);
   tree opaque_ftype_long_long
     = build_function_type_list (opaque_V4SI_type_node,
 				long_integer_type_node, long_integer_type_node,
@@ -16099,8 +16103,8 @@ s2pp_init_builtins (void)
 	       S2PP_BUILTIN_FXVOUTX_V8HI);
   def_builtin ("__builtin_s2pp_fxvoutx_v16qi", void_ftype_v16qi_long_long,
 	       S2PP_BUILTIN_FXVOUTX_V16QI);
-  def_builtin ("__builtin_vec_in", opaque_ftype_long_long, S2PP_BUILTIN_VEC_IN);
-  def_builtin ("__builtin_vec_out", void_ftype_opaque_long_long, S2PP_BUILTIN_VEC_OUT);
+  def_builtin ("__builtin_vec_in", opaque_ftype_long_pvoid, S2PP_BUILTIN_VEC_IN);
+  def_builtin ("__builtin_vec_out", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT);
 
 
   def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
@@ -24630,7 +24634,7 @@ rs6000_emit_prologue (void)
      it ourselves.  Otherwise, call function.  */
   if (!WORLD_SAVE_P (info) && (strategy & SAVE_INLINE_FPRS))
     {
-      fprintf (stderr, "save fprs eith emit frame save\n");
+      fprintf (stderr, "save fprs with emit frame save\n");
       int i;
       if (!TARGET_S2PP){
         for (i = 0; i < 64 - info->first_fp_reg_save; i++)
@@ -26402,7 +26406,6 @@ rs6000_emit_epilogue (int sibcall)
     }
     else{
       for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++){
-        fprintf (stderr, "first epilogue marker\n");
         if (save_reg_p (info->first_s2pp_reg_save + i))
         {  
           fprintf (stderr, "epilogue marker\n");
