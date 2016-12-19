@@ -16102,8 +16102,8 @@ s2pp_init_builtins (void)
 	       S2PP_BUILTIN_FXVSTAX_GT_V8HI);
   def_builtin ("__builtin_s2pp_fxvstax_gt_v16qi", void_ftype_v16qi_long_pvoid,
 	       S2PP_BUILTIN_FXVSTAX_GT_V16QI);
-  def_builtin ("__builtin_vec_fxvlax_gt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC__FXVLAX_GT);
-  def_builtin ("__builtin_vec_fxvstax_gt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_FXVSTAX_GT);
+  def_builtin ("__builtin_vec_ld_gt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD_GT);
+  def_builtin ("__builtin_vec_st_gt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST_GT);
   def_builtin ("__builtin_s2pp_fxvlax_lt_v8hi", v8hi_ftype_long_pcvoid,
 	       S2PP_BUILTIN_FXVLAX_LT_V8HI);
   def_builtin ("__builtin_s2pp_fxvlax_lt_v16qi", v16qi_ftype_long_pcvoid,
@@ -16112,8 +16112,18 @@ s2pp_init_builtins (void)
 	       S2PP_BUILTIN_FXVSTAX_LT_V8HI);
   def_builtin ("__builtin_s2pp_fxvstax_lt_v16qi", void_ftype_v16qi_long_pvoid,
 	       S2PP_BUILTIN_FXVSTAX_LT_V16QI);
-  def_builtin ("__builtin_vec_fxvlax_lt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC__FXVLAX_LT);
-  def_builtin ("__builtin_vec_fxvstax_lt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_FXVSTAX_LT);
+  def_builtin ("__builtin_vec_ld_lt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD_LT);
+  def_builtin ("__builtin_vec_st_lt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST_LT);
+  def_builtin ("__builtin_s2pp_fxvlax_eq_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVLAX_EQ_V8HI);
+  def_builtin ("__builtin_s2pp_fxvlax_eq_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVLAX_EQ_V16QI);
+  def_builtin ("__builtin_s2pp_fxvstax_eq_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_FXVSTAX_EQ_V8HI);
+  def_builtin ("__builtin_s2pp_fxvstax_eq_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_FXVSTAX_EQ_V16QI);
+  def_builtin ("__builtin_vec_ld_eq", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_LD_EQ);
+  def_builtin ("__builtin_vec_st_eq", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_ST_EQ);
 
   def_builtin ("__builtin_s2pp_fxvinx_v8hi", v8hi_ftype_long_long,
 	       S2PP_BUILTIN_FXVINX_V8HI);
@@ -16125,16 +16135,36 @@ s2pp_init_builtins (void)
 	       S2PP_BUILTIN_FXVOUTX_V16QI);
   def_builtin ("__builtin_vec_in", opaque_ftype_long_pvoid, S2PP_BUILTIN_VEC_IN);
   def_builtin ("__builtin_vec_out", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT);
-  def_builtin ("__builtin_s2pp_fxvlax_eq_v8hi", v8hi_ftype_long_pcvoid,
-	       S2PP_BUILTIN_FXVLAX_EQ_V8HI);
-  def_builtin ("__builtin_s2pp_fxvlax_eq_v16qi", v16qi_ftype_long_pcvoid,
-	       S2PP_BUILTIN_FXVLAX_EQ_V16QI);
-  def_builtin ("__builtin_s2pp_fxvstax_eq_v8hi", void_ftype_v8hi_long_pvoid,
-	       S2PP_BUILTIN_FXVSTAX_EQ_V8HI);
-  def_builtin ("__builtin_s2pp_fxvstax_eq_v16qi", void_ftype_v16qi_long_pvoid,
-	       S2PP_BUILTIN_FXVSTAX_EQ_V16QI);
-  def_builtin ("__builtin_vec_fxvlax_eq", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC__FXVLAX_EQ);
-  def_builtin ("__builtin_vec_fxvstax_eq", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_FXVSTAX_EQ);
+  def_builtin ("__builtin_s2pp_fxvinx_gt_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_GT_V8HI);
+  def_builtin ("__builtin_s2pp_fxvinx_gt_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_GT_V16QI);
+  def_builtin ("__builtin_s2pp_fxvoutx_gt_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_GT_V8HI);
+  def_builtin ("__builtin_s2pp_fxvoutx_gt_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_GT_V16QI);
+  def_builtin ("__builtin_vec_in_gt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN_GT);
+  def_builtin ("__builtin_vec_out_gt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT_GT);
+  def_builtin ("__builtin_s2pp_fxvinx_lt_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_LT_V8HI);
+  def_builtin ("__builtin_s2pp_fxvinx_lt_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_LT_V16QI);
+  def_builtin ("__builtin_s2pp_fxvoutx_lt_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_LT_V8HI);
+  def_builtin ("__builtin_s2pp_fxvoutx_lt_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_LT_V16QI);
+  def_builtin ("__builtin_vec_in_lt", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN_LT);
+  def_builtin ("__builtin_vec_out_lt", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT_LT);
+  def_builtin ("__builtin_s2pp_fxvinx_eq_v8hi", v8hi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_EQ_V8HI);
+  def_builtin ("__builtin_s2pp_fxvinx_eq_v16qi", v16qi_ftype_long_pcvoid,
+	       S2PP_BUILTIN_FXVINX_EQ_V16QI);
+  def_builtin ("__builtin_s2pp_fxvoutx_eq_v8hi", void_ftype_v8hi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_EQ_V8HI);
+  def_builtin ("__builtin_s2pp_fxvoutx_eq_v16qi", void_ftype_v16qi_long_pvoid,
+	       S2PP_BUILTIN_FXVOUTX_EQ_V16QI);
+  def_builtin ("__builtin_vec_in_eq", opaque_ftype_long_pcvoid, S2PP_BUILTIN_VEC_IN_EQ);
+  def_builtin ("__builtin_vec_out_eq", void_ftype_opaque_long_pvoid, S2PP_BUILTIN_VEC_OUT_EQ);
 
 
   def_builtin ("__builtin_vec_step", int_ftype_opaque, S2PP_BUILTIN_VEC_STEP);
