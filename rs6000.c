@@ -24656,7 +24656,6 @@ rs6000_emit_prologue (void)
   	    rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
 			    		GEN_INT(offset), NULL_RTX);
 	  }
-          
       }
     }
   else if (!WORLD_SAVE_P (info) && info->first_fp_reg_save != 64)
@@ -25743,36 +25742,47 @@ rs6000_emit_epilogue (int sibcall)
 	  if (flag_shrink_wrap)
 	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
 	}
-      for (i = 0; info->first_fp_reg_save + i <= 63; i++)
-	{
-	  rtx reg = gen_rtx_REG ((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
-				  ? DFmode : SFmode),
-				 info->first_fp_reg_save + i);
-	  RTVEC_ELT (p, j++)
-	    = gen_frame_load (reg, frame_reg_rtx, info->fp_save_offset + 8 * i);
-	  if (flag_shrink_wrap)
-	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
-	}
-      for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
-	{
-	  rtx reg = gen_rtx_REG (V4SImode, info->first_s2pp_reg_save + i);
-	  RTVEC_ELT (p, j++)
-	    = gen_frame_load (reg,
-			      frame_reg_rtx, info->s2pp_save_offset + 16 * i);
-	  if (flag_shrink_wrap)
-	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
-	}
-      RTVEC_ELT (p, j++)
-	= gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (Pmode, 0));
-      RTVEC_ELT (p, j++)
-	= gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, 12));
-      RTVEC_ELT (p, j++)
-	= gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, 7));
-      RTVEC_ELT (p, j++)
-	= gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, 8));
-      RTVEC_ELT (p, j++)
-	= gen_rtx_USE (VOIDmode, gen_rtx_REG (SImode, 10));
-      insn = emit_jump_insn (gen_rtx_PARALLEL (VOIDmode, p));
+      
+      if (!TARGET_S2PP){
+        for (i = 0; info->first_fp_reg_save + i <= 63; i++)
+          {
+            rtx reg = gen_rtx_REG ((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+          			  ? DFmode : SFmode),
+          			 info->first_fp_reg_save + i);
+            RTVEC_ELT (p, j++)
+              = gen_frame_load (reg, frame_reg_rtx, info->fp_save_offset + 8 * i);
+            if (flag_shrink_wrap)
+              cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
+          }
+        RTVEC_ELT (p, j++)
+          = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (Pmode, 0));
+        RTVEC_ELT (p, j++)
+          = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, 12));
+        RTVEC_ELT (p, j++)
+          = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, 7));
+        RTVEC_ELT (p, j++)
+          = gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, 8));
+        RTVEC_ELT (p, j++)
+          = gen_rtx_USE (VOIDmode, gen_rtx_REG (SImode, 10));
+        insn = emit_jump_insn (gen_rtx_PARALLEL (VOIDmode, p));
+
+        }
+      else{
+        for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++)
+	  if (save_reg_p (info->first_s2pp_reg_save + i)){
+	    
+	    int offset = info->s2pp_save_offset + frame_off + 16 * i;
+            rtx areg = gen_rtx_REG (Pmode, 0);
+	    emit_move_insn (areg, GEN_INT (offset)); 
+
+	    rtx addr = gen_rtx_PLUS (Pmode, frame_reg_rtx, areg);
+	    rtx mem = gen_frame_mem (V8HImode,addr);
+
+	    rtx reg = gen_rtx_REG (V8HImode, i+info->first_s2pp_reg_save);
+	    emit_move_insn (reg, mem);
+	  }
+      }
+    
 
       if (flag_shrink_wrap)
 	{
@@ -26376,17 +26386,43 @@ rs6000_emit_epilogue (int sibcall)
 
   /* Restore fpr's if we need to do it without calling a function.  */
   if (restoring_FPRs_inline)
-    for (i = 0; i < 64 - info->first_fp_reg_save; i++)
-      if (save_reg_p (info->first_fp_reg_save + i))
-	{
-	  rtx reg = gen_rtx_REG ((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
-				  ? DFmode : SFmode),
-				 info->first_fp_reg_save + i);
-	  emit_insn (gen_frame_load (reg, frame_reg_rtx,
-				     info->fp_save_offset + frame_off + 8 * i));
-	  if (DEFAULT_ABI == ABI_V4 || flag_shrink_wrap)
-	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
-	}
+  {
+    if (!TARGET_S2PP){
+      for (i = 0; i < 64 - info->first_fp_reg_save; i++)
+        if (save_reg_p (info->first_fp_reg_save + i))
+  	{
+  	  rtx reg = gen_rtx_REG ((TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+  				  ? DFmode : SFmode),
+  				 info->first_fp_reg_save + i);
+  	  emit_insn (gen_frame_load (reg, frame_reg_rtx,
+  				     info->fp_save_offset + frame_off + 8 * i));
+  	  if (DEFAULT_ABI == ABI_V4 || flag_shrink_wrap)
+  	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
+  	}
+    }
+    else{
+      for (i = 0; info->first_s2pp_reg_save + i <= LAST_S2PP_REGNO; i++){
+        fprintf (stderr, "first epilogue marker\n");
+        if (save_reg_p (info->first_s2pp_reg_save + i))
+        {  
+          fprintf (stderr, "epilogue marker\n");
+          int offset = info->s2pp_save_offset + frame_off + 16 * i;
+          rtx areg = gen_rtx_REG (Pmode, 0);
+          emit_move_insn (areg, GEN_INT (offset)); 
+
+          rtx addr = gen_rtx_PLUS (Pmode, frame_reg_rtx, areg);
+          rtx mem = gen_frame_mem (V8HImode,addr);
+
+          rtx reg = gen_rtx_REG (V8HImode, i+info->first_s2pp_reg_save);
+          //emit_move_insn (reg, mem);
+          insn = emit_move_insn (reg, mem);
+
+          //rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
+              	    		//GEN_INT(offset), NULL_RTX);
+        }
+      }
+    }
+  }
 
   /* If we saved cr, restore it here.  Just those that were used.  */
   if (info->cr_save_p)
