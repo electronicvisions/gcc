@@ -20,13 +20,27 @@
 #define vec_st __builtin_vec_st
 #define fxv_lax vec_ld
 #define vec_ld __builtin_vec_ld
+#define fxv_stax_gt vec_st_gt
+#define vec_st_gt __builtin_vec_st_gt
+#define fxv_lax_gt vec_ld_gt
+#define vec_ld_gt __builtin_vec_ld_gt
+#define fxv_stax_lt vec_st_lt
+#define vec_st_lt __builtin_vec_st_lt
+#define fxv_lax_lt vec_ld_lt
+#define vec_ld_lt __builtin_vec_ld_lt
+#define fxv_stax_eq vec_st_eq
+#define vec_st_eq __builtin_vec_st_eq
+#define fxv_lax_eq vec_ld_eq
+#define vec_ld_eq __builtin_vec_ld_eq
 
 #define fxv_in __builtin_vec_in
-//#define fxv_in_8 __builtin_vec_fxvin_v16qi
-//#define fxv_in_16 __builtin_vec_fxvin_v8hi
 #define fxv_out __builtin_vec_out
-
-#define vec_splat __builtin_vec_splat
+#define fxv_in_gt __builtin_vec_in_gt
+#define fxv_out_gt __builtin_vec_out_gt
+#define fxv_in_lt __builtin_vec_in_lt
+#define fxv_out_lt __builtin_vec_out_lt
+#define fxv_in_eq __builtin_vec_in_eq
+#define fxv_out_eq __builtin_vec_out_eq
 
 #define vec_sel __builtin_vec_fxvsel
 #define fxv_sel vec_sel

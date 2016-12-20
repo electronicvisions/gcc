@@ -3,8 +3,12 @@
 (define_c_enum "unspec"
   [UNSPEC_FXVSTAX
    UNSPEC_FXVLAX
+   UNSPEC_FXVSTAX_C
+   UNSPEC_FXVLAX_C
    UNSPEC_FXVOUTX
    UNSPEC_FXVINX
+   UNSPEC_FXVOUTX_C
+   UNSPEC_FXVINX_C
    UNSPEC_FXVSPLT_DIRECT
    UNSPEC_FXVADD
    UNSPEC_FXVADDACTACF
@@ -43,8 +47,8 @@
 
 
 (define_insn "*s2pp_mov<mode>"
-  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv")
-	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,j"))]
+  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv,kv")
+	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,j,W"))]
   "VECTOR_MEM_S2PP_P (<MODE>mode)
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
@@ -58,14 +62,30 @@
     case 4: return "#";
     case 5: return "#";
     case 6: return "fxvsel %0,0,0";
+    case 7: return output_vec_const_move (operands);
     default: gcc_unreachable ();
     }
 }
-  [(set_attr "type" "vecstore,vecload,vecsimple,store,load,*,*")])
+  [(set_attr "type" "vecstore,vecload,vecsimple,store,load,*,vecsimple,*")])
 ;; 0 at the end of case 2 in order to return true -> similar to vor(x,x)
 ;; alternatively use 3
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
+
+(define_split
+  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+	(match_operand:FXVI 1 "easy_vector_constant" ""))] 
+  "TARGET_S2PP && can_create_pseudo_p()"
+  [(set (match_dup 2) (match_dup 3))
+   (set (match_dup 0)
+	(unspec:FXVI
+	     [(match_dup 2)]
+	UNSPEC_SPLAT))]
+  "{
+    operands[2] = gen_reg_rtx (SImode);
+    operands[3] = CONST_VECTOR_ELT(operands[1], 1);
+  }")
+
 
 (define_expand "s2pp_fxvstax_<mode>"
   [(parallel
@@ -92,7 +112,7 @@
                                  (const_int 0))
 	(match_operand:FXVI 1 "register_operand" "kv")
 	(match_dup 0)))
-    (unspec [(const_int 0)] UNSPEC_FXVSTAX)])]
+    (unspec [(const_int 0)] UNSPEC_FXVSTAX_C)])]
   "TARGET_S2PP"
   "fxvstax %1,%y0,<C_char>"
   [(set_attr "type" "vecstore")])
@@ -124,13 +144,13 @@
   [(set_attr "type" "vecload")])
 
 (define_insn "s2pp_fxvlax_<code>_<mode>"
-  [(parallel
-  [(set (match_operand:FXVI 0 "memory_operand" "=kv")
+[(parallel
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (if_then_else (C_cond:CC (reg:CC S2PP_COND_REGNO)
                                  (const_int 0))
 	(match_operand:FXVI 1 "memory_operand" "Z")
 	(match_dup 0)))
-     (unspec [(const_int 0)] UNSPEC_FXVLAX)])]
+     (unspec [(const_int 0)] UNSPEC_FXVLAX_C)])]
   "TARGET_S2PP"
   "fxvlax %0,%y1,<C_char>"
   [(set_attr "type" "vecload")])
@@ -168,7 +188,7 @@
 
 (define_insn "s2pp_fxvinx_<code>_<mode>"
   [(parallel
-  [(set (match_operand:FXVI 0 "memory_operand" "=kv")
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (if_then_else (C_cond:CC (reg:CC S2PP_COND_REGNO)
                                  (const_int 0))
 	(match_operand:FXVI 1 "memory_operand" "Z")

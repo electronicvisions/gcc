@@ -14092,11 +14092,35 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
       return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v8hi, exp);
     case S2PP_BUILTIN_FXVSTAX_V16QI:
       return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v16qi, exp);
+    case S2PP_BUILTIN_FXVSTAX_GT_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v8hi, exp);
+    case S2PP_BUILTIN_FXVSTAX_GT_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v16qi, exp);
+    case S2PP_BUILTIN_FXVSTAX_LT_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v8hi, exp);
+    case S2PP_BUILTIN_FXVSTAX_LT_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v16qi, exp);
+    case S2PP_BUILTIN_FXVSTAX_EQ_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v8hi, exp);
+    case S2PP_BUILTIN_FXVSTAX_EQ_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v16qi, exp);
 
     case S2PP_BUILTIN_FXVOUTX_V8HI:
       return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v8hi, exp);
     case S2PP_BUILTIN_FXVOUTX_V16QI:
       return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v16qi, exp);
+    case S2PP_BUILTIN_FXVOUTX_GT_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v8hi, exp);
+    case S2PP_BUILTIN_FXVOUTX_GT_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v16qi, exp);
+    case S2PP_BUILTIN_FXVOUTX_LT_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v8hi, exp);
+    case S2PP_BUILTIN_FXVOUTX_LT_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v16qi, exp);
+    case S2PP_BUILTIN_FXVOUTX_EQ_V8HI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v8hi, exp);
+    case S2PP_BUILTIN_FXVOUTX_EQ_V16QI:
+      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v16qi, exp);
 
     case S2PP_BUILTIN_VEC_INIT_V8HI:
     case S2PP_BUILTIN_VEC_INIT_V16QI:
@@ -14173,17 +14197,38 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
     {
 //    case S2PP_BUILTIN_LAX:
     case S2PP_BUILTIN_FXVLAX_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v8hi,
-					exp, target, false);
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,
-					exp, target, false);
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,exp, target, false);
+    case S2PP_BUILTIN_FXVLAX_GT_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v8hi,exp, target, false);
+    case S2PP_BUILTIN_FXVLAX_GT_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v16qi,exp, target, false);
+    case S2PP_BUILTIN_FXVLAX_LT_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v8hi,exp, target, false);
+    case S2PP_BUILTIN_FXVLAX_LT_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v16qi,exp, target, false);
+    case S2PP_BUILTIN_FXVLAX_EQ_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v8hi,exp, target, false);
+    case S2PP_BUILTIN_FXVLAX_EQ_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v16qi,exp, target, false);
+
     case S2PP_BUILTIN_FXVINX_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v8hi,
-					exp, target, false);
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v16qi,
-					exp, target, false);
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v16qi,exp, target, false);
+    case S2PP_BUILTIN_FXVINX_GT_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v8hi,exp, target, false);
+    case S2PP_BUILTIN_FXVINX_GT_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v16qi,exp, target, false);
+    case S2PP_BUILTIN_FXVINX_LT_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v8hi,exp, target, false);
+    case S2PP_BUILTIN_FXVINX_LT_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v16qi,exp, target, false);
+    case S2PP_BUILTIN_FXVINX_EQ_V8HI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v8hi,exp, target, false);
+    case S2PP_BUILTIN_FXVINX_EQ_V16QI:
+      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v16qi,exp, target, false);
     default:
       break;
       /* Fall through.  */
