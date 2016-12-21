@@ -17969,7 +17969,7 @@ rs6000_secondary_reload (bool in_p,
          /* Allow scalar loads to/from the traditional floating point
             registers, even if VSX memory is set.  */
          else if ((rclass == FLOAT_REGS || rclass == NO_REGS)
-		  && !VECTOR_MEM_S2PP_P (mode)
+		  && !TARGET_S2PP
                   && (GET_MODE_SIZE (mode) == 4 || GET_MODE_SIZE (mode) == 8)
                   && (legitimate_indirect_address_p (addr, false)
                       || legitimate_indirect_address_p (addr, false)
@@ -18675,6 +18675,9 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
       && easy_vector_constant (x, mode)){
     return S2PP_REGS;
   }
+  
+  //if (TARGET_S2PP && VECTOR_UNIT_S2PP_P (mode))
+    //return S2PP_REGS;
 
   //maybe not needed!
   //if (TARGET_S2PP && x == CONST0_RTX (mode) && S2PP_REG_CLASS_P (rclass))

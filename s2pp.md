@@ -86,6 +86,17 @@
     operands[3] = CONST_VECTOR_ELT(operands[1], 1);
   }")
 
+;;(define_split
+;;  [(set (match_operand:FXVI 0 "int_reg_operand" "")
+;;	(match_operand:FXVI 1 "s2pp_register_operand" ""))] 
+;;  "TARGET_S2PP && can_create_pseudo_p()"
+;;  [(set (match_dup 2) (match_dup 1))
+;;   (set (match_dup 0) (match_dup 2))]
+;;  "{
+;;//    emit_move_insn (operands[1], 
+;;    operands[2] = gen_rtx_MEM (GET_MODE(operands[1]));
+;;  }")
+
 
 (define_expand "s2pp_fxvstax_<mode>"
   [(parallel
@@ -108,8 +119,8 @@
 (define_insn "s2pp_fxvstax_<code>_<mode>"
 [(parallel  
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-        (if_then_else (C_cond:CC (reg:CC S2PP_COND_REGNO)
-                                 (const_int 0))
+        (if_then_else (reg:CC S2PP_COND_REGNO)
+                      (const_int 0))
 	(match_operand:FXVI 1 "register_operand" "kv")
 	(match_dup 0)))
     (unspec [(const_int 0)] UNSPEC_FXVSTAX_C)])]
