@@ -119,8 +119,8 @@
 (define_insn "s2pp_fxvstax_<code>_<mode>"
 [(parallel  
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-        (if_then_else (reg:CC S2PP_COND_REGNO)
-                      (const_int 0))
+        (if_then_else (C_cond (reg:CC S2PP_COND_REGNO)
+                                 (const_int 0))
 	(match_operand:FXVI 1 "register_operand" "kv")
 	(match_dup 0)))
     (unspec [(const_int 0)] UNSPEC_FXVSTAX_C)])]
