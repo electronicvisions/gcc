@@ -344,10 +344,10 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
-#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
+#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, S2PP_REG_TYPE)
 
 
-#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE)
+#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE)
 //(IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
 
 
@@ -3627,7 +3627,7 @@ rs6000_option_override_internal (bool global_init_p)
 
       if (TARGET_DEBUG_ADDR)
 	{
-	  targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
+	  //targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
 	  targetm.legitimize_address = rs6000_debug_legitimize_address;
 	  rs6000_secondary_reload_class_ptr
 	    = rs6000_debug_secondary_reload_class;
@@ -6741,8 +6741,7 @@ legitimate_indexed_address_p (rtx x, int strict)
      replaced with proper base and index regs.  */
   if (!strict
       && reload_in_progress
-      && (REG_P (op0) || GET_CODE (op0) == PLUS)
-      && REG_P (op1))
+      && (REG_P (op0) || GET_CODE (op0) == PLUS) && REG_P (op1))
     return true;
 
   return (REG_P (op0) && REG_P (op1)
@@ -7886,6 +7885,12 @@ rs6000_debug_legitimate_address_p (enum machine_mode mode, rtx x,
 	    : (reload_in_progress ? "progress" : "before")),
 	   GET_RTX_NAME (GET_CODE (x)));
   debug_rtx (x);
+  if (mode == V16QImode || mode == V8HImode){
+	  fprintf (stderr, "legit_indirect_addr = %i\n",
+			  legitimate_indirect_address_p (x, reg_ok_strict));
+	  fprintf (stderr, "legit_offset_addr = %i\n",
+			  rs6000_legitimate_offset_address_p (mode, x, reg_ok_strict, false));
+  }
 
   return ret;
 }
@@ -18673,7 +18678,7 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
   if ((rclass == S2PP_REGS)
       && VECTOR_UNIT_S2PP_P (mode)
       && easy_vector_constant (x, mode)){
-    return S2PP_REGS;
+    return rclass;
   }
   
   //if (TARGET_S2PP && VECTOR_UNIT_S2PP_P (mode))
@@ -18753,9 +18758,9 @@ rs6000_secondary_memory_needed (enum reg_class from_class,
 				enum machine_mode mode)
 {
   enum rs6000_reg_type from_type, to_type;
-  bool altivec_p = (from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
-	  //((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
-	//	    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
+  bool altivec_p = (from_class == //ALTIVEC_REGS || to_class == ALTIVEC_REGS);
+	  ((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
+		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS)));
 
   /* If a simple/direct move is available, we don't need secondary memory  */
   from_type = reg_class_to_reg_type[(int)from_class];
