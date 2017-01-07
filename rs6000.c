@@ -1269,6 +1269,39 @@ char rs6000_reg_names[][8] =
 };
 
 #ifdef TARGET_REGNAMES
+#if 0
+static const char alt_reg_names[][8] =
+{
+   "%r0",   "%r1",  "%r2",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
+   "%r8",   "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
+  "%r16",  "%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23",
+  "%r24",  "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
+   "%kv0",   "%kv1",  "%kv2",  "%kv3",  "%kv4",  "%kv5",  "%kv6",  "%kv7",
+   "%kv8",   "%kv9", "%kv10", "%kv11", "%kv12", "%kv13", "%kv14", "%kv15",
+  "%kv16",  "%kv17", "%kv18", "%kv19", "%kv20", "%kv21", "%kv22", "%kv23",
+  "%kv24",  "%kv25", "%kv26", "%kv27", "%kv28", "%kv29", "%kv30", "%kv31",
+    "ka",    "lr",  "ctr",   "ap",
+  "%kc",  "%cr1", "%cr2", "%cr3", "%cr4", "%cr5", "%cr6", "%cr7",
+   "ca",
+  /* AltiVec registers.  */
+   "%v0",  "%v1",  "%v2",  "%v3",  "%v4",  "%v5",  "%v6", "%v7",
+   "%v8",  "%v9", "%v10", "%v11", "%v12", "%v13", "%v14", "%v15",
+  "%v16", "%v17", "%v18", "%v19", "%v20", "%v21", "%v22", "%v23",
+  "%v24", "%v25", "%v26", "%v27", "%v28", "%v29", "%v30", "%v31",
+  "vrsave", "vscr",
+  /* SPE registers.  */
+  "spe_acc", "spefscr",
+  /* Soft frame pointer.  */
+  "sfp",
+  /* HTM SPR registers.  */
+  "tfhar", "tfiar", "texasr",
+  /* SPE High registers.  */
+  "%rh0",  "%rh1",  "%rh2",  "%rh3",  "%rh4",  "%rh5",  "%rh6",   "%rh7",
+  "%rh8",  "%rh9",  "%rh10", "%r11",  "%rh12", "%rh13", "%rh14", "%rh15",
+  "%rh16", "%rh17", "%rh18", "%rh19", "%rh20", "%rh21", "%rh22", "%rh23",
+  "%rh24", "%rh25", "%rh26", "%rh27", "%rh28", "%rh29", "%rh30", "%rh31"
+};
+#else
 static const char alt_reg_names[][8] =
 {
    "%r0",   "%r1",  "%r2",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
@@ -1300,6 +1333,7 @@ static const char alt_reg_names[][8] =
   "%rh16", "%rh17", "%rh18", "%rh19", "%rh20", "%rh21", "%rh22", "%rh23",
   "%rh24", "%rh25", "%rh26", "%rh27", "%rh28", "%rh29", "%rh30", "%rh31"
 };
+#endif
 #endif
 
 /* Table of valid machine attributes. *//*p_o_i*/
@@ -12121,8 +12155,10 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
     target = gen_reg_rtx (tmode);
     
-  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
-    op0 = copy_to_mode_reg (mode0, op0);
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
+    op0 = copy_to_mode_reg (mode0, op0);)
+    emit_insn (gen_sync());
+  }
   pat = GEN_FCN (icode) (target, op0);
   
   if (! pat)
@@ -12647,6 +12683,7 @@ s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 
   if (! pat)
     return 0;
+  emit_insn (gen_sync());
   emit_insn (pat);
 
   return target;
@@ -13844,6 +13881,8 @@ s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
       return NULL_RTX;
     }
 
+  emit_insn (gen_sync());
+
   arg0 = CALL_EXPR_ARG (exp, 0);
   arg1 = CALL_EXPR_ARG (exp, 1);
   op0 = expand_normal (arg0);
@@ -14875,6 +14914,8 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 	rtx op, addr, pat;
 
 	gcc_assert (TARGET_S2PP);
+
+	emit_insn (gen_sync());
 
 	arg = CALL_EXPR_ARG (exp, 0);
 	gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));

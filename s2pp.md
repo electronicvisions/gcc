@@ -30,6 +30,7 @@
    UNSPEC_FXVUPCKR
    UNSPEC_SPLAT
    UNSPEC_FXVCOND
+   UNSPEC_FXVSYNC
 ])  
 
 ;; Vec int modes
@@ -45,6 +46,12 @@
 
 (define_code_attr C_char [(gt "1") (lt "2") (eq "3")])
 
+;;s2pp sync instruction
+(define_insn "sync"
+  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+  "TARGET_S2PP"
+  "sync"
+  [(set_attr "type" "sync")])
 
 (define_insn "*s2pp_mov<mode>"
   [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv,kv")
@@ -53,6 +60,7 @@
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
 {
+ // emit_insn (gen_sync ());
   switch (which_alternative)
     {
     case 0: return "fxvstax %1,%y0";
