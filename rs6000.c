@@ -8738,6 +8738,8 @@ rs6000_emit_move (rtx dest, rtx source, enum machine_mode mode)
     case V2DFmode:
     case V2DImode:
     case V1TImode:
+      if (TARGET_S2PP)
+	emit_insn (gen_sync());
       if (CONSTANT_P (operands[1])
 	  && !easy_vector_constant (operands[1], mode))
 	operands[1] = force_const_mem (mode, operands[1]);
@@ -12156,7 +12158,7 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
     target = gen_reg_rtx (tmode);
     
   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
-    op0 = copy_to_mode_reg (mode0, op0);)
+    op0 = copy_to_mode_reg (mode0, op0);
     emit_insn (gen_sync());
   }
   pat = GEN_FCN (icode) (target, op0);
@@ -12293,10 +12295,14 @@ rs6000_expand_binop_builtin (enum insn_code icode, tree exp, rtx target)
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
     target = gen_reg_rtx (tmode);
 
-  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
     op0 = copy_to_mode_reg (mode0, op0);
-  if (! (*insn_data[icode].operand[2].predicate) (op1, mode1))
+    emit_insn(gen_sync());
+  }
+  if (! (*insn_data[icode].operand[2].predicate) (op1, mode1)){
     op1 = copy_to_mode_reg (mode1, op1);
+    emit_insn(gen_sync());
+  }
 
   pat = GEN_FCN (icode) (target, op0, op1);
   if (! pat)
@@ -12843,6 +12849,7 @@ s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
     }
 
   pat = GEN_FCN (icode) (addr, op0);
+  emit_insn (gen_sync());
   if (pat)
     emit_insn (pat);
   return NULL_RTX;

@@ -60,7 +60,7 @@
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
 {
- // emit_insn (gen_sync ());
+  output_asm_insn (\"sync\", operands);
   switch (which_alternative)
     {
     case 0: return "fxvstax %1,%y0";
@@ -93,6 +93,16 @@
     operands[2] = gen_reg_rtx (SImode);
     operands[3] = CONST_VECTOR_ELT(operands[1], 1);
   }")
+
+(define_split
+  [(set (match_operand:FXVI 0 "nonimmediate_operand" "")
+	(match_operand:FXVI 1 "input_operand" ""))]
+  "TARGET_S2PP"
+  [(set (match_operand:FXVI 0 "nonimmediate_operand" "")
+	(match_operand:FXVI 1 "input_operand" ""))
+   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+  ""
+  )
 
 ;;(define_split
 ;;  [(set (match_operand:FXVI 0 "int_reg_operand" "")

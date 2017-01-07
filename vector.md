@@ -103,12 +103,18 @@
   if (can_create_pseudo_p ())
     {
       if (CONSTANT_P (operands[1])
-	  && !easy_vector_constant (operands[1], <MODE>mode))
+	  && !easy_vector_constant (operands[1], <MODE>mode)){
 	operands[1] = force_const_mem (<MODE>mode, operands[1]);
+	if (TARGET_S2PP)
+	  emit_insn(gen_sync());
+      }
 
       else if (!vlogical_operand (operands[0], <MODE>mode)
-	       && !vlogical_operand (operands[1], <MODE>mode))
+	       && !vlogical_operand (operands[1], <MODE>mode)){
 	operands[1] = force_reg (<MODE>mode, operands[1]);
+	if (TARGET_S2PP)
+	  emit_insn(gen_sync());
+      }
     }
   if (!BYTES_BIG_ENDIAN
       && VECTOR_MEM_VSX_P (<MODE>mode)
@@ -193,13 +199,7 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-
-  //if (VECTOR_MEM_VSX_P (<MODE>mode))
-  //  {
-  //    operands[1] = rs6000_address_for_s2pp (operands[1]);
-  //    emit_insn (gen_s2pp_fxvlax_<mode> (operands[0], operands[1]));
-  //    DONE;
-  //  }
+  emit_insn (gen_sync());
 }")
 
 (define_expand "vector_s2pp_store_<mode>"
@@ -209,13 +209,7 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-
-  //if (VECTOR_MEM_VSX_P (<MODE>mode))
-  //  {
-  //    operands[0] = rs6000_address_for_s2pp (operands[0]);
-  //    emit_insn (gen_s2pp_fxvstax_<mode> (operands[0], operands[1]));
-  //    DONE;
-  //  }
+  emit_insn (gen_sync());
 }")
 
 (define_expand "vector_s2pp_input_<mode>"
@@ -225,13 +219,7 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-
-  //if (VECTOR_MEM_VSX_P (<MODE>mode))
-  //  {
-  //    operands[1] = rs6000_address_for_s2pp (operands[1]);
-  //    emit_insn (gen_s2pp_fxvlax_<mode> (operands[0], operands[1]));
-  //    DONE;
-  //  }
+  emit_insn (gen_sync());
 }")
 
 (define_expand "vector_s2pp_output_<mode>"
@@ -241,13 +229,7 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-
-  //if (VECTOR_MEM_VSX_P (<MODE>mode))
-  //  {
-  //    operands[0] = rs6000_address_for_s2pp (operands[0]);
-  //    emit_insn (gen_s2pp_fxvstax_<mode> (operands[0], operands[1]));
-  //    DONE;
-  //  }
+  emit_insn (gen_sync());
 }")
 
 
