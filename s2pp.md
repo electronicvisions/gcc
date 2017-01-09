@@ -80,29 +80,20 @@
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
 
-(define_split
-  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
-	(match_operand:FXVI 1 "easy_vector_constant" ""))] 
-  "TARGET_S2PP && can_create_pseudo_p()"
-  [(set (match_dup 2) (match_dup 3))
-   (set (match_dup 0)
-	(unspec:FXVI
-	     [(match_dup 2)]
-	UNSPEC_SPLAT))]
-  "{
-    operands[2] = gen_reg_rtx (SImode);
-    operands[3] = CONST_VECTOR_ELT(operands[1], 1);
-  }")
-
-(define_split
-  [(set (match_operand:FXVI 0 "nonimmediate_operand" "")
-	(match_operand:FXVI 1 "input_operand" ""))]
-  "TARGET_S2PP"
-  [(set (match_operand:FXVI 0 "nonimmediate_operand" "")
-	(match_operand:FXVI 1 "input_operand" ""))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  ""
-  )
+;;(define_split
+;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+;;	(match_operand:FXVI 1 "easy_vector_constant" ""))] 
+;;  "TARGET_S2PP && can_create_pseudo_p()"
+;;  [(set (match_dup 2) (match_dup 3))
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+;;   (set (match_dup 0)
+;;	(unspec:FXVI
+;;	     [(match_dup 2)]
+;;	UNSPEC_SPLAT))]
+;;  "{
+;;    operands[2] = gen_reg_rtx (SImode);
+;;    operands[3] = CONST_VECTOR_ELT(operands[1], 1);
+;;  }")
 
 ;;(define_split
 ;;  [(set (match_operand:FXVI 0 "int_reg_operand" "")
@@ -365,7 +356,16 @@
   [(set_attr "type" "vecsimple")])
 
 ;; splat
-(define_insn "s2pp_fxvsplat<FXVI_char>"
+(define_expand "s2pp_fxvsplat<FXVI_char>"
+  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+  (set (match_operand:FXVI 0 "register_operand" "=kv")
+	(unspec:FXVI
+	     [(match_operand:SI 1 "register_operand" "r")]
+	UNSPEC_SPLAT))]
+  "TARGET_S2PP"
+  "")
+
+(define_insn "s2pp_fxvsplat<FXVI_char>_internal"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(unspec:FXVI
 	     [(match_operand:SI 1 "register_operand" "r")]
@@ -618,7 +618,21 @@
   [(set_attr "type" "vecsimple")])
 
 ;; pack
-(define_insn "s2pp_fxvpckbu"
+(define_expand "s2pp_fxvpckbu"
+  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+  (set (match_operand:V16QI 0 "register_operand" "=kv")
+	(if_then_else:V16QI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVPCKU)
+		(match_dup 0)))]
+  "TARGET_S2PP"
+  "")
+ 
+(define_insn "*s2pp_fxvpckbu"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
 	(if_then_else:V16QI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
@@ -632,7 +646,21 @@
   "fxvpckbu %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
 
-(define_insn "s2pp_fxvpckbl"
+(define_expand "s2pp_fxvpckbl"
+  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+  (set (match_operand:V16QI 0 "register_operand" "=kv")
+	(if_then_else:V16QI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVPCKL)
+		(match_dup 0)))]
+  "TARGET_S2PP"
+  "")
+ 
+(define_insn "*s2pp_fxvpckbl"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
 	(if_then_else:V16QI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
@@ -647,7 +675,21 @@
   [(set_attr "type" "vecload")])
 
 ;;unpack
-(define_insn "s2pp_fxvupckbl"
+(define_expand "s2pp_fxvupckbl"
+  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+   (set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
+	(if_then_else:V8HI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVUPCKL)
+		(match_dup 0)))]
+  "TARGET_S2PP"
+  "")
+ 
+(define_insn "*s2pp_fxvupckbl"
   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
 	(if_then_else:V8HI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
@@ -661,7 +703,21 @@
   "fxvupckbl %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
 
-(define_insn "s2pp_fxvupckbr"
+(define_expand "s2pp_fxvupckbr"
+  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+   (set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
+	(if_then_else:V8HI
+		(unspec:CC [(reg:CC S2PP_COND_REGNO)
+			    (match_operand:SI 3 "u_short_cint_operand" "i")]
+		UNSPEC_FXVCOND)
+		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
+		UNSPEC_FXVUPCKR)
+		(match_dup 0)))]
+  "TARGET_S2PP"
+  "")
+ 
+(define_insn "*s2pp_fxvupckbr"
   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
 	(if_then_else:V8HI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)

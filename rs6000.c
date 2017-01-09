@@ -5519,10 +5519,14 @@ output_vec_const_move (rtx *operands)
 	return "#";
       } 
       mode = GET_MODE (splat_vec);
-      if (mode == V8HImode)
-	return "#";//"fxvsplath %0,0";
-      else if (mode == V16QImode)
-	return "#";
+      if (mode == V8HImode){
+        emit_insn(gen_s2pp_fxvsplath(dest, vec));
+	return "";//"fxvsplath %0,0";
+      }
+      else if (mode == V16QImode){
+        emit_insn(gen_s2pp_fxvsplatb(dest, vec));
+	return "";
+      }
       else
 	gcc_unreachable ();
     }
@@ -8739,7 +8743,7 @@ rs6000_emit_move (rtx dest, rtx source, enum machine_mode mode)
     case V2DImode:
     case V1TImode:
       if (TARGET_S2PP)
-	emit_insn (gen_sync());
+	//emit_insn (gen_sync());
       if (CONSTANT_P (operands[1])
 	  && !easy_vector_constant (operands[1], mode))
 	operands[1] = force_const_mem (mode, operands[1]);
@@ -12159,7 +12163,7 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
     
   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
     op0 = copy_to_mode_reg (mode0, op0);
-    emit_insn (gen_sync());
+    //emit_insn (gen_sync());
   }
   pat = GEN_FCN (icode) (target, op0);
   
@@ -12297,11 +12301,11 @@ rs6000_expand_binop_builtin (enum insn_code icode, tree exp, rtx target)
 
   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
     op0 = copy_to_mode_reg (mode0, op0);
-    emit_insn(gen_sync());
+    //emit_insn(gen_sync());
   }
   if (! (*insn_data[icode].operand[2].predicate) (op1, mode1)){
     op1 = copy_to_mode_reg (mode1, op1);
-    emit_insn(gen_sync());
+    //emit_insn(gen_sync());
   }
 
   pat = GEN_FCN (icode) (target, op0, op1);
@@ -13888,7 +13892,7 @@ s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
       return NULL_RTX;
     }
 
-  emit_insn (gen_sync());
+  //emit_insn (gen_sync());
 
   arg0 = CALL_EXPR_ARG (exp, 0);
   arg1 = CALL_EXPR_ARG (exp, 1);
@@ -14922,7 +14926,7 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 
 	gcc_assert (TARGET_S2PP);
 
-	emit_insn (gen_sync());
+	//emit_insn (gen_sync());
 
 	arg = CALL_EXPR_ARG (exp, 0);
 	gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
