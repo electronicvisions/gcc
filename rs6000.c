@@ -3661,7 +3661,7 @@ rs6000_option_override_internal (bool global_init_p)
 
       if (TARGET_DEBUG_ADDR)
 	{
-	  //targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
+	  targetm.legitimate_address_p = rs6000_debug_legitimate_address_p;
 	  targetm.legitimize_address = rs6000_debug_legitimize_address;
 	  rs6000_secondary_reload_class_ptr
 	    = rs6000_debug_secondary_reload_class;
@@ -5441,6 +5441,7 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
+  if (vspltis_constant (op, step, copies))
     return true;
 
   /* And finally a vspltisb.  */
@@ -5449,7 +5450,9 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
+  if (vspltis_constant (op, step, copies))
     return true;
+
 
 }
 
