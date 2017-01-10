@@ -5463,12 +5463,14 @@ gen_easy_s2pp_constant (rtx op)
   unsigned step = nunits / 4;
   unsigned copies = 1;
 
+  fprintf (stderr, "start\n step = %i, copies = %i\n", step, copies);
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
     step >>= 1;
 
+  fprintf (stderr, "step = %i, copies = %i\n", step, copies);
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V8HImode, gen_lowpart (HImode, val));
 
@@ -5478,6 +5480,7 @@ gen_easy_s2pp_constant (rtx op)
   else
     step >>= 1;
 
+  fprintf (stderr, "step = %i, copies = %i\n", step, copies);
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V16QImode, gen_lowpart (QImode, val));
 
@@ -8742,8 +8745,6 @@ rs6000_emit_move (rtx dest, rtx source, enum machine_mode mode)
     case V2DFmode:
     case V2DImode:
     case V1TImode:
-      if (TARGET_S2PP)
-	//emit_insn (gen_sync());
       if (CONSTANT_P (operands[1])
 	  && !easy_vector_constant (operands[1], mode))
 	operands[1] = force_const_mem (mode, operands[1]);

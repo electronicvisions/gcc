@@ -80,6 +80,64 @@
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
 
+;; Load up a vector with the most significant bit set by loading up -1 and
+;; doing a shift left
+(define_split
+  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+	(match_operand:FXVI 1 "easy_vector_constant_msb" ""))]
+  "VECTOR_UNIT_S2PP_P (<MODE>mode) && reload_completed"
+  [(const_int 0)]
+{
+  rtx dest = operands[0];
+  enum machine_mode mode = GET_MODE (operands[0]);
+  rtvec v;
+  int i, num_elements;
+
+  if (mode == V4SFmode)
+    {
+      mode = V4SImode;
+      dest = gen_lowpart (V4SImode, dest);
+    }
+
+  num_elements = GET_MODE_NUNITS (mode);
+  v = rtvec_alloc (num_elements);
+  for (i = 0; i < num_elements; i++)
+    RTVEC_ELT (v, i) = constm1_rtx;
+
+  emit_insn (gen_vec_initv4si (dest, gen_rtx_PARALLEL (mode, v)));
+  emit_insn (gen_rtx_SET (VOIDmode, dest, gen_rtx_ASHIFT (mode, dest, dest)));
+  DONE;
+})
+
+(define_split
+  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+	(match_operand:FXVI 1 "easy_vector_constant_add_self" ""))]
+  "VECTOR_UNIT_S2PP_P (<MODE>mode) && reload_completed"
+  [(set (match_dup 0) (match_dup 3))
+   (set (match_dup 0) (match_dup 4))]
+{
+  rtx dup = gen_easy_s2pp_constant (operands[1]);
+  rtx const_vec;
+  enum machine_mode op_mode = <MODE>mode;
+
+  /* Divide the operand of the resulting VEC_DUPLICATE, and use
+     simplify_rtx to make a CONST_VECTOR.  */
+  XEXP (dup, 0) = simplify_const_binary_operation (ASHIFTRT, QImode,
+						   XEXP (dup, 0), const1_rtx);
+  const_vec = simplify_rtx (dup);
+
+  if (op_mode == V4SFmode)
+    {
+      op_mode = V4SImode;
+      operands[0] = gen_lowpart (op_mode, operands[0]);
+    }
+  if (GET_MODE (const_vec) == op_mode)
+    operands[3] = const_vec;
+  else
+    operands[3] = gen_lowpart (op_mode, const_vec);
+  operands[4] = gen_rtx_PLUS (op_mode, operands[0], operands[0]);
+})
+
 ;;(define_split
 ;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
 ;;	(match_operand:FXVI 1 "easy_vector_constant" ""))] 
