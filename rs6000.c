@@ -5453,7 +5453,7 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   if (vspltis_constant (op, step, copies))
     return true;
 
-
+  return false;
 }
 
 

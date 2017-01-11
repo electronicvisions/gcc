@@ -105,15 +105,10 @@
       if (CONSTANT_P (operands[1])
 	  && !easy_vector_constant (operands[1], <MODE>mode)){
 	operands[1] = force_const_mem (<MODE>mode, operands[1]);
-	if (TARGET_S2PP)
-	  emit_insn(gen_sync());
-      }
-
+	}
       else if (!vlogical_operand (operands[0], <MODE>mode)
 	       && !vlogical_operand (operands[1], <MODE>mode)){
 	operands[1] = force_reg (<MODE>mode, operands[1]);
-	if (TARGET_S2PP)
-	  emit_insn(gen_sync());
       }
     }
   if (!BYTES_BIG_ENDIAN
@@ -199,7 +194,6 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-  emit_insn (gen_sync());
 }")
 
 (define_expand "vector_s2pp_store_<mode>"
@@ -209,7 +203,6 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-  emit_insn (gen_sync());
 }")
 
 (define_expand "vector_s2pp_input_<mode>"
@@ -219,7 +212,6 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-  emit_insn (gen_sync());
 }")
 
 (define_expand "vector_s2pp_output_<mode>"
@@ -229,7 +221,6 @@
   "
 {
   gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
-  emit_insn (gen_sync());
 }")
 
 
