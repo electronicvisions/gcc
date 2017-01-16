@@ -103,13 +103,11 @@
   if (can_create_pseudo_p ())
     {
       if (CONSTANT_P (operands[1])
-	  && !easy_vector_constant (operands[1], <MODE>mode)){
+	  && !easy_vector_constant (operands[1], <MODE>mode))
 	operands[1] = force_const_mem (<MODE>mode, operands[1]);
-	}
       else if (!vlogical_operand (operands[0], <MODE>mode)
-	       && !vlogical_operand (operands[1], <MODE>mode)){
+	       && !vlogical_operand (operands[1], <MODE>mode))
 	operands[1] = force_reg (<MODE>mode, operands[1]);
-      }
     }
   if (!BYTES_BIG_ENDIAN
       && VECTOR_MEM_VSX_P (<MODE>mode)

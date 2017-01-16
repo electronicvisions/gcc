@@ -624,8 +624,8 @@
 ;; Same as easy_vector_constant but only for EASY_VECTOR_15_ADD_SELF.
 (define_predicate "easy_vector_constant_add_self"
   (and (match_code "const_vector")
-       (and (match_test "TARGET_ALTIVEC || TARGET_S2PP")
-	    (match_test "easy_altivec_constant (op, mode) || easy_s2pp_constant (op, mode)")))
+       (and (match_test "TARGET_ALTIVEC")
+	    (match_test "easy_altivec_constant (op, mode)")))
 {
   HOST_WIDE_INT val;
   int elt;

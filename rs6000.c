@@ -344,11 +344,12 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
+//#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
 #define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, S2PP_REG_TYPE)
 
 
+//#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE)
 #define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE)
-//(IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
 
 
 /* Register classes we care about in secondary reload or go if legitimate
@@ -1269,39 +1270,6 @@ char rs6000_reg_names[][8] =
 };
 
 #ifdef TARGET_REGNAMES
-#if 0
-static const char alt_reg_names[][8] =
-{
-   "%r0",   "%r1",  "%r2",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
-   "%r8",   "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
-  "%r16",  "%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23",
-  "%r24",  "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
-   "%kv0",   "%kv1",  "%kv2",  "%kv3",  "%kv4",  "%kv5",  "%kv6",  "%kv7",
-   "%kv8",   "%kv9", "%kv10", "%kv11", "%kv12", "%kv13", "%kv14", "%kv15",
-  "%kv16",  "%kv17", "%kv18", "%kv19", "%kv20", "%kv21", "%kv22", "%kv23",
-  "%kv24",  "%kv25", "%kv26", "%kv27", "%kv28", "%kv29", "%kv30", "%kv31",
-    "ka",    "lr",  "ctr",   "ap",
-  "%kc",  "%cr1", "%cr2", "%cr3", "%cr4", "%cr5", "%cr6", "%cr7",
-   "ca",
-  /* AltiVec registers.  */
-   "%v0",  "%v1",  "%v2",  "%v3",  "%v4",  "%v5",  "%v6", "%v7",
-   "%v8",  "%v9", "%v10", "%v11", "%v12", "%v13", "%v14", "%v15",
-  "%v16", "%v17", "%v18", "%v19", "%v20", "%v21", "%v22", "%v23",
-  "%v24", "%v25", "%v26", "%v27", "%v28", "%v29", "%v30", "%v31",
-  "vrsave", "vscr",
-  /* SPE registers.  */
-  "spe_acc", "spefscr",
-  /* Soft frame pointer.  */
-  "sfp",
-  /* HTM SPR registers.  */
-  "tfhar", "tfiar", "texasr",
-  /* SPE High registers.  */
-  "%rh0",  "%rh1",  "%rh2",  "%rh3",  "%rh4",  "%rh5",  "%rh6",   "%rh7",
-  "%rh8",  "%rh9",  "%rh10", "%r11",  "%rh12", "%rh13", "%rh14", "%rh15",
-  "%rh16", "%rh17", "%rh18", "%rh19", "%rh20", "%rh21", "%rh22", "%rh23",
-  "%rh24", "%rh25", "%rh26", "%rh27", "%rh28", "%rh29", "%rh30", "%rh31"
-};
-#else
 static const char alt_reg_names[][8] =
 {
    "%r0",   "%r1",  "%r2",  "%r3",  "%r4",  "%r5",  "%r6",  "%r7",
@@ -1333,7 +1301,6 @@ static const char alt_reg_names[][8] =
   "%rh16", "%rh17", "%rh18", "%rh19", "%rh20", "%rh21", "%rh22", "%rh23",
   "%rh24", "%rh25", "%rh26", "%rh27", "%rh28", "%rh29", "%rh30", "%rh31"
 };
-#endif
 #endif
 
 /* Table of valid machine attributes. *//*p_o_i*/
@@ -5466,14 +5433,12 @@ gen_easy_s2pp_constant (rtx op)
   unsigned step = nunits / 4;
   unsigned copies = 1;
 
-  fprintf (stderr, "start\n step = %i, copies = %i\n", step, copies);
   /* Then try with a vspltish.  */
   if (step == 1)
     copies <<= 1;
   else
     step >>= 1;
 
-  fprintf (stderr, "step = %i, copies = %i\n", step, copies);
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V8HImode, gen_lowpart (HImode, val));
 
@@ -5483,7 +5448,6 @@ gen_easy_s2pp_constant (rtx op)
   else
     step >>= 1;
 
-  fprintf (stderr, "step = %i, copies = %i\n", step, copies);
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V16QImode, gen_lowpart (QImode, val));
 
@@ -5526,12 +5490,12 @@ output_vec_const_move (rtx *operands)
       } 
       mode = GET_MODE (splat_vec);
       if (mode == V8HImode){
-        emit_insn(gen_s2pp_fxvsplath(dest, vec));
-	return "";//"fxvsplath %0,0";
+        //emit_insn(gen_s2pp_fxvsplath_internal(dest, vec));
+	return "#";
       }
       else if (mode == V16QImode){
-        emit_insn(gen_s2pp_fxvsplatb(dest, vec));
-	return "";
+        //emit_insn(gen_s2pp_fxvsplatb_internal(dest, vec));
+	return "#";
       }
       else
 	gcc_unreachable ();
@@ -6785,7 +6749,8 @@ legitimate_indexed_address_p (rtx x, int strict)
      replaced with proper base and index regs.  */
   if (!strict
       && reload_in_progress
-      && (REG_P (op0) || GET_CODE (op0) == PLUS) && REG_P (op1))
+      && (REG_P (op0) || GET_CODE (op0) == PLUS)
+      && REG_P (op1))
     return true;
 
   return (REG_P (op0) && REG_P (op1)
@@ -7929,12 +7894,6 @@ rs6000_debug_legitimate_address_p (enum machine_mode mode, rtx x,
 	    : (reload_in_progress ? "progress" : "before")),
 	   GET_RTX_NAME (GET_CODE (x)));
   debug_rtx (x);
-  if (mode == V16QImode || mode == V8HImode){
-	  fprintf (stderr, "legit_indirect_addr = %i\n",
-			  legitimate_indirect_address_p (x, reg_ok_strict));
-	  fprintf (stderr, "legit_offset_addr = %i\n",
-			  rs6000_legitimate_offset_address_p (mode, x, reg_ok_strict, false));
-  }
 
   return ret;
 }
@@ -12165,10 +12124,9 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
     target = gen_reg_rtx (tmode);
     
-  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
     op0 = copy_to_mode_reg (mode0, op0);
-    //emit_insn (gen_sync());
-  }
+  
   pat = GEN_FCN (icode) (target, op0);
   
   if (! pat)
@@ -12303,14 +12261,11 @@ rs6000_expand_binop_builtin (enum insn_code icode, tree exp, rtx target)
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
     target = gen_reg_rtx (tmode);
 
-  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0)){
+  if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
     op0 = copy_to_mode_reg (mode0, op0);
-    //emit_insn(gen_sync());
-  }
-  if (! (*insn_data[icode].operand[2].predicate) (op1, mode1)){
+  
+  if (! (*insn_data[icode].operand[2].predicate) (op1, mode1))
     op1 = copy_to_mode_reg (mode1, op1);
-    //emit_insn(gen_sync());
-  }
 
   pat = GEN_FCN (icode) (target, op0, op1);
   if (! pat)
@@ -13896,8 +13851,6 @@ s2pp_expand_st_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
       return NULL_RTX;
     }
 
-  //emit_insn (gen_sync());
-
   arg0 = CALL_EXPR_ARG (exp, 0);
   arg1 = CALL_EXPR_ARG (exp, 1);
   op0 = expand_normal (arg0);
@@ -14929,8 +14882,6 @@ rs6000_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 	rtx op, addr, pat;
 
 	gcc_assert (TARGET_S2PP);
-
-	//emit_insn (gen_sync());
 
 	arg = CALL_EXPR_ARG (exp, 0);
 	gcc_assert (POINTER_TYPE_P (TREE_TYPE (arg)));
@@ -18814,9 +18765,9 @@ rs6000_secondary_memory_needed (enum reg_class from_class,
 				enum machine_mode mode)
 {
   enum rs6000_reg_type from_type, to_type;
-  bool altivec_p = (from_class == //ALTIVEC_REGS || to_class == ALTIVEC_REGS);
+  bool altivec_p = //(from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
 	  ((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
-		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS)));
+		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
 
   /* If a simple/direct move is available, we don't need secondary memory  */
   from_type = reg_class_to_reg_type[(int)from_class];
@@ -28910,6 +28861,8 @@ rs6000_sched_reorder2 (FILE *dump, int sched_verbose, rtx *ready,
   if (sched_verbose)
     fprintf (dump, "// rs6000_sched_reorder2 :\n");
 
+  if (TARGET_S2PP){
+    for 
   /* For Power6, we need to handle some special cases to try and keep the
      store queue from overflowing and triggering expensive flushes.
 
