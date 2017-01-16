@@ -85,7 +85,7 @@
 	(match_operand:FXVI 1 "easy_vector_constant" ""))] 
   "TARGET_S2PP && can_create_pseudo_p()"
   [(set (match_dup 2) (match_dup 3))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
    (set (match_dup 0)
 	(unspec:FXVI
 	     [(match_dup 2)]

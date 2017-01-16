@@ -28861,8 +28861,6 @@ rs6000_sched_reorder2 (FILE *dump, int sched_verbose, rtx *ready,
   if (sched_verbose)
     fprintf (dump, "// rs6000_sched_reorder2 :\n");
 
-  if (TARGET_S2PP){
-    for 
   /* For Power6, we need to handle some special cases to try and keep the
      store queue from overflowing and triggering expensive flushes.
 
