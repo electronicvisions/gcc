@@ -344,11 +344,12 @@ static enum rs6000_reg_type reg_class_to_reg_type[N_REG_CLASSES];
 
 /* First/last register type for the 'normal' register types (i.e. general
    purpose, floating point, altivec, and VSX registers).  */
-#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
+//#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, FPR_REG_TYPE)
+#define IS_STD_REG_TYPE(RTYPE) IN_RANGE(RTYPE, GPR_REG_TYPE, S2PP_REG_TYPE)
 
 
-#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE)
-//(IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE) || IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE))
+//#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, FPR_REG_TYPE)
+#define IS_FP_VECT_REG_TYPE(RTYPE) IN_RANGE(RTYPE, VSX_REG_TYPE, S2PP_REG_TYPE)
 
 
 /* Register classes we care about in secondary reload or go if legitimate
@@ -5407,6 +5408,7 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
+  if (vspltis_constant (op, step, copies))
     return true;
 
   /* And finally a vspltisb.  */
@@ -5415,8 +5417,10 @@ easy_s2pp_constant (rtx op, enum machine_mode mode)
   else
     step >>= 1;
 
+  if (vspltis_constant (op, step, copies))
     return true;
 
+  return false;
 }
 
 
@@ -5485,10 +5489,14 @@ output_vec_const_move (rtx *operands)
 	return "#";
       } 
       mode = GET_MODE (splat_vec);
-      if (mode == V8HImode)
-	return "#";//"fxvsplath %0,0";
-      else if (mode == V16QImode)
+      if (mode == V8HImode){
+        //emit_insn(gen_s2pp_fxvsplath_internal(dest, vec));
 	return "#";
+      }
+      else if (mode == V16QImode){
+        //emit_insn(gen_s2pp_fxvsplatb_internal(dest, vec));
+	return "#";
+      }
       else
 	gcc_unreachable ();
     }
@@ -12118,6 +12126,7 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
     
   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
     op0 = copy_to_mode_reg (mode0, op0);
+  
   pat = GEN_FCN (icode) (target, op0);
   
   if (! pat)
@@ -12254,6 +12263,7 @@ rs6000_expand_binop_builtin (enum insn_code icode, tree exp, rtx target)
 
   if (! (*insn_data[icode].operand[1].predicate) (op0, mode0))
     op0 = copy_to_mode_reg (mode0, op0);
+  
   if (! (*insn_data[icode].operand[2].predicate) (op1, mode1))
     op1 = copy_to_mode_reg (mode1, op1);
 
@@ -12642,6 +12652,7 @@ s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 
   if (! pat)
     return 0;
+  emit_insn (gen_sync());
   emit_insn (pat);
 
   return target;
@@ -12801,6 +12812,7 @@ s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
     }
 
   pat = GEN_FCN (icode) (addr, op0);
+  emit_insn (gen_sync());
   if (pat)
     emit_insn (pat);
   return NULL_RTX;
@@ -18673,7 +18685,7 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
   if ((rclass == S2PP_REGS)
       && VECTOR_UNIT_S2PP_P (mode)
       && easy_vector_constant (x, mode)){
-    return S2PP_REGS;
+    return rclass;
   }
   
   //if (TARGET_S2PP && VECTOR_UNIT_S2PP_P (mode))
@@ -18753,9 +18765,9 @@ rs6000_secondary_memory_needed (enum reg_class from_class,
 				enum machine_mode mode)
 {
   enum rs6000_reg_type from_type, to_type;
-  bool altivec_p = (from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
-	  //((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
-	//	    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
+  bool altivec_p = //(from_class == ALTIVEC_REGS || to_class == ALTIVEC_REGS);
+	  ((from_class == ALTIVEC_REGS || from_class == S2PP_REGS)
+		    || (to_class == ALTIVEC_REGS || to_class == S2PP_REGS));
 
   /* If a simple/direct move is available, we don't need secondary memory  */
   from_type = reg_class_to_reg_type[(int)from_class];
@@ -28849,6 +28861,8 @@ rs6000_sched_reorder2 (FILE *dump, int sched_verbose, rtx *ready,
   if (sched_verbose)
     fprintf (dump, "// rs6000_sched_reorder2 :\n");
 
+  if (TARGET_S2PP){
+    for 
   /* For Power6, we need to handle some special cases to try and keep the
      store queue from overflowing and triggering expensive flushes.
 

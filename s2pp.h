@@ -231,4 +231,74 @@
 //  typedef __vector __bool char __ret;
 //};
 
+
+static uint32_t const __FXVIO_WEIGHT_BASE   = 0x0000;
+static uint32_t const __FXVIO_DECODER_BASE  = 0x4000;
+static uint32_t const __FXVIO_CAUSAL_BASE   = 0x8000;
+static uint32_t const __FXVIO_VRESET_C_BASE = 0x9000;
+static uint32_t const __FXVIO_ACAUSAL_BASE  = 0xc000;
+static uint32_t const __FXVIO_VRESET_A_BASE = 0xd000;
+
+static uint32_t const __FXVIO_LOCATION_MASK      = 0x000fff;
+static uint32_t const __FXVIO_TEST_MASK          = 0x100000;
+static uint32_t const __FXVIO_BUFFER_ENABLE_MASK = 0x200000;
+
+static uint32_t const __SPIKE_BASE_ADDR = (0x3c000040 << 2);
+static uint32_t const __DECODER_BASE_ADDR = (0x20014000 << 2);
+
+#define cadc_load_causal(vec, addr) vec = fxv_inx(__FXVIO_CAUSAL_BASE, addr)
+#define cadc_load_acausal(vec, addr) vec = fxv_inx(__FXVIO_ACAUSAL_BASE, addr)
+#define cadc_load_causal_buffered(vec, addr) vec = fxv_inx(__FXVIO_CAUSAL_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
+#define cadc_load_acausal_buffered(vec, addr) vec = fxv_inx(__FXVIO_ACAUSAL_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
+#define cadc_test_load_causal(vec, addr) vec = fxv_inx(__FXVIO_CAUSAL_BASE | __FXVIO_TEST_MASK, addr)
+#define cadc_test_load_acausal(vec, addr) vec = fxv_inx(__FXVIO_ACAUSAL_BASE | __FXVIO_TEST_MASK, addr)
+#define cadc_load_vreset_c(vec, addr) vec = fxv_inx(__FXVIO_VRESET_C_BASE, addr)
+#define cadc_load_vreset_a(vec, addr) vec = fxv_inx(__FXVIO_VRESET_A_BASE, addr)
+#define cadc_load_vreset_c_buffered(vec, addr) vec = fxv_inx(__FXVIO_VRESET_C_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
+#define cadc_load_vreset_a_buffered(vec, addr) vec = fxv_inx(__FXVIO_VRESET_A_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
+
+
+#define _cadc_load_row(ap0, am0, ap1, am1, addr, buffer_enable) do {\
+	register uint32_t base_causal = __FXVIO_CAUSAL_BASE | (buffer_enable); \
+	register uint32_t base_causal_b = __FXVIO_CAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK; \
+	register uint32_t base_acausal = __FXVIO_ACAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK; \
+	\
+	asm ( \
+		"fxvinx " #ap0 ", %[base_causal], %[offset_0]\n" \
+		"fxvinx " #am0 ", %[base_acausal], %[offset_0]\n" \
+		"fxvinx " #ap1 ", %[base_causal_b], %[offset_1]\n" \
+		"fxvinx " #am1 ", %[base_acausal], %[offset_1]\n" \
+		:	/* no outputs */ \
+		:	[base_causal] "b" (base_causal), \
+			[base_causal_b] "b" (base_causal_b), \
+			[base_acausal] "b" (base_acausal), \
+			[offset_0] "r" (addr), \
+			[offset_1] "r" (addr+1) \
+	); \
+} while(0)
+
+#define _cadc_load_row(ap0, am0, ap1, am1, addr, buffer_enable) do {\
+	\
+	ap0 = fxv_inx(__FXVIO_CAUSAL_BASE | (buffer_enable), addr)\
+	am0 = fxv_inx(__FXVIO_ACAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK), addr)\
+	++addr;\
+	ap1 = fxv_inx(__FXVIO_CAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK), addr)\
+	am1 = fxv_inx(__FXVIO_ACAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK), addr)\
+	--addr;\
+} while(0)
+
+#define cadc_load_row(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, 0)
+#define cadc_load_row_buffered(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK)
+#define cadc_test_load_row(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
+#define cadc_test_load_row_buffered(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
+
+//#define fxv_shin(offset, address) do {	fxv_shr(__builtin_vec_shin(offset, address)
+//#define fxv_shout(vec, offset, address) fxv_out(fxv_sh(vec, -2), offset, address)
+//#define fxv_shin_gt(offset, address) fxv_sh(fxv_in_gt(offset, address), 2)
+//#define fxv_shout_gt(vec, offset, address) fxv_out_gt(fxv_sh(vec, -2), offset, address)
+//#define fxv_shin_lt(offset, address) fxv_sh(fxv_in_lt(offset, address)m 2)
+//#define fxv_shout_lt(vec, offset, address) fxv_out_lt(fxv_sh(vec, -2), offset, address)
+//#define fxv_shin_eq(offset, address) fxv_sh(fxv_in_eq(offset, address), 2)
+//#define fxv_shout_eq(vec, offset, address) fxv_out_eq(fxv_sh(vec, -2), offset, address)
+
 #endif /* _S2PP_H */
