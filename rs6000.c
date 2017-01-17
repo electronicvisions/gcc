@@ -12098,6 +12098,18 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
 	}
     }
 
+  if (icode == CODE_FOR_s2pp_fxvsplatb
+      || icode == CODE_FOR_s2pp_fxvsplath)
+    {
+      /* Only allow 5-bit *signed* literals.  */
+      if (INTVAL (op0) > 31
+	  || INTVAL (op0) < -32)
+	{
+	  error ("argument in fxvsplat must be a 6-bit signed literal");
+	  return const0_rtx;
+	}
+    }
+
   if (target == 0
       || GET_MODE (target) != tmode
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
@@ -12652,7 +12664,7 @@ s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 
   if (! pat)
     return 0;
-  emit_insn (gen_sync());
+  //emit_insn (gen_sync());
   emit_insn (pat);
 
   return target;
@@ -12812,7 +12824,7 @@ s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
     }
 
   pat = GEN_FCN (icode) (addr, op0);
-  emit_insn (gen_sync());
+  //emit_insn (gen_sync());
   if (pat)
     emit_insn (pat);
   return NULL_RTX;
@@ -28860,9 +28872,6 @@ rs6000_sched_reorder2 (FILE *dump, int sched_verbose, rtx *ready,
 {
   if (sched_verbose)
     fprintf (dump, "// rs6000_sched_reorder2 :\n");
-
-  if (TARGET_S2PP){
-    for 
   /* For Power6, we need to handle some special cases to try and keep the
      store queue from overflowing and triggering expensive flushes.
 

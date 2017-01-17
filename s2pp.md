@@ -53,6 +53,15 @@
   "sync"
   [(set_attr "type" "sync")])
 
+;;(define_split
+;;  [(set (match_operand:FXVI 0 "nonimmediate_operand" "")
+;;	(match_operand:FXVI 1 "input_operand" ""))] 
+;;  "VECTOR_MEM_S2PP_P (<MODE>mode) && reload_completed"
+;;  [(set (match_dup 0)
+;;	(match_dup 1))
+;;  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+;;  "")
+
 (define_insn "*s2pp_mov<mode>"
   [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv,kv")
 	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,j,W"))]
@@ -60,7 +69,6 @@
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
 {
-  output_asm_insn (\"sync\", operands);
   switch (which_alternative)
     {
     case 0: return "fxvstax %1,%y0";
@@ -80,16 +88,59 @@
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
 
+;; eventually drop peephole and use split instead -> reload_complete good test -> nope MUST be pro reload?
+
+(define_split
+  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+	(match_operand:FXVI 1 "indexed_or_indirect_operand" ""))] 
+  "VECTOR_MEM_S2PP_P (<MODE>mode)
+   && (register_operand (operands[0], <MODE>mode) 
+       || register_operand (operands[1], <MODE>mode))"
+  ;;"TARGET_S2PP && reload_completed"
+  [(parallel
+    [(set (match_operand:FXVI 0 "s2pp_register_operand" "=kv")
+	  (match_operand:FXVI 1 "memory_operand" "Z"))
+     (unspec [(const_int 0)] UNSPEC_FXVLAX)])
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+  "")
+
+(define_split
+  [(set (match_operand:FXVI 0 "indexed_or_indirect_operand" "")
+	(match_operand:FXVI 1 "s2pp_register_operand" ""))] 
+  "VECTOR_MEM_S2PP_P (<MODE>mode)
+   && (register_operand (operands[0], <MODE>mode) 
+       || register_operand (operands[1], <MODE>mode))"
+  ;;"TARGET_S2PP && reload_completed"
+  [(parallel
+    [(set (match_operand:FXVI 0 "memory_operand" "")
+	  (match_operand:FXVI 1 "s2pp_register_operand" ""))
+    (unspec [(const_int 0)] UNSPEC_FXVSTAX)])
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+  "")
+
+;;(define_split
+;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+;;	(unspec:FXVI
+;;	     [(match_operand:SI 1 "register_operand" "")]
+;;	UNSPEC_SPLAT))]
+;;  "TARGET_S2PP && reload_completed"
+;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+;;	(unspec:FXVI
+;;	     [(match_operand:SI 1 "register_operand" "")]
+;;	UNSPEC_SPLAT))
+;;  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+;;  "")
+
 (define_split
   [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
 	(match_operand:FXVI 1 "easy_vector_constant" ""))] 
   "TARGET_S2PP && can_create_pseudo_p()"
   [(set (match_dup 2) (match_dup 3))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
    (set (match_dup 0)
 	(unspec:FXVI
 	     [(match_dup 2)]
-	UNSPEC_SPLAT))]
+	UNSPEC_SPLAT))
+   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "{
     operands[2] = gen_reg_rtx (SImode);
     operands[3] = CONST_VECTOR_ELT(operands[1], 1);
@@ -111,7 +162,8 @@
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "kv"))
-    (unspec [(const_int 0)] UNSPEC_FXVSTAX)])]
+    (unspec [(const_int 0)] UNSPEC_FXVSTAX)])
+   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
 {
 })
@@ -141,7 +193,8 @@
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
-     (unspec [(const_int 0)] UNSPEC_FXVLAX)])]
+     (unspec [(const_int 0)] UNSPEC_FXVLAX)])
+   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
 {
 })
@@ -357,11 +410,11 @@
 
 ;; splat
 (define_expand "s2pp_fxvsplat<FXVI_char>"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
-  (set (match_operand:FXVI 0 "register_operand" "=kv")
+  [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(unspec:FXVI
 	     [(match_operand:SI 1 "register_operand" "r")]
-	UNSPEC_SPLAT))]
+	UNSPEC_SPLAT))
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
 
@@ -619,8 +672,7 @@
 
 ;; pack
 (define_expand "s2pp_fxvpckbu"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
-  (set (match_operand:V16QI 0 "register_operand" "=kv")
+  [(set (match_operand:V16QI 0 "register_operand" "=kv")
 	(if_then_else:V16QI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 3 "u_short_cint_operand" "i")]
@@ -628,7 +680,8 @@
 		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
 			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
 		UNSPEC_FXVPCKU)
-		(match_dup 0)))]
+		(match_dup 0)))
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
@@ -647,8 +700,7 @@
   [(set_attr "type" "vecload")])
 
 (define_expand "s2pp_fxvpckbl"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
-  (set (match_operand:V16QI 0 "register_operand" "=kv")
+  [(set (match_operand:V16QI 0 "register_operand" "=kv")
 	(if_then_else:V16QI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 3 "u_short_cint_operand" "i")]
@@ -656,7 +708,8 @@
 		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
 			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
 		UNSPEC_FXVPCKL)
-		(match_dup 0)))]
+		(match_dup 0)))
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
@@ -676,8 +729,7 @@
 
 ;;unpack
 (define_expand "s2pp_fxvupckbl"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
-   (set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
+   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
 	(if_then_else:V8HI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 3 "u_short_cint_operand" "i")]
@@ -685,7 +737,8 @@
 		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
 		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
 		UNSPEC_FXVUPCKL)
-		(match_dup 0)))]
+		(match_dup 0)))
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
@@ -704,8 +757,7 @@
   [(set_attr "type" "vecload")])
 
 (define_expand "s2pp_fxvupckbr"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)
-   (set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
+   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
 	(if_then_else:V8HI
 		(unspec:CC [(reg:CC S2PP_COND_REGNO)
 			    (match_operand:SI 3 "u_short_cint_operand" "i")]
@@ -713,7 +765,8 @@
 		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
 		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
 		UNSPEC_FXVUPCKR)
-		(match_dup 0)))]
+		(match_dup 0)))
+  (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  

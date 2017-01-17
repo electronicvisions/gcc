@@ -292,13 +292,13 @@ static uint32_t const __DECODER_BASE_ADDR = (0x20014000 << 2);
 #define cadc_test_load_row(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
 #define cadc_test_load_row_buffered(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
 
-//#define fxv_shin(offset, address) do {	fxv_shr(__builtin_vec_shin(offset, address)
-//#define fxv_shout(vec, offset, address) fxv_out(fxv_sh(vec, -2), offset, address)
-//#define fxv_shin_gt(offset, address) fxv_sh(fxv_in_gt(offset, address), 2)
-//#define fxv_shout_gt(vec, offset, address) fxv_out_gt(fxv_sh(vec, -2), offset, address)
-//#define fxv_shin_lt(offset, address) fxv_sh(fxv_in_lt(offset, address)m 2)
-//#define fxv_shout_lt(vec, offset, address) fxv_out_lt(fxv_sh(vec, -2), offset, address)
-//#define fxv_shin_eq(offset, address) fxv_sh(fxv_in_eq(offset, address), 2)
-//#define fxv_shout_eq(vec, offset, address) fxv_out_eq(fxv_sh(vec, -2), offset, address)
+#define fxv_shin(offset, address) fxv_shr(__builtin_vec_shin(offset, address)
+#define fxv_shout(vec, offset, address) fxv_out(fxv_sh(vec, -2), offset, address)
+#define fxv_shin_gt(offset, address) fxv_sh(fxv_in_gt(offset, address), 2)
+#define fxv_shout_gt(vec, offset, address) fxv_out_gt(fxv_sh(vec, -2), offset, address)
+#define fxv_shin_lt(offset, address) fxv_sh(fxv_in_lt(offset, address)m 2)
+#define fxv_shout_lt(vec, offset, address) fxv_out_lt(fxv_sh(vec, -2), offset, address)
+#define fxv_shin_eq(offset, address) fxv_sh(fxv_in_eq(offset, address), 2)
+#define fxv_shout_eq(vec, offset, address) fxv_out_eq(fxv_sh(vec, -2), offset, address)
 
 #endif /* _S2PP_H */
