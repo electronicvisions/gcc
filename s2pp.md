@@ -22,6 +22,8 @@
    UNSPEC_FXVSPLAT
    UNSPEC_FXVADD
    UNSPEC_FXVADDF
+   UNSPEC_FXVMA
+   UNSPEC_FXVMAF
    UNSPEC_FXVADDACTACF
    UNSPEC_FXVADDACTAC
    UNSPEC_FXVMATAC
@@ -264,13 +266,13 @@
     (unspec [(const_int 0)] FXVOUTX)])]
   "TARGET_S2PP && reload_completed"
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	(unspec [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))
    (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "")
 
 (define_insn "*s2pp_fxvoutx_<fxvoutx_int>_<mode>_direct"
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
-	(unspec [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))]
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))]
   "TARGET_S2PP"
   "fxvoutx %1,%y0,<fxvoutx_int>"
   [(set_attr "type" "vecstore")])
@@ -288,16 +290,16 @@
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "")
 	  (match_operand:FXVI 1 "memory_operand" ""))
-     (unspec [(const_int 0)] FXVOUTX)])]
+     (unspec [(const_int 0)] FXVINX)])]
   "TARGET_S2PP && reload_completed"
   [(set (match_operand:FXVI 0 "register_operand" "")
-        (unspec [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))
+        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))
    (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "")
 
 (define_insn "s2pp_fxvinx_<fxvinx_int>_<mode>"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (unspec [(match_operand:FXVI 1 "memory_operand" "Z")] FXVINX))]
+        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "Z")] FXVINX))]
   "TARGET_S2PP"
   "fxvinx %0,%y1,<fxvinx_int>"
   [(set_attr "type" "vecload")])
@@ -315,14 +317,14 @@
 
 (define_insn "s2pp_fxvadd<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-	(unspec: (match_operand:FXVI 1 "register_operand" "kv")
-		 (match_operand:FXVI 2 "register_operand" "kv")
-		 (match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVADD))]
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		      (match_operand:FXVI 2 "register_operand" "kv")
+		      (match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVADD))]
   "<FXVI_unit>"
   "fxvadd<FXVI_char>m %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "s2pp_fxvadd<FXVI_char>fs_c"
+(define_insn "s2pp_fxvadd<FXVI_char>fs"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")
@@ -335,7 +337,7 @@
 ;; sub
 (define_insn "fxvsub<mode>3"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-        (plus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
+        (minus:FXVI (match_operand:FXVI 1 "register_operand" "kv")
 		  (match_operand:FXVI 2 "register_operand" "kv")))]
   "<FXVI_unit>"
   "fxvsub<FXVI_char>m %0,%1,%2"
@@ -345,14 +347,14 @@
 
 (define_insn "s2pp_fxvsub<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-	(unspec: (match_operand:FXVI 1 "register_operand" "kv")
-		 (match_operand:FXVI 2 "register_operand" "kv")
-		 (match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVSUB))]
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		      (match_operand:FXVI 2 "register_operand" "kv")
+		      (match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVSUB))]
   "<FXVI_unit>"
   "fxvsub<FXVI_char>m %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "s2pp_fxvsub<FXVI_char>fs_c"
+(define_insn "s2pp_fxvsub<FXVI_char>fs"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")
@@ -373,14 +375,14 @@
 
 (define_insn "s2pp_fxvmul<FXVI_char>m"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
-	(unspec: (match_operand:FXVI 1 "register_operand" "kv")
-		 (match_operand:FXVI 2 "register_operand" "kv")
-		 (match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVMUL))]
+	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
+		      (match_operand:FXVI 2 "register_operand" "kv")
+		      (match_operand:SI 3 "u_short_cint_operand" "i")] UNSPEC_FXVMUL))]
   "<FXVI_unit>"
   "fxvmul<FXVI_char>m %0,%1,%2,%3"
   [(set_attr "type" "vecsimple")])
 
-(define_insn "s2pp_fxvmul<FXVI_char>fs_c"
+(define_insn "s2pp_fxvmul<FXVI_char>fs"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
         (unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")
@@ -611,56 +613,40 @@
 ;; pack
 (define_expand "s2pp_fxvpckbu"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
-	(if_then_else:V16QI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
-			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVPCKU)
-		(match_dup 0)))
+	(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+        	       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")
+        	       (match_operand:SI 3 "u_short_cint_operand" "i")]
+		       UNSPEC_FXVPCKU))
   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
 (define_insn "*s2pp_fxvpckbu_internal"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
-	(if_then_else:V16QI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
-			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVPCKU)
-		(match_dup 0)))]
+	(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+        	       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")
+        	       (match_operand:SI 3 "u_short_cint_operand" "i")]
+		       UNSPEC_FXVPCKU))]
   "TARGET_S2PP"
   "fxvpckbu %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
 
 (define_expand "s2pp_fxvpckbl"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
-	(if_then_else:V16QI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
-			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVPCKL)
-		(match_dup 0)))
+	(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+        	       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")
+        	       (match_operand:SI 3 "u_short_cint_operand" "i")]
+		       UNSPEC_FXVPCKL))
   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
 (define_insn "*s2pp_fxvpckbl_internal"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")
-	(if_then_else:V16QI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
-			       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVPCKL)
-		(match_dup 0)))]
+	(unspec:V16QI [(match_operand:V8HI 1 "indexed_or_indirect_address" "a")
+        	       (match_operand:V8HI 2 "indexed_or_indirect_address" "a")
+        	       (match_operand:SI 3 "u_short_cint_operand" "i")]
+		       UNSPEC_FXVPCKL))]
   "TARGET_S2PP"
   "fxvpckbl %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
@@ -668,56 +654,40 @@
 ;;unpack
 (define_expand "s2pp_fxvupckbl"
    [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
-	(if_then_else:V8HI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
-		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVUPCKL)
-		(match_dup 0)))
+	 (unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+	 	       (match_operand:V16QI 2 "indexed_or_indirect_address" "a")
+	 	       (match_operand:SI 3 "u_short_cint_operand" "i")]
+         		UNSPEC_FXVUPCKL))
   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
 (define_insn "*s2pp_fxvupckbl_internal"
-  [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
-	(if_then_else:V8HI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
-		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVUPCKL)
-		(match_dup 0)))]
+   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
+	 (unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+	 	       (match_operand:V16QI 2 "indexed_or_indirect_address" "a")
+	 	       (match_operand:SI 3 "u_short_cint_operand" "i")]
+         UNSPEC_FXVUPCKL))]
   "TARGET_S2PP"
   "fxvupckbl %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
 
 (define_expand "s2pp_fxvupckbr"
    [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
-	(if_then_else:V8HI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
-		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVUPCKR)
-		(match_dup 0)))
+	 (unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+	 	       (match_operand:V16QI 2 "indexed_or_indirect_address" "a")
+		       (match_operand:SI 3 "u_short_cint_operand" "i")]
+		       UNSPEC_FXVUPCKR))
   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
   "TARGET_S2PP"
   "")
  
 (define_insn "*s2pp_fxvupckbr_internal"
-  [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
-	(if_then_else:V8HI
-		(unspec:CC [(reg:CC S2PP_COND_REGNO)
-			    (match_operand:SI 3 "u_short_cint_operand" "i")]
-		UNSPEC_FXVCOND)
-		(unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
-		 	      (match_operand:V16QI 2 "indexed_or_indirect_address" "a")]
-		UNSPEC_FXVUPCKR)
-		(match_dup 0)))]
+   [(set (match_operand:V8HI 0 "s2pp_register_operand" "=kv")
+	 (unspec:V8HI [(match_operand:V16QI 1 "indexed_or_indirect_address" "a")
+	 	       (match_operand:V16QI 2 "indexed_or_indirect_address" "a")
+		       (match_operand:SI 3 "u_short_cint_operand" "i")]
+		       UNSPEC_FXVUPCKR))]
   "TARGET_S2PP"
   "fxvupckbr %0,%1,%2,%3"
   [(set_attr "type" "vecload")])
