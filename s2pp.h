@@ -6,6 +6,24 @@
 #error Use the "-ms2pp" flag to enable s2pp support
 #endif
 
+#if !defined(_SOFT_FLOAT)
+#error Use the "-msoft-float" flag to enable s2pp support
+#endif
+
+#if !defined(_STRICT_ALIGN)
+#error Use the "-mstrict-align" flag to enable s2pp support
+#endif
+
+#if defined(_RELOCATABLE)
+#error Use the "-mno-relocatable" flag to enable s2pp support
+#endif
+
+#if defined(_SDATA)
+#error Use the "-msdata=none" flag to enable s2pp support
+#endif
+
+#include <stdint.h>
+
 #define vector __vector
 #define pixel __pixel
 #define bool __bool
@@ -42,8 +60,8 @@
 #define fxv_in_eq __builtin_vec_in_eq
 #define fxv_out_eq __builtin_vec_out_eq
 
-#define vec_sel __builtin_vec_fxvsel
-#define fxv_sel vec_sel
+#define vec_sel(x,y) fxv_sel(x,y,0)
+#define fxv_sel __builtin_vec_fxvsel
 #define fxv_sel_gt(x,y) fxv_sel(x,y,1)
 #define fxv_sel_lt(x,y) fxv_sel(x,y,2)
 #define fxv_sel_eq(x,y) fxv_sel(x,y,3)
@@ -55,51 +73,32 @@
 
 #define vec_add fxv_add
 #define fxv_add __builtin_vec_fxvadd
-#define fxv_addbm __builtin_vec_fxvaddbm
-#define fxv_addhm __builtin_vec_fxvaddhm
 #define fxv_addfs(x,y) fxv_addfs_c(x,y,0)
-#define fxv_addbfs(x,y) fxv_addbfs_c(x,y,0)
-#define fxv_addhfs(x,y) fxv_addhfs_c(x,y,0)
-//#define fxv_addfs __builtin_vec_fxvaddfs
-//#define fxv_addbfs __builtin_vec_fxvaddbfs
-//#define fxv_addhfs __builtin_vec_fxvaddhfs
 #define vec_sub fxv_sub
 #define fxv_sub __builtin_vec_fxvsub
-#define fxv_subbm __builtin_vec_fxvsubbm
-#define fxv_subhm __builtin_vec_fxvsubhm
 #define fxv_subfs(x,y) fxv_subfs_c(x,y,0)
-#define fxv_subbfs(x,y) fxv_subbfs_c(x,y,0)
-#define fxv_subhfs(x,y) fxv_subhfs_c(x,y,0)
-//#define fxv_subbfs __builtin_vec_fxvsubbfs
-//#define fxv_subhfs __builtin_vec_fxvsubhfs
 #define vec_mul fxv_mul
 #define fxv_mul __builtin_vec_fxvmul
-#define fxv_mulbm __builtin_vec_fxvmulbm
-#define fxv_mulhm __builtin_vec_fxvmulhm
 #define fxv_mulfs(x,y) fxv_mulfs_c(x,y,0)
-#define fxv_mulbfs(x,y) fxv_mulbfs_c(x,y,0)
-#define fxv_mulhfs(x,y) fxv_mulhfs_c(x,y,0)
-//#define fxv_mulbfs __builtin_vec_fxvmulbfs
-//#define fxv_mulhfs __builtin_vec_fxvmulhfs
 
-#define fxv_addm_c __builtin_vec_fxvaddm_c
-#define fxv_addbm_c __builtin_vec_fxvaddbm_c
-#define fxv_addhm_c __builtin_vec_fxvaddhm_c
-#define fxv_addfs_c __builtin_vec_fxvaddfs_c
-#define fxv_addbfs_c __builtin_vec_fxvaddbfs_c
-#define fxv_addhfs_c __builtin_vec_fxvaddhfs_c
-#define fxv_subm_c __builtin_vec_fxvsubm_c
-#define fxv_subbm_c __builtin_vec_fxvsubbm_c
-#define fxv_subhm_c __builtin_vec_fxvsubhm_c
-#define fxv_subfs_c __builtin_vec_fxvsubfs_c
-#define fxv_subbfs_c __builtin_vec_fxvsubbfs_c
-#define fxv_subhfs_c __builtin_vec_fxvsubhfs_c
-#define fxv_mulm_c __builtin_vec_fxvmulm_c
-#define fxv_mulbm_c __builtin_vec_fxvmulbm_c
-#define fxv_mulhm_c __builtin_vec_fxvmulhm_c
-#define fxv_mulfs_c __builtin_vec_fxvmulfs_c
-#define fxv_mulbfs_c __builtin_vec_fxvmulbfs_c
-#define fxv_mulhfs_c __builtin_vec_fxvmulhfs_c
+#define fxv_addm_c __builtin_vec_fxvaddm
+#define fxv_addbm_c __builtin_vec_fxvaddbm
+#define fxv_addhm_c __builtin_vec_fxvaddhm
+#define fxv_addfs_c __builtin_vec_fxvaddfs
+#define fxv_addbfs_c __builtin_vec_fxvaddbfs
+#define fxv_addhfs_c __builtin_vec_fxvaddhfs
+#define fxv_subm_c __builtin_vec_fxvsubm
+#define fxv_subbm_c __builtin_vec_fxvsubbm
+#define fxv_subhm_c __builtin_vec_fxvsubhm
+#define fxv_subfs_c __builtin_vec_fxvsubfs
+#define fxv_subbfs_c __builtin_vec_fxvsubbfs
+#define fxv_subhfs_c __builtin_vec_fxvsubhfs
+#define fxv_mulm_c __builtin_vec_fxvmulm
+#define fxv_mulbm_c __builtin_vec_fxvmulbm
+#define fxv_mulhm_c __builtin_vec_fxvmulhm
+#define fxv_mulfs_c __builtin_vec_fxvmulfs
+#define fxv_mulbfs_c __builtin_vec_fxvmulbfs
+#define fxv_mulhfs_c __builtin_vec_fxvmulhfs
 
 #define vec_sh fxv_sh
 #define fxv_sh __builtin_vec_fxvsh
@@ -257,26 +256,6 @@ static uint32_t const __DECODER_BASE_ADDR = (0x20014000 << 2);
 #define cadc_load_vreset_c_buffered(vec, addr) vec = fxv_inx(__FXVIO_VRESET_C_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
 #define cadc_load_vreset_a_buffered(vec, addr) vec = fxv_inx(__FXVIO_VRESET_A_BASE || __FXVIO_BUFFER_ENABLE_MASK, addr)
 
-
-#define _cadc_load_row(ap0, am0, ap1, am1, addr, buffer_enable) do {\
-	register uint32_t base_causal = __FXVIO_CAUSAL_BASE | (buffer_enable); \
-	register uint32_t base_causal_b = __FXVIO_CAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK; \
-	register uint32_t base_acausal = __FXVIO_ACAUSAL_BASE | __FXVIO_BUFFER_ENABLE_MASK; \
-	\
-	asm ( \
-		"fxvinx " #ap0 ", %[base_causal], %[offset_0]\n" \
-		"fxvinx " #am0 ", %[base_acausal], %[offset_0]\n" \
-		"fxvinx " #ap1 ", %[base_causal_b], %[offset_1]\n" \
-		"fxvinx " #am1 ", %[base_acausal], %[offset_1]\n" \
-		:	/* no outputs */ \
-		:	[base_causal] "b" (base_causal), \
-			[base_causal_b] "b" (base_causal_b), \
-			[base_acausal] "b" (base_acausal), \
-			[offset_0] "r" (addr), \
-			[offset_1] "r" (addr+1) \
-	); \
-} while(0)
-
 #define _cadc_load_row(ap0, am0, ap1, am1, addr, buffer_enable) do {\
 	\
 	ap0 = fxv_inx(__FXVIO_CAUSAL_BASE | (buffer_enable), addr)\
@@ -292,13 +271,13 @@ static uint32_t const __DECODER_BASE_ADDR = (0x20014000 << 2);
 #define cadc_test_load_row(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
 #define cadc_test_load_row_buffered(a, b, c, d, e) _cadc_load_row(a, b, c, d, e, __FXVIO_BUFFER_ENABLE_MASK | __FXVIO_TEST_MASK)
 
-//#define fxv_shin(offset, address) do {	fxv_shr(__builtin_vec_shin(offset, address)
-//#define fxv_shout(vec, offset, address) fxv_out(fxv_sh(vec, -2), offset, address)
-//#define fxv_shin_gt(offset, address) fxv_sh(fxv_in_gt(offset, address), 2)
-//#define fxv_shout_gt(vec, offset, address) fxv_out_gt(fxv_sh(vec, -2), offset, address)
-//#define fxv_shin_lt(offset, address) fxv_sh(fxv_in_lt(offset, address)m 2)
-//#define fxv_shout_lt(vec, offset, address) fxv_out_lt(fxv_sh(vec, -2), offset, address)
-//#define fxv_shin_eq(offset, address) fxv_sh(fxv_in_eq(offset, address), 2)
-//#define fxv_shout_eq(vec, offset, address) fxv_out_eq(fxv_sh(vec, -2), offset, address)
+#define fxv_shin(offset, address) fxv_shr(__builtin_vec_shin(offset, address)
+#define fxv_shout(vec, offset, address) fxv_out(fxv_sh(vec, -2), offset, address)
+#define fxv_shin_gt(offset, address) fxv_sh(fxv_in_gt(offset, address), 2)
+#define fxv_shout_gt(vec, offset, address) fxv_out_gt(fxv_sh(vec, -2), offset, address)
+#define fxv_shin_lt(offset, address) fxv_sh(fxv_in_lt(offset, address)m 2)
+#define fxv_shout_lt(vec, offset, address) fxv_out_lt(fxv_sh(vec, -2), offset, address)
+#define fxv_shin_eq(offset, address) fxv_sh(fxv_in_eq(offset, address), 2)
+#define fxv_shout_eq(vec, offset, address) fxv_out_eq(fxv_sh(vec, -2), offset, address)
 
 #endif /* _S2PP_H */

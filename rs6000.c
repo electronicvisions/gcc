@@ -1006,7 +1006,7 @@ struct processor_costs ppca2_cost = {
 
 /* Instruction costs on s2pp processors = power7_costs.  */
 static const
-struct processor_costs s2pp_cost = {
+struct processor_costs ppu_cost = {
   COSTS_N_INSNS (2),	/* mulsi */
   COSTS_N_INSNS (2),	/* mulsi_const */
   COSTS_N_INSNS (2),	/* mulsi_const9 */
@@ -4054,6 +4054,10 @@ rs6000_option_override_internal (bool global_init_p)
 
       case PROCESSOR_PPCA2:
 	rs6000_cost = &ppca2_cost;
+	break;
+
+      case PROCESSOR_PPU:
+	rs6000_cost = &ppu_cost;
 	break;
 
       default:
@@ -12083,8 +12087,6 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
   if (icode == CODE_FOR_altivec_vspltisb
       || icode == CODE_FOR_altivec_vspltish
       || icode == CODE_FOR_altivec_vspltisw
-      || icode == CODE_FOR_s2pp_fxvsplatb
-      || icode == CODE_FOR_s2pp_fxvsplath
       || icode == CODE_FOR_spe_evsplatfi
       || icode == CODE_FOR_spe_evsplati)
     {
@@ -12097,6 +12099,18 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
 	  return const0_rtx;
 	}
     }
+
+//  if (icode == CODE_FOR_s2pp_fxvsplatb
+//      || icode == CODE_FOR_s2pp_fxvsplath)
+//    {
+//      /* Only allow 5-bit *signed* literals.  */
+//      if (INTVAL (op0) > 31
+//	  || INTVAL (op0) < -32)
+//	{
+//	  error ("argument in fxvsplat must be a 6-bit signed literal");
+//	  return const0_rtx;
+//	}
+//    }
 
   if (target == 0
       || GET_MODE (target) != tmode
@@ -12652,7 +12666,7 @@ s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 
   if (! pat)
     return 0;
-  emit_insn (gen_sync());
+  //emit_insn (gen_sync());
   emit_insn (pat);
 
   return target;
@@ -12812,7 +12826,7 @@ s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
     }
 
   pat = GEN_FCN (icode) (addr, op0);
-  emit_insn (gen_sync());
+  //emit_insn (gen_sync());
   if (pat)
     emit_insn (pat);
   return NULL_RTX;
@@ -24776,6 +24790,8 @@ rs6000_emit_prologue (void)
 	    emit_move_insn (areg, GEN_INT (offset)); 
 	    rtx mem = gen_frame_mem (V8HImode,gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
 	    insn = emit_move_insn (mem, savereg);
+	    
+	    emit_insn (gen_sync());
 
   	    rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
 			    		GEN_INT(offset), NULL_RTX);
@@ -28586,6 +28602,7 @@ rs6000_issue_rate (void)
   case CPU_POWER5:
   case CPU_POWER6:
   case CPU_POWER7:
+  //case CPU_PPU:
     return 5;
   case CPU_POWER8:
     return 7;
@@ -33231,7 +33248,7 @@ static struct rs6000_opt_mask const rs6000_opt_masks[] =
   { "upper-regs-sf",		OPTION_MASK_UPPER_REGS_SF,	false, false },
   { "vsx",			OPTION_MASK_VSX,		false, true  },
   { "vsx-timode",		OPTION_MASK_VSX_TIMODE,		false, true  },
-  { "s2pp",			OPTION_MASK_S2PP,		false, true  },//s2pp-mark
+  { "s2pp",			OPTION_MASK_S2PP,		false, false  },//s2pp-mark
 #ifdef OPTION_MASK_64BIT
 #if TARGET_AIX_OS
   { "aix64",			OPTION_MASK_64BIT,		false, false },
