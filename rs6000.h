@@ -163,15 +163,15 @@
 %{mcpu=e500mc64: -me500mc64} \
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
-%{mcpu=ppu: -mpower7 -ms2pp} \
+%{mcpu=nux: -mpower7} \
 %{maltivec: -maltivec} \
-%{ms2pp: -ms2pp %{!msoft-float: -msoft-float}} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
 -many"
 /*p_o_i*/
 #define CPP_DEFAULT_SPEC ""
 
+//%{ms2pp: -ms2pp %{!msoft-float: -msoft-float}} 
 #define ASM_DEFAULT_SPEC ""
 
 /* This macro defines names of additional specifications to put in the specs

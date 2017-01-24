@@ -139,6 +139,9 @@ do {									\
       rs6000_sdata_name = "none";					\
     }									\
 									\
+  if (TARGET_S2PP && rs6000_sdata != SDATA_NONE)					\
+      rs6000_sdata = SDATA_NONE;					\
+									\
   if (TARGET_RELOCATABLE &&						\
       (rs6000_sdata == SDATA_EABI || rs6000_sdata == SDATA_SYSV))	\
     {									\

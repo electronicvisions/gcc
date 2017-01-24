@@ -364,6 +364,12 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
  
   if ((flags & OPTION_MASK_S2PP) != 0)
     rs6000_define_or_undefine_macro (define_p, "__S2PP__"); //s2pp-mark
+  if ((flags & OPTION_MASK_STRICT_ALIGN) != 0)
+    rs6000_define_or_undefine_macro (define_p, "_STRICT_ALIGN"); //s2pp-mark
+  if ((flags & OPTION_MASK_RELOCATABLE) != 0)
+    rs6000_define_or_undefine_macro (define_p, "_RELOCATABLE"); //s2pp-mark
+  if (rs6000_sdata != SDATA_NONE)
+    rs6000_define_or_undefine_macro (define_p, "_SDATA"); //s2pp-mark
 
   /* options from the builtin masks.  */
   if ((bu_mask & RS6000_BTM_SPE) != 0)

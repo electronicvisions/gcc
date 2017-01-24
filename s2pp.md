@@ -117,6 +117,12 @@
   "sync"
   [(set_attr "type" "sync")])
 
+(define_insn "internal_sync"
+  [(unspec [(const_int 0)] UNSPEC_FXVSYNC)]
+  "TARGET_S2PP"
+  "sync"
+  [(set_attr "type" "sync")])
+
 (define_insn "*s2pp_mov<mode>"
   [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv,kv")
 	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,j,W"))]
@@ -151,7 +157,6 @@
   "VECTOR_MEM_S2PP_P (<MODE>mode)
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
-  ;;"TARGET_S2PP && reload_completed"
   [(parallel
     [(set (match_operand:FXVI 0 "s2pp_register_operand" "=kv")
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
@@ -164,7 +169,6 @@
   "VECTOR_MEM_S2PP_P (<MODE>mode)
    && (register_operand (operands[0], <MODE>mode) 
        || register_operand (operands[1], <MODE>mode))"
-  ;;"TARGET_S2PP && reload_completed"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "")
 	  (match_operand:FXVI 1 "s2pp_register_operand" ""))
@@ -186,27 +190,31 @@
   }")
 
 ;;store
-(define_insn "s2pp_fxvstax<fxvstax_char><mode>"
+(define_insn_and_split "s2pp_fxvstax<fxvstax_char><mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "kv"))
     (unspec [(const_int 0)] FXVSTAX)])]
   "TARGET_S2PP"
   "#"
-  [(set_attr "type" "vecstore")])
-
-(define_split
-  [(parallel
-    [(set (match_operand:FXVI 0 "memory_operand" "")
-	  (match_operand:FXVI 1 "s2pp_register_operand" ""))
-    (unspec [(const_int 0)] FXVSTAX)])]
-  "TARGET_S2PP && reload_completed"
+  "reload_completed"
   [(set (match_operand:FXVI 0 "memory_operand" "")
 	(unspec:FXVI [(match_operand:FXVI 1 "s2pp_register_operand" "")] FXVSTAX))
    (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  "")
+  ""
+  [(set_attr "type" "vecstore")])
 
-;;load
+;;(define_split
+;;  [(parallel
+;;    [(set (match_operand:FXVI 0 "memory_operand" "")
+;;	  (match_operand:FXVI 1 "s2pp_register_operand" ""))
+;;    (unspec [(const_int 0)] FXVSTAX)])]
+;;  "TARGET_S2PP && reload_completed"
+;;  [(set (match_operand:FXVI 0 "memory_operand" "")
+;;	(unspec:FXVI [(match_operand:FXVI 1 "s2pp_register_operand" "")] FXVSTAX))
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+;;  "")
+
 (define_insn "*s2pp_fxvstax_<fxvstax_int>_<mode>_direct"
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVSTAX))]
@@ -214,25 +222,31 @@
   "fxvstax %1,%y0,<fxvstax_int>"
   [(set_attr "type" "vecstore")])
 
-(define_insn "s2pp_fxvlax<fxvlax_char><mode>"
+;;load
+(define_insn_and_split "s2pp_fxvlax<fxvlax_char><mode>"
 [(parallel
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] FXVLAX)])]
   "TARGET_S2PP"
   "#"
-  [(set_attr "type" "vecload")])
-
-(define_split
-  [(parallel
-    [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
-	  (match_operand:FXVI 1 "memory_operand" ""))
-     (unspec [(const_int 0)] FXVLAX)])]
-  "TARGET_S2PP && reload_completed"
+  "reload_completed"
   [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
 	(unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVLAX))
    (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  "")
+  ""
+  [(set_attr "type" "vecload")])
+
+;;(define_split
+;;  [(parallel
+;;    [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+;;	  (match_operand:FXVI 1 "memory_operand" ""))
+;;     (unspec [(const_int 0)] FXVLAX)])]
+;;  "TARGET_S2PP && reload_completed"
+;;  [(set (match_operand:FXVI 0 "s2pp_register_operand" "")
+;;	(unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVLAX))
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+;;  "")
 
 (define_insn "*s2pp_fxvlax_<fxvlax_int>_<mode>_direct"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -250,25 +264,30 @@
   [(set_attr "type" "vecload")])
 
 ;;synram
-(define_insn "s2pp_fxvoutx<fxvoutx_char><mode>"
+(define_insn_and_split "s2pp_fxvoutx<fxvoutx_char><mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	  (match_operand:FXVI 1 "register_operand" "kv"))
     (unspec [(const_int 0)] FXVOUTX)])]
   "TARGET_S2PP"
   "#"
-  [(set_attr "type" "vecstore")])
-
-(define_split
-  [(parallel
-    [(set (match_operand:FXVI 0 "memory_operand" "")
-	  (match_operand:FXVI 1 "register_operand" ""))
-    (unspec [(const_int 0)] FXVOUTX)])]
-  "TARGET_S2PP && reload_completed"
+  "reload_completed"
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
 	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))
    (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  "")
+  ""
+  [(set_attr "type" "vecstore")])
+
+;;(define_split
+;;  [(parallel
+;;    [(set (match_operand:FXVI 0 "memory_operand" "")
+;;	  (match_operand:FXVI 1 "register_operand" ""))
+;;    (unspec [(const_int 0)] FXVOUTX)])]
+;;  "TARGET_S2PP && reload_completed"
+;;  [(set (match_operand:FXVI 0 "memory_operand" "=Z")
+;;	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")] FXVOUTX))
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+;;  "")
 
 (define_insn "*s2pp_fxvoutx_<fxvoutx_int>_<mode>_direct"
   [(set (match_operand:FXVI 0 "memory_operand" "=Z")
@@ -277,25 +296,30 @@
   "fxvoutx %1,%y0,<fxvoutx_int>"
   [(set_attr "type" "vecstore")])
 
-(define_insn "s2pp_fxvinx<fxvinx_char><mode>"
+(define_insn_and_split "s2pp_fxvinx<fxvinx_char><mode>"
   [(parallel
     [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	  (match_operand:FXVI 1 "memory_operand" "Z"))
      (unspec [(const_int 0)] FXVINX)])]
   "TARGET_S2PP"
   "#"
-  [(set_attr "type" "vecload")])
-
-(define_split
-  [(parallel
-    [(set (match_operand:FXVI 0 "register_operand" "")
-	  (match_operand:FXVI 1 "memory_operand" ""))
-     (unspec [(const_int 0)] FXVINX)])]
-  "TARGET_S2PP && reload_completed"
+  "reload_completed"
   [(set (match_operand:FXVI 0 "register_operand" "")
         (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))
    (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
-  "")
+  ""
+  [(set_attr "type" "vecload")])
+
+;;(define_split
+;;  [(parallel
+;;    [(set (match_operand:FXVI 0 "register_operand" "")
+;;	  (match_operand:FXVI 1 "memory_operand" ""))
+;;     (unspec [(const_int 0)] FXVINX)])]
+;;  "TARGET_S2PP && reload_completed"
+;;  [(set (match_operand:FXVI 0 "register_operand" "")
+;;        (unspec:FXVI [(match_operand:FXVI 1 "memory_operand" "")] FXVINX))
+;;   (unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
+;;  "")
 
 (define_insn "s2pp_fxvinx_<fxvinx_int>_<mode>"
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
@@ -610,6 +634,7 @@
   "fxvaddac<FXVI_char>fs %0,%1,%2"
   [(set_attr "type" "vecsimple")])
 
+;;TODO: use define_and_split
 ;; pack
 (define_expand "s2pp_fxvpckbu"
   [(set (match_operand:V16QI 0 "register_operand" "=kv")

@@ -1006,7 +1006,7 @@ struct processor_costs ppca2_cost = {
 
 /* Instruction costs on s2pp processors = power7_costs.  */
 static const
-struct processor_costs s2pp_cost = {
+struct processor_costs ppu_cost = {
   COSTS_N_INSNS (2),	/* mulsi */
   COSTS_N_INSNS (2),	/* mulsi_const */
   COSTS_N_INSNS (2),	/* mulsi_const9 */
@@ -4054,6 +4054,10 @@ rs6000_option_override_internal (bool global_init_p)
 
       case PROCESSOR_PPCA2:
 	rs6000_cost = &ppca2_cost;
+	break;
+
+      case PROCESSOR_PPU:
+	rs6000_cost = &ppu_cost;
 	break;
 
       default:
@@ -28598,6 +28602,7 @@ rs6000_issue_rate (void)
   case CPU_POWER5:
   case CPU_POWER6:
   case CPU_POWER7:
+  //case CPU_PPU:
     return 5;
   case CPU_POWER8:
     return 7;
@@ -33242,7 +33247,7 @@ static struct rs6000_opt_mask const rs6000_opt_masks[] =
   { "upper-regs-sf",		OPTION_MASK_UPPER_REGS_SF,	false, false },
   { "vsx",			OPTION_MASK_VSX,		false, true  },
   { "vsx-timode",		OPTION_MASK_VSX_TIMODE,		false, true  },
-  { "s2pp",			OPTION_MASK_S2PP,		false, true  },//s2pp-mark
+  { "s2pp",			OPTION_MASK_S2PP,		false, false  },//s2pp-mark
 #ifdef OPTION_MASK_64BIT
 #if TARGET_AIX_OS
   { "aix64",			OPTION_MASK_64BIT,		false, false },
