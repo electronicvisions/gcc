@@ -1,0 +1,7 @@
+[gerrit]
+host=brainscales-r.kip.uni-heidelberg.de
+port=29418
+project=gcc
+defaultbranch=gcc-4_9-branch-nux
+defaultremote=review
+defaultrebase=0
