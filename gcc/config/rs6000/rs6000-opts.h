@@ -26,7 +26,7 @@
 
 #ifndef RS6000_OPTS_H
 #define RS6000_OPTS_H
-
+/*p_o_i*/
 /* Processor type.  Order must match cpu attribute in MD file.  */
 enum processor_type
  {
@@ -65,7 +65,9 @@ enum processor_type
    PROCESSOR_MPCCORE,
    PROCESSOR_CELL,
    PROCESSOR_PPCA2,
-   PROCESSOR_TITAN
+   PROCESSOR_TITAN,
+
+   PROCESSOR_PPU
 };
 
 
@@ -141,7 +143,7 @@ enum rs6000_cmodel {
 
 /* Describe which vector unit to use for a given machine mode.  The
    VECTOR_MEM_* and VECTOR_UNIT_* macros assume that Altivec, VSX, and
-   P8_VECTOR are contiguous.  */
+   P8_VECTOR are contiguous.  *//*p_o_i*/
 enum rs6000_vector {
   VECTOR_NONE,			/* Type is not  a vector or not supported */
   VECTOR_ALTIVEC,		/* Use altivec for vector processing */
@@ -149,6 +151,7 @@ enum rs6000_vector {
   VECTOR_P8_VECTOR,		/* Use ISA 2.07 VSX for vector processing */
   VECTOR_PAIRED,		/* Use paired floating point for vectors */
   VECTOR_SPE,			/* Use SPE for vector processing */
+  VECTOR_S2PP,			/* Use s2pp for vector processing */ //s2pp-mark
   VECTOR_OTHER			/* Some other vector unit */
 };
 

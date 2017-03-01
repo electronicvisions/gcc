@@ -375,7 +375,7 @@ static const struct asm_name asm_names[] = {
   { "cell",	"-mcell" },
   { "power3",	"-mppc64" },
   { "power4",	"-mpower4" },
-  { "power5",	"%(asm_cpu_power5)" },
+  { "power5",	"%(asm_cpusm_cpu_power5)" },
   { "power5+",	"%(asm_cpu_power5)" },
   { "power6",	"%(asm_cpu_power6) -maltivec" },
   { "power6x",	"%(asm_cpu_power6) -maltivec" },
@@ -418,9 +418,10 @@ static const struct asm_name asm_names[] = {
   { "e300c2",	"-me300" },
   { "e300c3",	"-me300" },
   { "e500mc",	"-me500mc" },
+  { "nux",	"-mpower7" },//s2pp-mark
   { NULL,	"\
 %{mpowerpc64*: -mppc64} \
-%{!mpowerpc64*: %(asm_default)}" },
+%{!mpowerpc64*: %(asm_default)}" }
 #endif
 };
 
