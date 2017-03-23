@@ -18,6 +18,7 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
+
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
@@ -24502,7 +24503,7 @@ rs6000_emit_prologue (void)
 #define NOT_INUSE(R) do {} while (0)
 #endif
 
-  fprintf (stderr, "prologue begins\n");
+
 
   if (DEFAULT_ABI == ABI_ELFv2)
     {
@@ -24767,8 +24768,7 @@ rs6000_emit_prologue (void)
   /* Do any required saving of fpr's.  If only one or two to save, do
      it ourselves.  Otherwise, call function.  */
   if (!WORLD_SAVE_P (info) && (strategy & SAVE_INLINE_FPRS))
-    {
-      fprintf (stderr, "save fprs with emit frame save\n");
+	{
       int i;
       if (!TARGET_S2PP){
         for (i = 0; i < 64 - info->first_fp_reg_save; i++)
