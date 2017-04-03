@@ -664,7 +664,7 @@
 		(match_dup 4))
 	 (match_operand:VEC_L 2 "vlogical_operand" "")
 	 (match_operand:VEC_L 1 "vlogical_operand" "")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "operands[4] = CONST0_RTX (<MODE>mode);")
 
 (define_expand "vector_select_<mode>_uns"
@@ -674,7 +674,7 @@
 		   (match_dup 4))
 	 (match_operand:VEC_L 2 "vlogical_operand" "")
 	 (match_operand:VEC_L 1 "vlogical_operand" "")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
   "operands[4] = CONST0_RTX (<MODE>mode);")
 
 ;; Expansions that compare vectors producing a vector result and a predicate,

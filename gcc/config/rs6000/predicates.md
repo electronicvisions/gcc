@@ -165,6 +165,11 @@
   (and (match_code "reg")
        (match_test "CA_REGNO_P (REGNO (op))")))
 
+;; Return 1 if op is an unsigned 2-bit constant integer.
+(define_predicate "u2bit_cint_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) >= 0 && INTVAL (op) <= 3")))
+
 ;; Return 1 if op is a signed 5-bit constant integer.
 (define_predicate "s5bit_cint_operand"
   (and (match_code "const_int")

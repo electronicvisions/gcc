@@ -128,6 +128,14 @@ do {									\
       else								\
 	error ("bad value for -msdata=%s", rs6000_sdata_name);		\
     }									\
+  else if (OPTION_MASK_S2PP \
+           && OPTION_MASK_SOFT_FLOAT \
+           && !TARGET_RELOCATABLE \
+           && OPTION_MASK_STRICT_ALIGN)					\
+    {									\
+      rs6000_sdata = SDATA_NONE;					\
+      rs6000_sdata_name = "none";					\
+    }									\
   else if (DEFAULT_ABI == ABI_V4)					\
     {									\
       rs6000_sdata = SDATA_DATA;					\
@@ -138,9 +146,6 @@ do {									\
       rs6000_sdata = SDATA_NONE;					\
       rs6000_sdata_name = "none";					\
     }									\
-									\
-  if (TARGET_S2PP && rs6000_sdata != SDATA_NONE)					\
-      rs6000_sdata = SDATA_NONE;					\
 									\
   if (TARGET_RELOCATABLE &&						\
       (rs6000_sdata == SDATA_EABI || rs6000_sdata == SDATA_SYSV))	\

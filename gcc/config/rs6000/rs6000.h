@@ -164,7 +164,7 @@
 %{mcpu=e500mc64: -me500mc64} \
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
-%{mcpu=nux: -mpower7} \
+%{mcpu=nux: -mnux} \
 %{maltivec: -maltivec} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
@@ -397,7 +397,6 @@ extern const char *host_detect_local_cpu (int argc, const char **argv);
 				 | MASK_DEBUG_COST \
 				 | MASK_DEBUG_TARGET \
 				 | MASK_DEBUG_BUILTIN)
-//#define rs6000_debug 0x6f
 
 #define	TARGET_DEBUG_STACK	(rs6000_debug & MASK_DEBUG_STACK)
 #define	TARGET_DEBUG_ARG	(rs6000_debug & MASK_DEBUG_ARG)
@@ -707,10 +706,8 @@ extern unsigned char rs6000_recip_bits[];
 #define REGISTER_TARGET_PRAGMAS() do {				\
   c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
   targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
-  if(OPTION_MASK_S2PP) \
-    targetm.resolve_overloaded_builtin = s2pp_resolve_overloaded_builtin; \
-  else \
-    targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
+  targetm.resolve_overloaded_builtin = (TARGET_S2PP ?\
+     s2pp_resolve_overloaded_builtin : altivec_resolve_overloaded_builtin); \
   rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
 } while (0)
 
@@ -783,7 +780,7 @@ extern unsigned char rs6000_recip_bits[];
 #endif
 #define UNITS_PER_FP_WORD 8
 #define UNITS_PER_ALTIVEC_WORD 16
-#define UNITS_PER_S2PP_WORD 16 /*p_o_i*/ 
+#define UNITS_PER_S2PP_WORD 16 
 #define UNITS_PER_VSX_WORD 16
 #define UNITS_PER_SPE_WORD 8
 #define UNITS_PER_PAIRED_WORD 8
@@ -1448,10 +1445,10 @@ enum reg_class
   { 0xffffffff, 0x00000000, 0x00000008, 0x00020000, 0x00000000 },	\
   /* S2PP_REGS.  */							\
   { 0x00000000, 0xfffffffe, 0x00000000, 0x00000000, 0x00000000 },	\
+  /* S2PP_C_REG.  */							\
+  { 0x00000000, 0x00000001, 0x00000000, 0x00000000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
-  /* S2PP_C_REG.  */							\
-  { 0x00000000, 0x00000000, 0x00000010, 0x00000000, 0x00000000 },	\
   /* S2PP_ACC_REG.  */							\
   { 0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
@@ -1758,14 +1755,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define ALTIVEC_ARG_NUM_REG (ALTIVEC_ARG_MAX_REG - ALTIVEC_ARG_MIN_REG + 1)
 
 /* Minimum and maximum s2pp registers used to hold arguments.  */
-//#define S2PP_REGS FLOAT_REGS
-//#define FIRST_S2PP_REGNO FIRST_FPR_REGNO + 1
-//#define LAST_S2PP_REGNO LAST_FPR_REGNO
 #define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
 #define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
 #define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
-//#define S2PP_COND_REGNO LAST_S2PP_REGNO + 1
-//#define S2PP_ACC_REGNO S2PP_COND_REGNO + 1
 
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
@@ -1916,7 +1908,6 @@ typedef struct rs6000_args
        && TARGET_AIX						\
        && (REGNO) == 2))
 
-   //|| (TARGET_S2PP && (REGNO) == VRSAVE_REGNO)			
 			       
 
 /* Length in units of the trampoline for entering a nested function.  */
