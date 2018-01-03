@@ -7172,7 +7172,7 @@ vrp_evaluate_conditional (enum tree_code code, tree op0, tree op1, gimple stmt)
       tree type = TREE_TYPE (op0);
       value_range_t *vr0 = get_value_range (op0);
 
-      if (vr0->type != VR_VARYING
+      if (vr0->type == VR_RANGE
 	  && INTEGRAL_TYPE_P (type)
 	  && vrp_val_is_min (vr0->min)
 	  && vrp_val_is_max (vr0->max)
@@ -9021,7 +9021,8 @@ simplify_cond_using_ranges (gimple stmt)
       innerop = gimple_assign_rhs1 (def_stmt);
 
       if (TREE_CODE (innerop) == SSA_NAME
-	  && !POINTER_TYPE_P (TREE_TYPE (innerop)))
+	  && !POINTER_TYPE_P (TREE_TYPE (innerop))
+	  && !SSA_NAME_OCCURS_IN_ABNORMAL_PHI (innerop))
 	{
 	  value_range_t *vr = get_value_range (innerop);
 
@@ -9051,8 +9052,8 @@ simplify_cond_using_ranges (gimple stmt)
 		  else
 		    location = gimple_location (stmt);
 		  warning_at (location, OPT_Wstrict_overflow,
-		      "assuming signed overflow does not occur when "
-		      "simplifying conditional");
+			      "assuming signed overflow does not occur when "
+			      "simplifying conditional");
 		}
 
 	      tree newconst = fold_convert (TREE_TYPE (innerop), op1);
@@ -9377,8 +9378,10 @@ simplify_internal_call_using_ranges (gimple_stmt_iterator *gsi, gimple stmt)
     }
   else
     {
-      tree r1 = int_const_binop (subcode, vr0.min, vr1.min);
-      tree r2 = int_const_binop (subcode, vr0.max, vr1.max);
+      tree r1 = int_const_binop (subcode, vr0.min,
+				 subcode == MINUS_EXPR ? vr1.max : vr1.min);
+      tree r2 = int_const_binop (subcode, vr0.max,
+				 subcode == MINUS_EXPR ? vr1.min : vr1.max);
       if (r1 == NULL_TREE || TREE_OVERFLOW (r1)
 	  || r2 == NULL_TREE || TREE_OVERFLOW (r2))
 	return false;
@@ -9728,7 +9731,7 @@ vrp_finalize (void)
   substitute_and_fold (op_with_constant_singleton_value_range,
 		       vrp_fold_stmt, false);
 
-  if (warn_array_bounds)
+  if (warn_array_bounds && first_pass_instance)
     check_all_array_refs ();
 
   /* We must identify jump threading opportunities before we release

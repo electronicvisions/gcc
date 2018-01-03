@@ -3483,7 +3483,8 @@ gfc_trans_scalarized_loop_end (gfc_loopinfo * loop, int n,
   tree init;
   tree incr;
 
-  if ((ompws_flags & (OMPWS_WORKSHARE_FLAG | OMPWS_SCALARIZER_WS))
+  if ((ompws_flags & (OMPWS_WORKSHARE_FLAG | OMPWS_SCALARIZER_WS
+		      | OMPWS_SCALARIZER_BODY))
       == (OMPWS_WORKSHARE_FLAG | OMPWS_SCALARIZER_WS)
       && n == loop->dimen - 1)
     {
@@ -4350,6 +4351,13 @@ gfc_conv_resolve_dependencies (gfc_loopinfo * loop, gfc_ss * dest,
 	      && ss_expr->rank)
 	    nDepend = gfc_check_dependency (dest_expr, ss_expr, true);
 
+	  /* Check for cases like   c(:)(1:2) = c(2)(2:3)  */
+	  if (!nDepend && dest_expr->rank > 0
+	      && dest_expr->ts.type == BT_CHARACTER
+	      && ss_expr->expr_type == EXPR_VARIABLE)
+	    
+	    nDepend = gfc_check_dependency (dest_expr, ss_expr, false);
+
 	  continue;
 	}
 
@@ -4969,6 +4977,8 @@ gfc_array_init_size (tree descriptor, int rank, int corank, tree * poffset,
       gcc_assert (ubound);
       gfc_conv_expr_type (&se, ubound, gfc_array_index_type);
       gfc_add_block_to_block (pblock, &se.pre);
+      if (ubound->expr_type == EXPR_FUNCTION)
+	se.expr = gfc_evaluate_now (se.expr, pblock);
 
       gfc_conv_descriptor_ubound_set (descriptor_block, descriptor,
 				      gfc_rank_cst[n], se.expr);
@@ -8918,7 +8928,11 @@ gfc_get_proc_ifc_for_expr (gfc_expr *procedure_ref)
     return NULL;
 
   /* Normal procedure case.  */
-  sym = procedure_ref->symtree->n.sym;
+  if (procedure_ref->expr_type == EXPR_FUNCTION
+      && procedure_ref->value.function.esym)
+    sym = procedure_ref->value.function.esym;
+  else
+    sym = procedure_ref->symtree->n.sym;
 
   /* Typebound procedure case.  */
   for (ref = procedure_ref->ref; ref; ref = ref->next)

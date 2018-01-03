@@ -10203,7 +10203,7 @@ sync_resolve_size (tree function, vec<tree, va_gc> *params)
   tree type;
   int size;
 
-  if (!params)
+  if (vec_safe_is_empty (params))
     {
       error ("too few arguments to function %qE", function);
       return 0;
@@ -10402,7 +10402,8 @@ get_atomic_generic_size (location_t loc, tree function,
 		    function);
 	  return 0;
 	}
-      size = tree_to_uhwi (TYPE_SIZE_UNIT (TREE_TYPE (type)));
+      tree type_size = TYPE_SIZE_UNIT (TREE_TYPE (type));
+      size = type_size ? tree_to_uhwi (type_size) : 0;
       if (size != size_0)
 	{
 	  error_at (loc, "size mismatch in argument %d of %qE", x + 1,

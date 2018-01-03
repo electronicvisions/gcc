@@ -663,6 +663,9 @@ split_constant_offset_1 (tree type, tree op0, enum tree_code code, tree op1,
 
     case SSA_NAME:
       {
+	if (SSA_NAME_OCCURS_IN_ABNORMAL_PHI (op0))
+	  return false;
+
 	gimple def_stmt = SSA_NAME_DEF_STMT (op0);
 	enum tree_code subcode;
 
@@ -970,6 +973,24 @@ dr_analyze_indices (struct data_reference *dr, loop_p nest, loop_p loop)
 				fold_convert (ssizetype, memoff));
 	      memoff = build_int_cst (TREE_TYPE (memoff), 0);
 	    }
+	  /* Adjust the offset so it is a multiple of the access type
+	     size and thus we separate bases that can possibly be used
+	     to produce partial overlaps (which the access_fn machinery
+	     cannot handle).  */
+	  double_int rem;
+	  if (TYPE_SIZE_UNIT (TREE_TYPE (ref))
+	      && TREE_CODE (TYPE_SIZE_UNIT (TREE_TYPE (ref))) == INTEGER_CST
+	      && !integer_zerop (TYPE_SIZE_UNIT (TREE_TYPE (ref))))
+	    rem = tree_to_double_int (off).mod
+		(tree_to_double_int (TYPE_SIZE_UNIT (TREE_TYPE (ref))), false,
+		 TRUNC_MOD_EXPR);
+	  else
+	    /* If we can't compute the remainder simply force the initial
+	       condition to zero.  */
+	    rem = tree_to_double_int (off);
+	  off = double_int_to_tree (ssizetype, tree_to_double_int (off) - rem);
+	  memoff = double_int_to_tree (TREE_TYPE (memoff), rem);
+	  /* And finally replace the initial condition.  */
 	  access_fn = chrec_replace_initial_condition
 	      (access_fn, fold_convert (orig_type, off));
 	  /* ???  This is still not a suitable base object for
@@ -982,6 +1003,7 @@ dr_analyze_indices (struct data_reference *dr, loop_p nest, loop_p loop)
 	  ref = fold_build2_loc (EXPR_LOCATION (ref),
 				 MEM_REF, TREE_TYPE (ref),
 				 base, memoff);
+	  DR_UNCONSTRAINED_BASE (dr) = true;
 	  access_fns.safe_push (access_fn);
 	}
     }
@@ -1393,7 +1415,8 @@ dr_may_alias_p (const struct data_reference *a, const struct data_reference *b,
      offset/overlap based analysis but have to rely on points-to
      information only.  */
   if (TREE_CODE (addr_a) == MEM_REF
-      && TREE_CODE (TREE_OPERAND (addr_a, 0)) == SSA_NAME)
+      && (DR_UNCONSTRAINED_BASE (a)
+	  || TREE_CODE (TREE_OPERAND (addr_a, 0)) == SSA_NAME))
     {
       /* For true dependences we can apply TBAA.  */
       if (flag_strict_aliasing
@@ -1409,7 +1432,8 @@ dr_may_alias_p (const struct data_reference *a, const struct data_reference *b,
 				       build_fold_addr_expr (addr_b));
     }
   else if (TREE_CODE (addr_b) == MEM_REF
-	   && TREE_CODE (TREE_OPERAND (addr_b, 0)) == SSA_NAME)
+	   && (DR_UNCONSTRAINED_BASE (b)
+	       || TREE_CODE (TREE_OPERAND (addr_b, 0)) == SSA_NAME))
     {
       /* For true dependences we can apply TBAA.  */
       if (flag_strict_aliasing
@@ -1471,13 +1495,14 @@ initialize_data_dependence_relation (struct data_reference *a,
   /* The case where the references are exactly the same.  */
   if (operand_equal_p (DR_REF (a), DR_REF (b), 0))
     {
-     if (loop_nest.exists ()
-        && !object_address_invariant_in_loop_p (loop_nest[0],
-       					        DR_BASE_OBJECT (a)))
-      {
-        DDR_ARE_DEPENDENT (res) = chrec_dont_know;
-        return res;
-      }
+      if ((loop_nest.exists ()
+	   && !object_address_invariant_in_loop_p (loop_nest[0],
+						   DR_BASE_OBJECT (a)))
+	  || DR_NUM_DIMENSIONS (a) == 0)
+	{
+	  DDR_ARE_DEPENDENT (res) = chrec_dont_know;
+	  return res;
+	}
       DDR_AFFINE_P (res) = true;
       DDR_ARE_DEPENDENT (res) = NULL_TREE;
       DDR_SUBSCRIPTS (res).create (DR_NUM_DIMENSIONS (a));
@@ -1509,9 +1534,9 @@ initialize_data_dependence_relation (struct data_reference *a,
   /* If the base of the object is not invariant in the loop nest, we cannot
      analyze it.  TODO -- in fact, it would suffice to record that there may
      be arbitrary dependences in the loops where the base object varies.  */
-  if (loop_nest.exists ()
-      && !object_address_invariant_in_loop_p (loop_nest[0],
-     					      DR_BASE_OBJECT (a)))
+  if ((loop_nest.exists ()
+       && !object_address_invariant_in_loop_p (loop_nest[0], DR_BASE_OBJECT (a)))
+      || DR_NUM_DIMENSIONS (a) == 0)
     {
       DDR_ARE_DEPENDENT (res) = chrec_dont_know;
       return res;

@@ -75,6 +75,7 @@ enum processor_subtypes
   AMDFAM15H_BDVER4,
   INTEL_COREI7_IVYBRIDGE,
   INTEL_COREI7_HASWELL,
+  INTEL_COREI7_BROADWELL,
   CPU_SUBTYPE_MAX
 };
 
@@ -152,6 +153,9 @@ get_amd_cpu (unsigned int family, unsigned int model)
       /* Bulldozer version 3 "Steamroller"  */
       if (model >= 0x30 && model <= 0x4f)
 	__cpu_model.__cpu_subtype = AMDFAM15H_BDVER3;
+      /* Bulldozer version 4 "Excavator"   */
+      if (model >= 0x60 && model <= 0x7f)
+	__cpu_model.__cpu_subtype = AMDFAM15H_BDVER4;
       break;
     /* AMD Family 16h "btver2" */
     case 0x16:
@@ -184,7 +188,10 @@ get_intel_cpu (unsigned int family, unsigned int model, unsigned int brand_id)
 	      __cpu_model.__cpu_type = INTEL_BONNELL;
 	      break;
 	    case 0x37:
+	    case 0x4a:
 	    case 0x4d:
+	    case 0x5a:
+	    case 0x5d:
 	      /* Silvermont.  */
 	      __cpu_model.__cpu_type = INTEL_SILVERMONT;
 	      break;
@@ -216,11 +223,19 @@ get_intel_cpu (unsigned int family, unsigned int model, unsigned int brand_id)
 	      __cpu_model.__cpu_subtype = INTEL_COREI7_IVYBRIDGE;
 	      break;
 	    case 0x3c:
+	    case 0x3f:
 	    case 0x45:
 	    case 0x46:
 	      /* Haswell.  */
 	      __cpu_model.__cpu_type = INTEL_COREI7;
 	      __cpu_model.__cpu_subtype = INTEL_COREI7_HASWELL;
+	      break;
+	    case 0x3d:
+	    case 0x4f:
+	    case 0x56:
+	      /* Broadwell.  */
+	      __cpu_model.__cpu_type = INTEL_COREI7;
+	      __cpu_model.__cpu_subtype = INTEL_COREI7_BROADWELL;
 	      break;
 	    case 0x17:
 	    case 0x1d:
@@ -385,7 +400,7 @@ __cpu_indicator_init (void)
       if (family == 0x0f)
 	{
 	  family += extended_family;
-	  model += (extended_model << 4);
+	  model += extended_model;
 	}
 
       /* Get CPU type.  */

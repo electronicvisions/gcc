@@ -24,6 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 
 #ifdef HAVE_cloog
+#include <isl/constraint.h>
 #include <isl/aff.h>
 #include <isl/set.h>
 #include <isl/map.h>
@@ -31,6 +32,12 @@ along with GCC; see the file COPYING3.  If not see
 #include <isl/ilp.h>
 #include <cloog/cloog.h>
 #include <cloog/isl/domain.h>
+#ifdef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE
+#include <isl/deprecated/int.h>
+#include <isl/deprecated/aff_int.h>
+#include <isl/deprecated/ilp_int.h>
+#include <isl/deprecated/constraint_int.h>
+#endif
 #endif
 
 #include "system.h"

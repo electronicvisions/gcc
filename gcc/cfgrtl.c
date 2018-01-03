@@ -1761,6 +1761,22 @@ rtl_tidy_fallthru_edge (edge e)
       && (any_uncondjump_p (q)
 	  || single_succ_p (b)))
     {
+      rtx label, table;
+
+      if (tablejump_p (q, &label, &table))
+	{
+	  /* The label is likely mentioned in some instruction before
+	     the tablejump and might not be DCEd, so turn it into
+	     a note instead and move before the tablejump that is going to
+	     be deleted.  */
+	  const char *name = LABEL_NAME (label);
+	  PUT_CODE (label, NOTE);
+	  NOTE_KIND (label) = NOTE_INSN_DELETED_LABEL;
+	  NOTE_DELETED_LABEL_NAME (label) = name;
+	  reorder_insns (label, label, PREV_INSN (q));
+	  delete_insn (table);
+	}
+
 #ifdef HAVE_cc0
       /* If this was a conditional jump, we need to also delete
 	 the insn that set cc0.  */
@@ -4223,14 +4239,14 @@ cfg_layout_initialize (unsigned int flags)
   rtx x;
   basic_block bb;
 
-  /* Once bb reordering is complete, cfg layout mode should not be re-entered.
-     Entering cfg layout mode will perform optimizations on the cfg that
-     could affect the bb layout negatively or even require fixups. An
-     example of the latter is if edge forwarding performed when optimizing
-     the cfg layout required moving a block from the hot to the cold section
-     under -freorder-blocks-and-partition. This would create an illegal
-     partitioning unless some manual fixup was performed.  */
-  gcc_assert (!crtl->bb_reorder_complete);
+  /* Once bb partitioning is complete, cfg layout mode should not be
+     re-entered.  Entering cfg layout mode may require fixups.  As an
+     example, if edge forwarding performed when optimizing the cfg
+     layout required moving a block from the hot to the cold
+     section. This would create an illegal partitioning unless some
+     manual fixup was performed.  */
+  gcc_assert (!(crtl->bb_reorder_complete
+		&& flag_reorder_blocks_and_partition));
 
   initialize_original_copy_tables ();
 
