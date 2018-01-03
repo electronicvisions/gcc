@@ -24961,8 +24961,8 @@ rs6000_emit_prologue (void)
 	    
 	    emit_insn (gen_sync());
 
-  	    rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
-			    		GEN_INT(offset), NULL_RTX);
+	    rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
+				    GEN_INT(offset));
 	  }
       }
     }
