@@ -191,3 +191,6 @@ Enum(rs6000_cpu_opt_value) String(powerpc64le) Value(53)
 EnumValue
 Enum(rs6000_cpu_opt_value) String(rs64) Value(54)
 
+EnumValue
+Enum(rs6000_cpu_opt_value) String(nux) Value(55)
+

@@ -51,6 +51,16 @@
 (define_register_constraint "z" "CA_REGS"
   "@internal")
 
+;;s2pp-mark added vector register constraint
+(define_register_constraint "kv" "rs6000_constraints[RS6000_CONSTRAINT_kv]"
+  "s2pp vector register")
+
+(define_register_constraint "kc" "rs6000_constraints[RS6000_CONSTRAINT_kc]"
+  "s2pp conditional register")
+
+(define_register_constraint "ka" "rs6000_constraints[RS6000_CONSTRAINT_ka]"
+  "s2pp accumulator")
+
 ;; Use w as a prefix to add VSX modes
 ;; any VSX register
 (define_register_constraint "wa" "rs6000_constraints[RS6000_CONSTRAINT_wa]"

@@ -31,6 +31,7 @@ extern void init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, int, int, int,
 #endif /* TREE_CODE */
 
 extern bool easy_altivec_constant (rtx, enum machine_mode);
+extern bool easy_s2pp_constant (rtx, enum machine_mode);
 extern HOST_WIDE_INT const_vector_elt_as_int (rtx, unsigned int);
 extern bool macho_lo_sum_memory_operand (rtx, enum machine_mode);
 extern int num_insns_constant (rtx, enum machine_mode);
@@ -49,6 +50,7 @@ extern bool avoiding_indexed_address_p (enum machine_mode);
 extern rtx rs6000_got_register (rtx);
 extern rtx find_addr_reg (rtx);
 extern rtx gen_easy_altivec_constant (rtx);
+extern rtx gen_easy_s2pp_constant (rtx);
 extern const char *output_vec_const_move (rtx *);
 extern const char *rs6000_output_move_128bit (rtx *);
 extern bool rs6000_move_128bit_ok_p (rtx []);
@@ -58,6 +60,7 @@ extern void paired_expand_vector_init (rtx, rtx);
 extern void rs6000_expand_vector_set (rtx, rtx, int);
 extern void rs6000_expand_vector_extract (rtx, rtx, int);
 extern bool altivec_expand_vec_perm_const (rtx op[4]);
+extern bool s2pp_expand_vec_perm_const (rtx op[4]);
 extern void altivec_expand_vec_perm_le (rtx op[4]);
 extern bool rs6000_expand_vec_perm_const (rtx op[4]);
 extern void altivec_expand_lvx_be (rtx, rtx, enum machine_mode, unsigned);
@@ -149,6 +152,7 @@ extern rtx rs6000_machopic_legitimize_pic_address (rtx, enum machine_mode,
 						   rtx);
 extern rtx rs6000_address_for_fpconvert (rtx);
 extern rtx rs6000_address_for_altivec (rtx);
+extern rtx rs6000_address_for_s2pp (rtx);
 extern rtx rs6000_allocate_stack_temp (enum machine_mode, bool, bool);
 extern int rs6000_loop_align (rtx);
 extern void rs6000_split_logical (rtx [], enum rtx_code, bool, bool, bool, rtx);
@@ -162,6 +166,7 @@ extern unsigned int rs6000_special_round_type_align (tree, unsigned int,
 extern unsigned int darwin_rs6000_special_round_type_align (tree, unsigned int,
 							    unsigned int);
 extern tree altivec_resolve_overloaded_builtin (location_t, tree, void *);
+extern tree s2pp_resolve_overloaded_builtin (location_t, tree, void *);
 extern rtx rs6000_libcall_value (enum machine_mode);
 extern rtx rs6000_va_arg (tree, tree);
 extern int function_ok_for_sibcall (tree);

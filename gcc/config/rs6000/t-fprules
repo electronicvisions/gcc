@@ -16,5 +16,5 @@
 # along with GCC; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
 
-SOFT_FLOAT_CPUS = e300c2 401 403 405 440 464 476 ec603e 801 821 823 860
+SOFT_FLOAT_CPUS = e300c2 401 403 405 440 464 476 ec603e 801 821 823 860 nux
 MULTILIB_MATCHES_FLOAT = $(foreach cpu, $(SOFT_FLOAT_CPUS), msoft-float=mcpu?$(cpu))

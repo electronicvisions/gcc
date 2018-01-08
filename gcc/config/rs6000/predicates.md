@@ -47,6 +47,52 @@
   return ALTIVEC_REGNO_P (REGNO (op));
 })
 
+;; Return 1 if op is an S2PP register.
+(define_predicate "s2pp_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    op = SUBREG_REG (op);
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) >= FIRST_PSEUDO_REGISTER)
+    return 1;
+
+  return S2PP_REGNO_P (REGNO (op));
+})
+
+(define_predicate "s2pp_cond_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    op = SUBREG_REG (op);
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) >= FIRST_PSEUDO_REGISTER)
+    return 1;
+
+  return S2PP_COND_REGNO_P (REGNO (op));
+})
+
+(define_predicate "s2pp_acc_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    op = SUBREG_REG (op);
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) >= FIRST_PSEUDO_REGISTER)
+    return 1;
+
+  return S2PP_ACC_REGNO_P (REGNO (op));
+})
+
 ;; Return 1 if op is a VSX register.
 (define_predicate "vsx_register_operand"
   (match_operand 0 "register_operand")
@@ -118,6 +164,11 @@
 (define_predicate "ca_operand"
   (and (match_code "reg")
        (match_test "CA_REGNO_P (REGNO (op))")))
+
+;; Return 1 if op is an unsigned 2-bit constant integer.
+(define_predicate "u2bit_cint_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) >= 0 && INTVAL (op) <= 3")))
 
 ;; Return 1 if op is a signed 5-bit constant integer.
 (define_predicate "s5bit_cint_operand"
@@ -538,6 +589,14 @@
       return easy_altivec_constant (op, mode);
     }
 
+  if (VECTOR_MEM_S2PP_P (mode))
+    {
+      if (zero_constant (op, mode))
+	return true;
+
+      return easy_s2pp_constant (op, mode);
+    }
+
   if (SPE_VECTOR_MODE (mode))
     {
       int cst, cst2;
@@ -687,6 +746,12 @@
       && INTVAL (XEXP (op, 1)) == -16)
     op = XEXP (op, 0);
 
+  if (VECTOR_MEM_S2PP_P (mode)
+      && GET_CODE (op) == AND
+      && GET_CODE (XEXP (op, 1)) == CONST_INT
+      && INTVAL (XEXP (op, 1)) == -16)
+    op = XEXP (op, 0);
+
   return indexed_or_indirect_address (op, mode);
 })
 
@@ -712,6 +777,19 @@
 {
   op = XEXP (op, 0);
   if (VECTOR_MEM_ALTIVEC_OR_VSX_P (mode)
+      && GET_CODE (op) == AND
+      && GET_CODE (XEXP (op, 1)) == CONST_INT
+      && INTVAL (XEXP (op, 1)) == -16)
+    return indexed_or_indirect_address (XEXP (op, 0), mode);
+
+  return 0;
+})
+
+(define_predicate "s2pp_indexed_or_indirect_operand"
+  (match_code "mem")
+{
+  op = XEXP (op, 0);
+  if (VECTOR_MEM_S2PP_P (mode)
       && GET_CODE (op) == AND
       && GET_CODE (XEXP (op, 1)) == CONST_INT
       && INTVAL (XEXP (op, 1)) == -16)
