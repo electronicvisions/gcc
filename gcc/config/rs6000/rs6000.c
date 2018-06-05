@@ -1085,6 +1085,7 @@ static tree rs6000_handle_longcall_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_altivec_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_s2pp_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_struct_attribute (tree *, tree, tree, int, bool *);
+static tree rs6000_handle_fndecl_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_builtin_vectorized_libmass (tree, tree, tree);
 static rtx rs6000_emit_set_long_const (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
 static int rs6000_memory_move_cost (enum machine_mode, reg_class_t, bool);
@@ -1300,6 +1301,8 @@ static const struct attribute_spec rs6000_attribute_table[] =
   { "ms_struct", 0, 0, false, false, false, rs6000_handle_struct_attribute,
     false },
   { "gcc_struct", 0, 0, false, false, false, rs6000_handle_struct_attribute,
+    false },
+  { "naked", 0, 0, true, false, false, rs6000_handle_fndecl_attribute,
     false },
 #ifdef SUBTARGET_ATTRIBUTE_TABLE
   SUBTARGET_ATTRIBUTE_TABLE,
@@ -9311,6 +9314,13 @@ call_ABI_of_interest (tree fndecl)
   return false;
 }
 #endif
+
+static bool rs6000_function_naked(const_tree fn)
+{
+  if (fn && lookup_attribute("naked", DECL_ATTRIBUTES(fn)))
+    return true;
+  return false;
+}
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
@@ -24327,6 +24337,9 @@ rs6000_emit_prologue (void)
   HOST_WIDE_INT frame_off = 0;
   HOST_WIDE_INT sp_off = 0;
 
+  if (rs6000_function_naked(current_function_decl))
+    return;
+
 #ifdef ENABLE_CHECKING
   /* Track and check usage of r0, r11, r12.  */
   int reg_inuse = using_static_chain_p ? 1 << 11 : 0;
@@ -25626,6 +25639,9 @@ rs6000_emit_epilogue (int sibcall)
   int i;
   bool exit_func;
   unsigned ptr_regno;
+
+  if (rs6000_function_naked(current_function_decl))
+    return;
 
   info = rs6000_stack_info ();
 
@@ -30100,6 +30116,20 @@ rs6000_handle_struct_attribute (tree *node, tree name,
       *no_add_attrs = true;
     }
 
+  return NULL_TREE;
+}
+
+static tree
+rs6000_handle_fndecl_attribute (tree *node, tree name,
+				tree args ATTRIBUTE_UNUSED,
+				int flags ATTRIBUTE_UNUSED, bool *no_add_attrs)
+{
+  if (TREE_CODE (*node) != FUNCTION_DECL)
+    {
+      warning (OPT_Wattributes, "%qE attribute only applies to functions",
+               name);
+      *no_add_attrs = true;
+    }
   return NULL_TREE;
 }
 
