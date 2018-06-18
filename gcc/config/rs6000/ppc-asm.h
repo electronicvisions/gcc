@@ -238,6 +238,41 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define vs63	63
 #endif
 
+#ifdef __S2PP__
+#define k0	0
+#define k1	1
+#define k2	2
+#define k3	3
+#define k4	4
+#define k5	5
+#define k6	6
+#define k7	7
+#define k8	8
+#define k9	9
+#define k10	10
+#define k11	11
+#define k12	12
+#define k13	13
+#define k14	14
+#define k15	15
+#define k16	16
+#define k17	17
+#define k18	18
+#define k19	19
+#define k20	20
+#define k21	21
+#define k22	22
+#define k23	23
+#define k24	24
+#define k25	25
+#define k26	26
+#define k27	27
+#define k28	28
+#define k29	29
+#define k30	30
+#define k31	31
+#endif
+
 /*
  * Macros to glue together two tokens.
  */

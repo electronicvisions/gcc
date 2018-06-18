@@ -126,7 +126,15 @@ do {									\
       else								\
 	error ("bad value for %<%s=%s%>", "-msdata", rs6000_sdata_name);\
     }									\
-  else if (DEFAULT_ABI == ABI_V4)					\
+  else if (OPTION_MASK_S2PP						\
+           && OPTION_MASK_SOFT_FLOAT					\
+           && !TARGET_RELOCATABLE					\
+           && OPTION_MASK_STRICT_ALIGN)					\
+    {									\
+      rs6000_sdata = SDATA_NONE;					\
+      rs6000_sdata_name = "none";					\
+    }									\
+  else if (DEFAULT_ABI == ABI_V4)						\
     {									\
       rs6000_sdata = SDATA_DATA;					\
       rs6000_sdata_name = "data";					\
@@ -295,7 +303,7 @@ do {									\
 
 /* Real stack boundary as mandated by the appropriate ABI.  */
 #define ABI_STACK_BOUNDARY \
-  ((TARGET_EABI && !TARGET_ALTIVEC && !TARGET_ALTIVEC_ABI) ? 64 : 128)
+  ((TARGET_EABI && !TARGET_ALTIVEC && !TARGET_ALTIVEC_ABI && !TARGET_S2PP) ? 64 : 128)
 
 /* An expression for the alignment of a structure field FIELD if the
    alignment computed in the usual way is COMPUTED.  */
