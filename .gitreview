@@ -1,0 +1,7 @@
+[gerrit]
+host=gerrit.bioai.eu
+port=29418
+project=gcc
+defaultbranch=gcc-8_5-branch-nux
+defaultremote=review
+defaultrebase=0
