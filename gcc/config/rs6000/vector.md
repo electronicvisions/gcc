@@ -36,6 +36,9 @@
 ;; Vector float modes
 (define_mode_iterator VEC_F [V4SF V2DF])
 
+;; Vector float modes
+(define_mode_iterator VEC_X [V16QI V8HI])
+
 ;; Vector arithmetic modes
 (define_mode_iterator VEC_A [V16QI V8HI V4SI V2DI V4SF V2DF])
 
@@ -113,7 +116,7 @@
 (define_expand "mov<mode>"
   [(set (match_operand:VEC_M 0 "nonimmediate_operand")
 	(match_operand:VEC_M 1 "any_operand"))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   if (can_create_pseudo_p ())
     {
@@ -156,20 +159,20 @@
 (define_expand "vector_load_<mode>"
   [(set (match_operand:VEC_M 0 "vfloat_operand")
 	(match_operand:VEC_M 1 "memory_operand"))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
   "")
 
 (define_expand "vector_store_<mode>"
   [(set (match_operand:VEC_M 0 "memory_operand")
 	(match_operand:VEC_M 1 "vfloat_operand"))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
   "")
 
 ;; Splits if a GPR register was chosen for the move
 (define_split
   [(set (match_operand:VEC_L 0 "nonimmediate_operand")
         (match_operand:VEC_L 1 "input_operand"))]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)
+  "(VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode))
    && reload_completed
    && gpr_or_gpr_p (operands[0], operands[1])
    && !direct_move_p (operands[0], operands[1])
@@ -180,20 +183,58 @@
   DONE;
 })
 
-
+;; s2pp specific load and store instructions
+;; PS: in gcc 4.9.4 there was the equivalent for altivec here,
+;; their structure seems to have changed.
+(define_expand "vector_s2pp_load_<mode>"
+  [(set (match_operand:VEC_X 0 "vfloat_operand" "")
+	(match_operand:VEC_X 1 "memory_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "
+{
+  gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
+}")
+
+(define_expand "vector_s2pp_store_<mode>"
+  [(set (match_operand:VEC_X 0 "memory_operand" "")
+	(match_operand:VEC_X 1 "vfloat_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "
+{
+  gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
+}")
+
+(define_expand "vector_s2pp_input_<mode>"
+  [(set (match_operand:VEC_X 0 "vfloat_operand" "")
+	(match_operand:VEC_X 1 "memory_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "
+{
+  gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
+}")
+
+(define_expand "vector_s2pp_output_<mode>"
+  [(set (match_operand:VEC_X 0 "memory_operand" "")
+	(match_operand:VEC_X 1 "vfloat_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "
+{
+  gcc_assert (VECTOR_MEM_S2PP_P (<MODE>mode));
+}")
+
 ;; Generic floating point vector arithmetic support
 (define_expand "add<mode>3"
   [(set (match_operand:VEC_F 0 "vfloat_operand")
 	(plus:VEC_F (match_operand:VEC_F 1 "vfloat_operand")
 		    (match_operand:VEC_F 2 "vfloat_operand")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
   "")
 
 (define_expand "sub<mode>3"
   [(set (match_operand:VEC_F 0 "vfloat_operand")
 	(minus:VEC_F (match_operand:VEC_F 1 "vfloat_operand")
 		     (match_operand:VEC_F 2 "vfloat_operand")))]
-  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_UNIT_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_UNIT_S2PP_P (<MODE>mode)"
   "")
 
 (define_expand "mul<mode>3"
@@ -1019,7 +1060,7 @@
 (define_expand "vec_init<mode><VEC_base_l>"
   [(match_operand:VEC_E 0 "vlogical_operand")
    (match_operand:VEC_E 1 "")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   rs6000_expand_vector_init (operands[0], operands[1]);
   DONE;
@@ -1029,7 +1070,7 @@
   [(match_operand:VEC_E 0 "vlogical_operand")
    (match_operand:<VEC_base> 1 "register_operand")
    (match_operand 2 "const_int_operand")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   rs6000_expand_vector_set (operands[0], operands[1], INTVAL (operands[2]));
   DONE;
@@ -1039,7 +1080,7 @@
   [(match_operand:<VEC_base> 0 "register_operand")
    (match_operand:VEC_E 1 "vlogical_operand")
    (match_operand 2 "const_int_operand")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   rs6000_expand_vector_extract (operands[0], operands[1], operands[2]);
   DONE;
@@ -1171,7 +1212,7 @@
    (match_operand:VEC_K 1 "vlogical_operand")
    (match_operand:VEC_K 2 "vlogical_operand")
    (match_operand:V16QI 3 "vlogical_operand")]
-  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode)"
+  "VECTOR_MEM_ALTIVEC_OR_VSX_P (<MODE>mode) || VECTOR_MEM_S2PP_P (<MODE>mode)"
 {
   if (BYTES_BIG_ENDIAN)
     emit_insn (gen_altivec_vperm_<mode> (operands[0], operands[1],

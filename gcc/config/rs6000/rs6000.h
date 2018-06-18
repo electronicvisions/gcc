@@ -176,6 +176,7 @@
 %{mcpu=e500mc64: -me500mc64} \
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
+%{mcpu=nux: -mnux} \
 %{maltivec: -maltivec} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
@@ -495,6 +496,9 @@ extern enum rs6000_vector rs6000_vector_unit[];
 	     (int)VECTOR_ALTIVEC,			\
 	     (int)VECTOR_P8_VECTOR))
 
+#define VECTOR_UNIT_S2PP_P(MODE)			\
+  (rs6000_vector_unit[(MODE)] == VECTOR_S2PP)
+
 /* Describe whether to use VSX loads or Altivec loads.  For now, just use the
    same unit as the vector unit we are using, but we may want to migrate to
    using VSX style loads even for types handled by altivec.  */
@@ -521,6 +525,9 @@ extern enum rs6000_vector rs6000_vector_mem[];
   (IN_RANGE ((int)rs6000_vector_mem[(MODE)],		\
 	     (int)VECTOR_ALTIVEC,			\
 	     (int)VECTOR_P8_VECTOR))
+
+#define VECTOR_MEM_S2PP_P(MODE)				\
+  (rs6000_vector_mem[(MODE)] == VECTOR_S2PP)
 
 /* Return the alignment of a given vector type, which is set based on the
    vector unit use.  VSX for instance can load 32 or 64 bit aligned words
@@ -669,6 +676,7 @@ extern int rs6000_vector_align[];
 #define MASK_STRICT_ALIGN		OPTION_MASK_STRICT_ALIGN
 #define MASK_UPDATE			OPTION_MASK_UPDATE
 #define MASK_VSX			OPTION_MASK_VSX
+#define MASK_S2PP			OPTION_MASK_S2PP
 
 #ifndef IN_LIBGCC2
 #define MASK_POWERPC64			OPTION_MASK_POWERPC64
@@ -702,7 +710,7 @@ extern int rs6000_vector_align[];
    compiler for those builtins, and those machines don't support altivec or
    VSX.  */
 
-#define TARGET_EXTRA_BUILTINS	(!TARGET_PAIRED_FLOAT			 \
+#define TARGET_EXTRA_BUILTINS	(!TARGET_S2PP && !TARGET_PAIRED_FLOAT	 \
 				 && ((TARGET_POWERPC64			 \
 				      || TARGET_PPC_GPOPT /* 970/power4 */ \
 				      || TARGET_POPCNTB	  /* ISA 2.02 */ \
@@ -789,12 +797,21 @@ extern unsigned char rs6000_recip_bits[];
 #define OPTION_TARGET_CPU_DEFAULT TARGET_CPU_DEFAULT
 
 /* Target pragma.  */
+#ifdef TARGET_S2PP
+#define REGISTER_TARGET_PRAGMAS() do {				\
+  c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
+  targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
+  targetm.resolve_overloaded_builtin = s2pp_resolve_overloaded_builtin; \
+  rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
+} while (0)
+#else
 #define REGISTER_TARGET_PRAGMAS() do {				\
   c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
   targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
   targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
   rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
 } while (0)
+#endif
 
 /* Target #defines.  */
 #define TARGET_CPU_CPP_BUILTINS() \
@@ -867,6 +884,7 @@ extern unsigned char rs6000_recip_bits[];
 #define UNITS_PER_ALTIVEC_WORD 16
 #define UNITS_PER_VSX_WORD 16
 #define UNITS_PER_PAIRED_WORD 8
+#define UNITS_PER_S2PP_WORD 16
 
 /* Type used for ptrdiff_t, as a string used in a declaration.  */
 #define PTRDIFF_TYPE "int"
@@ -928,7 +946,7 @@ extern unsigned rs6000_pointer_size;
 
 /* Boundary (in *bits*) on which stack pointer should be aligned.  */
 #define STACK_BOUNDARY	\
-  ((TARGET_32BIT && !TARGET_ALTIVEC && !TARGET_ALTIVEC_ABI && !TARGET_VSX) \
+  ((TARGET_32BIT && !TARGET_ALTIVEC && !TARGET_ALTIVEC_ABI && !TARGET_VSX && !TARGET_S2PP) \
     ? 64 : 128)
 
 /* Allocation boundary (in *bits*) for the code of a function.  */
@@ -977,7 +995,9 @@ enum data_align { align_abi, align_opt, align_both };
    RS/6000 has 32 fixed-point registers, 32 floating-point registers,
    a count register, a link register, and 8 condition register fields,
    which we view here as separate registers.  AltiVec adds 32 vector
-   registers and a VRsave register.
+   registers and a VRsave register. s2pp adds 32 vector registers, a
+   vector conditional and an accumulation register.
+
 
    In addition, the difference between the frame and argument pointers is
    a function of the number of registers saved, so we need to have a
@@ -994,7 +1014,7 @@ enum data_align { align_abi, align_opt, align_both };
 
    The 3 HTM registers aren't also included in DWARF_FRAME_REGISTERS.  */
 
-#define FIRST_PSEUDO_REGISTER 115
+#define FIRST_PSEUDO_REGISTER 149
 
 /* This must be included for pre gcc 3.0 glibc compatibility.  */
 #define PRE_GCC3_DWARF_FRAME_REGISTERS 77
@@ -1033,7 +1053,12 @@ enum data_align { align_abi, align_opt, align_both };
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1						   \
-   , 1, 1, 1, 1					   \
+   , 1, 1, 1, 1,				   \
+   /* s2pp registers.  */			   \
+   1,						   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   1,						   \
 }
 
 /* 1 for registers not available across function calls.
@@ -1053,7 +1078,12 @@ enum data_align { align_abi, align_opt, align_both };
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    1, 1						   \
-   , 1, 1, 1, 1					   \
+   , 1, 1, 1, 1,				   \
+   /* s2pp registers.  */			   \
+   1,						   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   1,						   \
 }
 
 /* Like `CALL_USED_REGISTERS' except this macro doesn't require that
@@ -1072,12 +1102,18 @@ enum data_align { align_abi, align_opt, align_both };
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
    0, 0						   \
-   , 0, 0, 0, 0					   \
+   , 0, 0, 0, 0,				   \
+   /* s2pp registers.  */			   \
+   0,						   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,						   \
 }
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
+#define FIRST_SAVED_S2PP_REGNO    (FIRST_S2PP_REGNO+19)
 #define FIRST_SAVED_FP_REGNO	  (14+32)
 #define FIRST_SAVED_GP_REGNO	  (FIXED_R13 ? 14 : 13)
 
@@ -1114,6 +1150,13 @@ enum data_align { align_abi, align_opt, align_both };
 	tfhar		(fixed)
 	tfiar		(fixed)
 	texasr		(fixed)
+	kc		(not saved)
+	kv0 - kv1	(not saved or used for anything)
+	kv14 - kv3	(not saved; incoming vector arg registers)
+	kv2		(not saved; incoming vector arg reg; return value)
+	kv18 - kv15	(not saved or used for anything)
+	kv31 - kv19	(saved; order given to save least number)
+	ka		(not saved)
 */
 
 #if FIXED_R2 == 1
@@ -1155,7 +1198,12 @@ enum data_align { align_abi, align_opt, align_both };
    96, 95, 94, 93, 92, 91,					\
    108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97,	\
    109, 110,							\
-   111, 112, 113, 114						\
+   111, 112, 113, 114,						\
+   /* s2pp registers.  */					\
+   115,								\
+   116, 117, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121,	\
+   120, 119, 118, 134, 133, 132, 131, 147, 146, 145, 144, 143,	\
+   142, 141, 140, 139, 138, 137, 136, 135, 148			\
 }
 
 /* True if register is floating-point.  */
@@ -1182,6 +1230,11 @@ enum data_align { align_abi, align_opt, align_both };
 
 /* True if register is a VSX register.  */
 #define VSX_REGNO_P(N) (FP_REGNO_P (N) || ALTIVEC_REGNO_P (N))
+
+/* True if register is a s2pp register. */
+#define S2PP_REGNO_P(N) ((N) >= FIRST_S2PP_REGNO && (N) <= LAST_S2PP_REGNO)
+#define S2PP_COND_REGNO_P(N) ((N) == S2PP_COND_REGNO)
+#define S2PP_ACC_REGNO_P(N) ((N) == S2PP_ACC_REGNO)
 
 /* Alternate name for any vector register supporting floating point, no matter
    which instruction set(s) are available.  */
@@ -1236,6 +1289,10 @@ enum data_align { align_abi, align_opt, align_both };
 
 #define PAIRED_VECTOR_MODE(MODE)        \
          ((MODE) == V2SFmode)            
+
+#define S2PP_VECTOR_MODE(MODE)						\
+  ((MODE) == V16QImode							\
+   || (MODE) == V8HImode)
 
 /* Post-reload, we can't use any new AltiVec registers, as we already
    emitted the vrsave mask.  */
@@ -1333,6 +1390,9 @@ enum reg_class
   CR_REGS,
   NON_FLOAT_REGS,
   CA_REGS,
+  S2PP_REGS,
+  S2PP_C_REG,
+  S2PP_ACC_REG,
   ALL_REGS,
   LIM_REG_CLASSES
 };
@@ -1362,6 +1422,9 @@ enum reg_class
   "CR_REGS",								\
   "NON_FLOAT_REGS",							\
   "CA_REGS",								\
+  "S2PP_REGS",								\
+  "S2PP_C_REG",								\
+  "S2PP_ACC_REG",							\
   "ALL_REGS"								\
 }
 
@@ -1372,45 +1435,51 @@ enum reg_class
 #define REG_CLASS_CONTENTS						\
 {									\
   /* NO_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	\
   /* BASE_REGS.  */							\
-  { 0xfffffffe, 0x00000000, 0x00000008, 0x00008000 },			\
+  { 0xfffffffe, 0x00000000, 0x00000008, 0x00008000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
-  { 0xffffffff, 0x00000000, 0x00000008, 0x00008000 },			\
+  { 0xffffffff, 0x00000000, 0x00000008, 0x00008000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
-  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000 },			\
+  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
-  { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff },			\
+  { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
   /* VSX_REGS.  */							\
-  { 0x00000000, 0xffffffff, 0xffffe000, 0x00001fff },			\
+  { 0x00000000, 0xffffffff, 0xffffe000, 0x00001fff, 0x00000000 },	\
   /* VRSAVE_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00002000 },			\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00002000, 0x00000000 },	\
   /* VSCR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00004000 },			\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000 },	\
   /* SPR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00010000 },			\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000 },	\
   /* NON_SPECIAL_REGS.  */						\
-  { 0xffffffff, 0xffffffff, 0x00000008, 0x00008000 },			\
+  { 0xffffffff, 0xffffffff, 0x00000008, 0x00008000, 0x00000000 },	\
   /* LINK_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000002, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000 },	\
   /* CTR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000004, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x00000000 },	\
   /* LINK_OR_CTR_REGS.  */						\
-  { 0x00000000, 0x00000000, 0x00000006, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000 },	\
   /* SPECIAL_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000006, 0x00002000 },			\
+  { 0x00000000, 0x00000000, 0x00000006, 0x00002000, 0x00000000 },	\
   /* SPEC_OR_GEN_REGS.  */						\
-  { 0xffffffff, 0x00000000, 0x0000000e, 0x0000a000 },			\
+  { 0xffffffff, 0x00000000, 0x0000000e, 0x0000a000, 0x00100000 },	\
   /* CR0_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000010, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00000010, 0x00000000, 0x00000000 },	\
   /* CR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000, 0x00000000 },	\
   /* NON_FLOAT_REGS.  */						\
-  { 0xffffffff, 0x00000000, 0x00000ffe, 0x00008000 },			\
+  { 0xffffffff, 0x00000000, 0x00000ffe, 0xfff88000, 0x001fffff },	\
   /* CA_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00001000, 0x00000000 },			\
+  { 0x00000000, 0x00000000, 0x00001000, 0x00000000, 0x00000000 },	\
+  /* S2PP_REGS */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0xfff00000, 0x000fffff },	\
+  /* S2PP_C_REG */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00080000, 0x00000000 },	\
+  /* S2PP_ACC_REG */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00100000 },	\
   /* ALL_REGS.  */							\
-  { 0xffffffff, 0xffffffff, 0xfffffffe, 0x0001ffff }			\
+  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffffffff, 0x001fffff }	\
 }
 
 /* The same information, inverted:
@@ -1430,6 +1499,9 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_d,		/* fpr registers for double values */
   RS6000_CONSTRAINT_f,		/* fpr registers for single values */
   RS6000_CONSTRAINT_v,		/* Altivec registers */
+  RS6000_CONSTRAINT_ka,		/* s2pp accumulator register */
+  RS6000_CONSTRAINT_kc,		/* s2pp conditional register */
+  RS6000_CONSTRAINT_kv,		/* s2pp vector register */
   RS6000_CONSTRAINT_wa,		/* Any VSX register */
   RS6000_CONSTRAINT_wb,		/* Altivec register if ISA 3.0 vector. */
   RS6000_CONSTRAINT_wd,		/* VSX register for V2DF */
@@ -1471,6 +1543,10 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 /* Return whether a given register class can hold VSX objects.  */
 #define VSX_REG_CLASS_P(CLASS)			\
   ((CLASS) == VSX_REGS || (CLASS) == FLOAT_REGS || (CLASS) == ALTIVEC_REGS)
+
+/* Return whether a given register class can hold s2pp objects. */
+#define S2PP_REG_CLASS_P(CLASS)			\
+  ((CLASS) == S2PP_REGS)
 
 /* Return whether a given register class targets general purpose registers.  */
 #define GPR_REG_CLASS_P(CLASS) ((CLASS) == GENERAL_REGS || (CLASS) == BASE_REGS)
@@ -1559,9 +1635,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define RS6000_STARTING_FRAME_OFFSET					\
   (cfun->calls_alloca							\
    ? (RS6000_ALIGN (crtl->outgoing_args_size + RS6000_SAVE_AREA,	\
-		    (TARGET_ALTIVEC || TARGET_VSX) ? 16 : 8 ))		\
+		(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) ? 16 : 8 )) \
    : (RS6000_ALIGN (crtl->outgoing_args_size,				\
-		    (TARGET_ALTIVEC || TARGET_VSX) ? 16 : 8)		\
+		(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) ? 16 : 8)	\
       + RS6000_SAVE_AREA))
 
 /* Offset from the stack pointer register to an item dynamically
@@ -1576,7 +1652,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define STACK_DYNAMIC_OFFSET(FUNDECL)					\
   RS6000_ALIGN (crtl->outgoing_args_size.to_constant ()			\
 		+ STACK_POINTER_OFFSET,					\
-		(TARGET_ALTIVEC || TARGET_VSX) ? 16 : 8)
+		(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) ? 16 : 8)
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.
@@ -1656,6 +1732,12 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define ALTIVEC_ARG_MAX_REG (ALTIVEC_ARG_MIN_REG + 11)
 #define ALTIVEC_ARG_NUM_REG (ALTIVEC_ARG_MAX_REG - ALTIVEC_ARG_MIN_REG + 1)
 
+/* Minimum and maximum s2pp registers used to hold arguments */
+#define S2PP_ARG_MIN_REG (FIRST_S2PP_REGNO + 2)
+#define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
+#define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
+
+
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
 
@@ -1663,12 +1745,16 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define GP_ARG_RETURN GP_ARG_MIN_REG
 #define FP_ARG_RETURN FP_ARG_MIN_REG
 #define ALTIVEC_ARG_RETURN (FIRST_ALTIVEC_REGNO + 2)
+#define S2PP_ARG_RETURN S2PP_ARG_MIN_REG
 #define FP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? FP_ARG_RETURN	\
 			   : (FP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 #define ALTIVEC_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2		\
 				? (ALTIVEC_ARG_RETURN			\
 				   + (TARGET_FLOAT128_TYPE ? 1 : 0))	\
 			        : (ALTIVEC_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
+#define S2PP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2			\
+				? S2PP_ARG_RETURN			\
+				: (S2PP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 
 /* Flags for the call/call_value rtl operations set up by function_arg */
 #define CALL_NORMAL		0x00000000	/* no special processing */
@@ -1691,7 +1777,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || (IN_RANGE ((N), FP_ARG_RETURN, FP_ARG_MAX_RETURN)			\
        && TARGET_HARD_FLOAT)						\
    || (IN_RANGE ((N), ALTIVEC_ARG_RETURN, ALTIVEC_ARG_MAX_RETURN)	\
-       && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI))
+       && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI))			\
+   || (IN_RANGE ((N), S2PP_ARG_RETURN, S2PP_ARG_MAX_RETURN)		\
+       && TARGET_S2PP)
 
 /* 1 if N is a possible register number for function argument passing.
    On RS/6000, these are r3-r10 and fp1-fp13.
@@ -1701,7 +1789,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || (IN_RANGE ((N), ALTIVEC_ARG_MIN_REG, ALTIVEC_ARG_MAX_REG)		\
        && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI)				\
    || (IN_RANGE ((N), FP_ARG_MIN_REG, FP_ARG_MAX_REG)			\
-       && TARGET_HARD_FLOAT))
+       && TARGET_HARD_FLOAT)						\
+   || (IN_RANGE ((N), S2PP_ARG_MIN_REG, S2PP_ARG_MAX_REG)		\
+       && TARGET_S2PP))
 
 /* Define a data type for recording info about an argument list
    during the scan of that argument list.  This data type should
@@ -1726,6 +1816,7 @@ typedef struct rs6000_args
   int words;			/* # words used for passing GP registers */
   int fregno;			/* next available FP register */
   int vregno;			/* next available AltiVec register */
+  int kvregno;			/* next available s2pp register */
   int nargs_prototype;		/* # args left in the current prototype */
   int prototype;		/* Whether a prototype was defined */
   int stdarg;			/* Whether function is a stdarg function.  */
@@ -2326,6 +2417,41 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   &rs6000_reg_names[112][0],	/* tfhar  */				\
   &rs6000_reg_names[113][0],	/* tfiar  */				\
   &rs6000_reg_names[114][0],	/* texasr  */				\
+									\
+  &rs6000_reg_names[115][0],	/* s2pp cond  */			\
+  &rs6000_reg_names[116][0],	/* s2pp */				\
+  &rs6000_reg_names[117][0],	/* s2pp */				\
+  &rs6000_reg_names[118][0],	/* s2pp */				\
+  &rs6000_reg_names[119][0],	/* s2pp */				\
+  &rs6000_reg_names[120][0],	/* s2pp */				\
+  &rs6000_reg_names[121][0],	/* s2pp */				\
+  &rs6000_reg_names[122][0],	/* s2pp */				\
+  &rs6000_reg_names[123][0],	/* s2pp */				\
+  &rs6000_reg_names[124][0],	/* s2pp */				\
+  &rs6000_reg_names[125][0],	/* s2pp */				\
+  &rs6000_reg_names[126][0],	/* s2pp */				\
+  &rs6000_reg_names[127][0],	/* s2pp */				\
+  &rs6000_reg_names[128][0],	/* s2pp */				\
+  &rs6000_reg_names[129][0],	/* s2pp */				\
+  &rs6000_reg_names[130][0],	/* s2pp */				\
+  &rs6000_reg_names[131][0],	/* s2pp */				\
+  &rs6000_reg_names[132][0],	/* s2pp */				\
+  &rs6000_reg_names[133][0],	/* s2pp */				\
+  &rs6000_reg_names[134][0],	/* s2pp */				\
+  &rs6000_reg_names[135][0],	/* s2pp */				\
+  &rs6000_reg_names[136][0],	/* s2pp */				\
+  &rs6000_reg_names[137][0],	/* s2pp */				\
+  &rs6000_reg_names[138][0],	/* s2pp */				\
+  &rs6000_reg_names[139][0],	/* s2pp */				\
+  &rs6000_reg_names[140][0],	/* s2pp */				\
+  &rs6000_reg_names[141][0],	/* s2pp */				\
+  &rs6000_reg_names[142][0],	/* s2pp */				\
+  &rs6000_reg_names[143][0],	/* s2pp */				\
+  &rs6000_reg_names[144][0],	/* s2pp */				\
+  &rs6000_reg_names[145][0],	/* s2pp */				\
+  &rs6000_reg_names[146][0],	/* s2pp */				\
+  &rs6000_reg_names[147][0],	/* s2pp */				\
+  &rs6000_reg_names[148][0],	/* s2pp acc  */				\
 }
 
 /* Table of additional register names to use in user input.  */
@@ -2381,6 +2507,16 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   {"vs60", 105},{"vs61", 106},{"vs62", 107},{"vs63", 108},	\
   /* Transactional Memory Facility (HTM) Registers.  */		\
   {"tfhar",  112}, {"tfiar",  113}, {"texasr",  114},		\
+  /* s2pp registers */						\
+  {"kc", 115},   {"kv0", 116},	{"kv1", 117},  {"kv2", 118},	\
+  {"kv3", 119},  {"kv4"	, 120}, {"kv5", 121},  {"kv6", 122},	\
+  {"kv7", 123},  {"kv8"	, 124}, {"kv9", 125},  {"kv10", 126},	\
+  {"kv11", 127}, {"kv12", 128}, {"kv13", 129}, {"kv14", 130},	\
+  {"kv15", 131}, {"kv16", 132}, {"kv17", 133}, {"kv18", 134},	\
+  {"kv19", 135}, {"kv20", 136}, {"kv21", 137}, {"kv22", 138},	\
+  {"kv23", 139}, {"kv24", 140}, {"kv25", 141}, {"kv26", 142},	\
+  {"kv27", 143}, {"kv28", 144}, {"kv29", 145}, {"kv30", 146},	\
+  {"kv31", 147}, {"ka", 148}					\
 }
 
 /* This is how to output an element of a case-vector that is relative.  */
@@ -2512,6 +2648,8 @@ extern int frame_pointer_needed;
 #define RS6000_BTM_FLOAT128	MASK_FLOAT128_KEYWORD /* IEEE 128-bit float.  */
 #define RS6000_BTM_FLOAT128_HW	MASK_FLOAT128_HW /* IEEE 128-bit float h/w.  */
 
+#define RS6000_BTM_S2PP		MASK_S2PP	/* s2pp vectors. */
+
 #define RS6000_BTM_COMMON	(RS6000_BTM_ALTIVEC			\
 				 | RS6000_BTM_VSX			\
 				 | RS6000_BTM_P8_VECTOR			\
@@ -2531,7 +2669,8 @@ extern int frame_pointer_needed;
 				 | RS6000_BTM_LDBL128			\
 				 | RS6000_BTM_POWERPC64			\
 				 | RS6000_BTM_FLOAT128			\
-				 | RS6000_BTM_FLOAT128_HW)
+				 | RS6000_BTM_FLOAT128_HW		\
+				 | RS6000_BTM_S2PP)
 
 /* Define builtin enum index.  */
 
