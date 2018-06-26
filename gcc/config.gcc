@@ -2262,6 +2262,12 @@ powerpc-*-eabi*)
 	tmake_file="rs6000/t-fprules rs6000/t-ppcgas rs6000/t-ppccomm"
 	use_gcc_stdint=wrap
 	;;
+powerpc-*-ppu*)
+	tm_file="${tm_file} dbxelf.h elfos.h usegas.h freebsd-spec.h newlib-stdint.h rs6000/sysv4.h rs6000/eabi.h rs6000/e500.h ppu.h"
+	extra_options="${extra_options} rs6000/sysv4.opt"
+	tmake_file="rs6000/t-fprules rs6000/t-ppcgas rs6000/t-ppccomm"
+	use_gcc_stdint=wrap
+	;;
 powerpc-*-rtems*)
 	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h newlib-stdint.h rs6000/sysv4.h rs6000/eabi.h rs6000/e500.h rs6000/rtems.h rtems.h"
 	extra_options="${extra_options} rs6000/sysv4.opt"
