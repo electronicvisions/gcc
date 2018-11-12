@@ -9,7 +9,7 @@ flex --version
 which bison
 bison --version
 
-target="powerpc-eabi"
+target="powerpc-ppu"
 
 prefix="$PWD/install"
 
