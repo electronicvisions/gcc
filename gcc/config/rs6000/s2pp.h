@@ -23,11 +23,8 @@
 #include <stdint.h>
 
 #define vector __vector
-#define bool __bool
 
-/* bool convenience */
-#define false (bool) 0
-#define true !false
+#include <stdbool.h>
 
 /* Condition register codes for s2pp predicates. */
 
