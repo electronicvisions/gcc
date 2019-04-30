@@ -257,7 +257,7 @@
   [(set (match_operand:FXVI 0 "register_operand" "=kv")
 	(unspec:FXVI [(match_operand:FXVI 1 "register_operand" "kv")
 		      (match_operand:FXVI 2 "register_operand" "kv")]
-	UNSPEC_FXVADDF))]
+	UNSPEC_FXVADD))]
   ""
   [(set_attr "type" "vecsimple")])
 
