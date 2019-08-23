@@ -944,7 +944,7 @@ extern unsigned rs6000_pointer_size;
 
 /* Boundary (in *bits*) on which stack pointer should be aligned.  */
 #define STACK_BOUNDARY	\
-  ((TARGET_32BIT && !TARGET_ALTIVEC && !TARGET_ALTIVEC_ABI && !TARGET_VSX && !TARGET_S2PP) \
+  ((TARGET_32BIT && !TARGET_ALTIVEC && !TARGET_ALTIVEC_ABI && !TARGET_VSX) \
     ? 64 : 128)
 
 /* Allocation boundary (in *bits*) for the code of a function.  */
@@ -1633,9 +1633,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define RS6000_STARTING_FRAME_OFFSET					\
   (cfun->calls_alloca							\
    ? (RS6000_ALIGN (crtl->outgoing_args_size + RS6000_SAVE_AREA,	\
-		(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) ? 16 : 8 )) \
+		(TARGET_ALTIVEC || TARGET_VSX) ? 16 : 8 )) \
    : (RS6000_ALIGN (crtl->outgoing_args_size,				\
-		(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) ? 16 : 8)	\
+		(TARGET_ALTIVEC || TARGET_VSX) ? 16 : 8)	\
       + RS6000_SAVE_AREA))
 
 /* Offset from the stack pointer register to an item dynamically
@@ -1650,7 +1650,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define STACK_DYNAMIC_OFFSET(FUNDECL)					\
   RS6000_ALIGN (crtl->outgoing_args_size.to_constant ()			\
 		+ STACK_POINTER_OFFSET,					\
-		(TARGET_ALTIVEC || TARGET_VSX || TARGET_S2PP) ? 16 : 8)
+		(TARGET_ALTIVEC || TARGET_VSX) ? 16 : 8)
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.

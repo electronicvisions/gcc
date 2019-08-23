@@ -5562,7 +5562,7 @@ rs6000_builtin_vectorization_cost (enum vect_cost_for_stmt type_of_cost,
               }
           }
 
-        if (TARGET_ALTIVEC || TARGET_S2PP)
+        if (TARGET_ALTIVEC)
           /* Misaligned loads are not supported.  */
           gcc_unreachable ();
 
@@ -5601,7 +5601,7 @@ rs6000_builtin_vectorization_cost (enum vect_cost_for_stmt type_of_cost,
               }
           }
 
-        if (TARGET_ALTIVEC || TARGET_S2PP)
+        if (TARGET_ALTIVEC)
           /* Misaligned stores are not supported.  */
           gcc_unreachable ();
 
@@ -8097,7 +8097,7 @@ rs6000_slow_unaligned_access (machine_mode mode, unsigned int align)
 bool
 rs6000_special_adjust_field_align_p (tree type, unsigned int computed)
 {
-  if ((TARGET_ALTIVEC || TARGET_S2PP) && TREE_CODE (type) == VECTOR_TYPE)
+  if (TARGET_ALTIVEC && TREE_CODE (type) == VECTOR_TYPE)
     {
       if (computed != 128)
 	{
@@ -26078,7 +26078,7 @@ rs6000_stack_info (void)
 	{
 	  /* Align stack so vector save area is on a quadword boundary.  */
 	  if (info->s2pp_size != 0)
-	    info->s2pp_padding_size = 16 - (-info->cr_save_offset % 16);
+	    info->s2pp_padding_size = 4 - (-info->cr_save_offset % 4);
 
 	  info->s2pp_save_offset = info->cr_save_offset
 				      - info->s2pp_padding_size
