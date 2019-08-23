@@ -20,8 +20,6 @@
    along with GCC; see the file COPYING3.  If not see
    <http://www.gnu.org/licenses/>.  */
 
-#include <cassert>
-
 #define IN_TARGET_CODE 1
 
 #include "config.h"
@@ -651,7 +649,6 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 	  /* Enable context-sensitive macros.  */
 	  cpp_get_callbacks (pfile)->macro_to_expand = rs6000_macro_to_expand;
 	}
-      assert (!TARGET_EXTRA_BUILTINS);
     }
   if (TARGET_EXTRA_BUILTINS && cpp_get_options (pfile)->lang != CLK_ASM)
     {

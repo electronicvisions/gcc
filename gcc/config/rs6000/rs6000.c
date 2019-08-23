@@ -10037,7 +10037,7 @@ rs6000_legitimize_reload_address (rtx x, machine_mode mode,
      force reload to create the address with an AND in a separate
      register, because we can't guarantee an altivec register will
      be used.  */
-  if ((VECTOR_MEM_ALTIVEC_P (mode) || VECTOR_MEM_S2PP_P (mode))
+  if (VECTOR_MEM_ALTIVEC_P (mode)
       && GET_CODE (x) == AND
       && GET_CODE (XEXP (x, 0)) == PLUS
       && GET_CODE (XEXP (XEXP (x, 0), 0)) == REG
@@ -10126,7 +10126,7 @@ rs6000_legitimate_address_p (machine_mode mode, rtx x, bool reg_ok_strict)
   bool quad_offset_p = mode_supports_vsx_dform_quad (mode);
 
   /* If this is an unaligned stvx/ldvx type address, discard the outer AND.  */
-  if ((VECTOR_MEM_ALTIVEC_P (mode) || VECTOR_MEM_S2PP_P (mode))
+  if (VECTOR_MEM_ALTIVEC_P (mode)
       && GET_CODE (x) == AND
       && GET_CODE (XEXP (x, 1)) == CONST_INT
       && INTVAL (XEXP (x, 1)) == -16)
@@ -18274,7 +18274,7 @@ rs6000_init_builtins (void)
      the target attribute.  */
   if (TARGET_PAIRED_FLOAT)
     paired_init_builtins ();
-  if (TARGET_EXTRA_BUILTINS && !TARGET_S2PP)
+  if (TARGET_EXTRA_BUILTINS)
     altivec_init_builtins ();
   if (TARGET_HTM)
     htm_init_builtins ();
@@ -20964,7 +20964,6 @@ rs6000_secondary_reload_memory (rtx addr,
 
   else if (rclass == ALTIVEC_REGS)
     addr_mask = reg_addr[mode].addr_mask[RELOAD_REG_VMX];
-  /* PS (2018-06-17): is a s2pp case necessary here? we also don't have RELOAD_REG_FVX. */
   /* For the combined VSX_REGS, turn off Altivec AND -16.  */
   else if (rclass == VSX_REGS)
     addr_mask = (reg_addr[mode].addr_mask[RELOAD_REG_VMX]
@@ -23199,12 +23198,12 @@ print_operand (FILE *file, rtx x, int code)
 
 	tmp = XEXP (x, 0);
 
-	if ((VECTOR_MEM_ALTIVEC_OR_VSX_P (GET_MODE (x)) || VECTOR_MEM_S2PP_P (GET_MODE(x)))
+	if (VECTOR_MEM_ALTIVEC_OR_VSX_P (GET_MODE (x))
 	    && GET_CODE (tmp) == AND
 	    && GET_CODE (XEXP (tmp, 1)) == CONST_INT
 	    && INTVAL (XEXP (tmp, 1)) == -16)
 	  tmp = XEXP (tmp, 0);
-	else if ((VECTOR_MEM_VSX_P (GET_MODE (x)) || VECTOR_MEM_S2PP_P (GET_MODE(x)))
+	else if (VECTOR_MEM_VSX_P (GET_MODE (x))
 		 && GET_CODE (tmp) == PRE_MODIFY)
 	  tmp = XEXP (tmp, 1);
 	if (REG_P (tmp))

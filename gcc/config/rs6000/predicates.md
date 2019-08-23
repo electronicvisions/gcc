@@ -917,7 +917,7 @@
   (match_code "mem")
 {
   op = XEXP (op, 0);
-  if ((VECTOR_MEM_ALTIVEC_P (mode) || VECTOR_MEM_S2PP_P (mode))
+  if (VECTOR_MEM_ALTIVEC_P (mode)
       && GET_CODE (op) == AND
       && GET_CODE (XEXP (op, 1)) == CONST_INT
       && INTVAL (XEXP (op, 1)) == -16)
@@ -955,20 +955,6 @@
 
   return 0;
 })
-
-(define_predicate "s2pp_indexed_or_indirect_operand"
-  (match_code "mem")
-{
-  op = XEXP (op, 0);
-  if (VECTOR_MEM_S2PP_P (mode)
-      && GET_CODE (op) == AND
-      && GET_CODE (XEXP (op, 1)) == CONST_INT
-      && INTVAL (XEXP (op, 1)) == -16)
-    return indexed_or_indirect_address (XEXP (op, 0), mode);
-
-  return 0;
-})
-
 
 ;; Return 1 if the operand is an indexed or indirect address.
 (define_special_predicate "indexed_or_indirect_address"
