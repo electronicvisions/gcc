@@ -197,3 +197,6 @@ Enum(rs6000_cpu_opt_value) String(rs64) Value(55)
 EnumValue
 Enum(rs6000_cpu_opt_value) String(nux) Value(56)
 
+EnumValue
+Enum(rs6000_cpu_opt_value) String(s2pp_hx) Value(57)
+

@@ -607,6 +607,9 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
     rs6000_define_or_undefine_macro (define_p, "_RELOCATABLE");
   if (rs6000_sdata != SDATA_NONE)
     rs6000_define_or_undefine_macro (define_p, "_SDATA");
+  /* s2pp_hx flag */
+  if ((flags & OPTION_MASK_S2PP_HX) != 0)
+    rs6000_define_or_undefine_macro (define_p, "__S2PP_HX__");
 }
 
 void
