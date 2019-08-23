@@ -1,7 +1,7 @@
 #pragma once
 
-#if !defined(__S2PP__)
-#error Use the "-mnux" flag to enable s2pp support
+#if !defined(__S2PP__) && !defined(__S2PP_HX__)
+#error Use the "-mnux" flag to enable s2pp support or the "-ms2pp_hx" flag to enable s2pp hx support
 #endif
 
 #if !defined(_SOFT_FLOAT)
@@ -19,6 +19,8 @@
 #if defined(_SDATA)
 #error Use the "-msdata=none" flag to enable s2pp support
 #endif
+
+#if defined(__S2PP__)
 
 #include <stdint.h>
 
@@ -218,3 +220,5 @@
 
 #define vec_step(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
 #define fxv_steps(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
+
+#endif

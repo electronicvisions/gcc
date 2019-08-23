@@ -152,6 +152,10 @@ mnux
 Target Report Mask(S2PP) Var(rs6000_isa_flags)
 Use s2pp instructions.
 
+ms2pp_hx
+Target Report Mask(S2PP_HX) Var(rs6000_isa_flags)
+Use s2pp_hx instructions.
+
 maltivec
 Target Report Mask(ALTIVEC) Var(rs6000_isa_flags)
 Use AltiVec instructions.

@@ -177,6 +177,7 @@
 %{mcpu=e5500: -me5500} \
 %{mcpu=e6500: -me6500} \
 %{mcpu=nux: -mnux} \
+%{mcpu=s2pp_hx: -mnux} \
 %{maltivec: -maltivec} \
 %{mvsx: -mvsx %{!maltivec: -maltivec} %{!mcpu*: %(asm_cpu_power7)}} \
 %{mpower8-vector|mcrypto|mdirect-move|mhtm: %{!mcpu*: %(asm_cpu_power8)}} \
@@ -677,6 +678,7 @@ extern int rs6000_vector_align[];
 #define MASK_UPDATE			OPTION_MASK_UPDATE
 #define MASK_VSX			OPTION_MASK_VSX
 #define MASK_S2PP			OPTION_MASK_S2PP
+#define MASK_S2PP_HX		OPTION_MASK_S2PP_HX
 
 #ifndef IN_LIBGCC2
 #define MASK_POWERPC64			OPTION_MASK_POWERPC64
