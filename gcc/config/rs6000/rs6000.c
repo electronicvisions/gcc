@@ -115,6 +115,7 @@ typedef struct rs6000_stack {
   int first_fp_reg_save;	/* first callee saved FP register used */
   int first_altivec_reg_save;	/* first callee saved AltiVec register used */
   int first_s2pp_reg_save;	/* first callee saved s2pp register used */
+  int first_s2pp_hx_reg_save;	/* first callee saved s2pp_hx register used */
   int lr_save_p;		/* true if the link reg needs to be saved */
   int cr_save_p;		/* true if the CR reg needs to be saved */
   unsigned int vrsave_mask;	/* mask of vec registers to save */
@@ -127,6 +128,7 @@ typedef struct rs6000_stack {
   int fp_save_offset;		/* offset to save FP regs from initial SP */
   int altivec_save_offset;	/* offset to save AltiVec regs from initial SP */
   int s2pp_save_offset;		/* offset to save s2pp regs from initial SP */
+  int s2pp_hx_save_offset;		/* offset to save s2pp_hx regs from initial SP */
   int lr_save_offset;		/* offset to save LR from initial SP */
   int cr_save_offset;		/* offset to save CR from initial SP */
   int vrsave_save_offset;	/* offset to save VRSAVE from initial SP */
@@ -142,10 +144,12 @@ typedef struct rs6000_stack {
   int fp_size;			/* size of saved FP registers */
   int altivec_size;		/* size of saved AltiVec registers */
   int s2pp_size;		/* size of saved s2pp registers */
+  int s2pp_hx_size;		/* size of saved s2pp_hx registers */
   int cr_size;			/* size to hold CR if not in fixed area */
   int vrsave_size;		/* size to hold VRSAVE */
   int altivec_padding_size;	/* size of altivec alignment padding */
   int s2pp_padding_size;	/* size of s2pp alignment padding */
+  int s2pp_hx_padding_size;	/* size of s2pp_hx alignment padding */
   HOST_WIDE_INT total_size;	/* total bytes allocated for stack */
   int savres_strategy;
 } rs6000_stack_t;
@@ -463,7 +467,10 @@ enum rs6000_reg_type {
   CR_REG_TYPE,
   S2PP_C_REG_TYPE,
   S2PP_REG_TYPE,
-  S2PP_ACC_REG_TYPE
+  S2PP_ACC_REG_TYPE,
+  S2PP_HX_C_REG_TYPE,
+  S2PP_HX_REG_TYPE,
+  S2PP_HX_ACC_REG_TYPE
 };
 
 /* Map register class to register type.  */
@@ -1344,6 +1351,7 @@ static int rs6000_ra_ever_killed (void);
 static tree rs6000_handle_longcall_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_altivec_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_s2pp_attribute (tree *, tree, tree, int, bool *);
+static tree rs6000_handle_s2pp_hx_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_handle_struct_attribute (tree *, tree, tree, int, bool *);
 static tree rs6000_builtin_vectorized_libmass (combined_fn, tree, tree);
 static void rs6000_emit_set_long_const (rtx, HOST_WIDE_INT);
@@ -1364,6 +1372,7 @@ static bool insn_must_be_first_in_group (rtx_insn *);
 static bool insn_must_be_last_in_group (rtx_insn *);
 static void altivec_init_builtins (void);
 static void s2pp_init_builtins (void);
+static void s2pp_hx_init_builtins (void);
 static tree builtin_function_type (machine_mode, machine_mode,
 				   machine_mode, machine_mode,
 				   enum rs6000_builtins, const char *name);
@@ -1504,7 +1513,14 @@ char rs6000_reg_names[][8] =
       "8",  "9", "10", "11", "12", "13", "14", "15",
      "16", "17", "18", "19", "20", "21", "22", "23",
      "24", "25", "26", "27", "28", "29", "30", "31",
-      "ka"
+      "ka",
+      /* s2pp_hx registers. */
+      "qc",
+      "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",
+      "8",  "9", "10", "11", "12", "13", "14", "15",
+     "16", "17", "18", "19", "20", "21", "22", "23",
+     "24", "25", "26", "27", "28", "29", "30", "31",
+      "qa"
 };
 
 #ifdef TARGET_REGNAMES
@@ -1537,7 +1553,14 @@ static const char alt_reg_names[][8] =
    "%k8",  "%k9", "%k10", "%k11", "%k12", "%k13", "%k14", "%k15",
   "%k16", "%k17", "%k18", "%k19", "%k20", "%k21", "%k22", "%k23",
   "%k24", "%k25", "%k26", "%k27", "%k28", "%k29", "%k30", "%k31",
-   "ka"
+   "ka",
+  /* s2pp_hx registers. */
+   "qc",
+   "%q0",  "%q1",  "%q2",  "%q3",  "%q4",  "%q5",  "%q6",  "%q7",
+   "%q8",  "%q9", "%q10", "%q11", "%q12", "%q13", "%q14", "%q15",
+  "%q16", "%q17", "%q18", "%q19", "%q20", "%q21", "%q22", "%q23",
+  "%q24", "%q25", "%q26", "%q27", "%q28", "%q29", "%q30", "%q31",
+   "qa"
 };
 #endif
 
@@ -1551,6 +1574,8 @@ static const struct attribute_spec rs6000_attribute_table[] =
     rs6000_handle_altivec_attribute, NULL },
   { "s2pp",   1, 1, false, true,  false, false,
     rs6000_handle_s2pp_attribute, NULL },
+  { "s2pp_hx",   1, 1, false, true,  false, false,
+    rs6000_handle_s2pp_hx_attribute, NULL },
   { "longcall",  0, 0, false, true,  true,  false,
     rs6000_handle_longcall_attribute, NULL },
   { "shortcall", 0, 0, false, true,  true,  false,
@@ -2068,6 +2093,9 @@ rs6000_hard_regno_nregs_internal (int regno, machine_mode mode)
   else if (S2PP_REGNO_P (regno))
     reg_size = UNITS_PER_S2PP_WORD;
 
+  else if (S2PP_HX_REGNO_P (regno))
+    reg_size = UNITS_PER_S2PP_HX_WORD;
+
   else
     reg_size = UNITS_PER_WORD;
 
@@ -2154,6 +2182,9 @@ rs6000_hard_regno_mode_ok_uncached (int regno, machine_mode mode)
 
   if (S2PP_REGNO_P (regno))
     return VECTOR_MEM_S2PP_P (mode);
+
+  if (S2PP_HX_REGNO_P (regno))
+    return VECTOR_MEM_S2PP_HX_P (mode);
 
   /* The CR register can only hold CC modes.  */
   if (CR_REGNO_P (regno))
@@ -2344,6 +2375,7 @@ rs6000_debug_vector_unit (enum rs6000_vector v)
     case VECTOR_P8_VECTOR: ret = "p8_vector"; break;
     case VECTOR_PAIRED:	   ret = "paired";    break;
     case VECTOR_S2PP:      ret = "s2pp";      break;
+    case VECTOR_S2PP_HX:      ret = "s2pp_hx";   break;
     case VECTOR_OTHER:	   ret = "other";     break;
     default:		   ret = "unknown";   break;
     }
@@ -2563,6 +2595,8 @@ rs6000_debug_reg_global (void)
     V4SImode,
     V2DImode,
     V1TImode,
+    V128QImode,
+    V64HImode,
     V32QImode,
     V16HImode,
     V8SImode,
@@ -2610,6 +2644,9 @@ rs6000_debug_reg_global (void)
   rs6000_debug_reg_print (FIRST_S2PP_REGNO, LAST_S2PP_REGNO, "kv");
   rs6000_debug_reg_print (S2PP_COND_REGNO, S2PP_COND_REGNO, "kc");
   rs6000_debug_reg_print (S2PP_ACC_REGNO, S2PP_ACC_REGNO, "ka");
+  rs6000_debug_reg_print (FIRST_S2PP_HX_REGNO, LAST_S2PP_HX_REGNO, "qv");
+  rs6000_debug_reg_print (S2PP_HX_COND_REGNO, S2PP_HX_COND_REGNO, "qc");
+  rs6000_debug_reg_print (S2PP_HX_ACC_REGNO, S2PP_HX_ACC_REGNO, "qa");
   rs6000_debug_reg_print (LR_REGNO, LR_REGNO, "lr");
   rs6000_debug_reg_print (CTR_REGNO, CTR_REGNO, "ctr");
   rs6000_debug_reg_print (CR0_REGNO, CR7_REGNO, "cr");
@@ -2629,6 +2666,9 @@ rs6000_debug_reg_global (void)
 	   "kv reg_class = %s\n"
 	   "kc reg_class = %s\n"
 	   "ka reg_class = %s\n"
+	   "qv reg_class = %s\n"
+	   "qc reg_class = %s\n"
+	   "qa reg_class = %s\n"
 	   "wa reg_class = %s\n"
 	   "wb reg_class = %s\n"
 	   "wd reg_class = %s\n"
@@ -2665,6 +2705,9 @@ rs6000_debug_reg_global (void)
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_kv]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_kc]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_ka]],
+	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_qv]],
+	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_qc]],
+	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_qa]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_wa]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_wb]],
 	   reg_class_names[rs6000_constraints[RS6000_CONSTRAINT_wd]],
@@ -3136,6 +3179,11 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
     rs6000_regno_regclass[r] = S2PP_REGS;
   rs6000_regno_regclass[S2PP_ACC_REGNO] = S2PP_ACC_REG;
 
+  rs6000_regno_regclass[S2PP_HX_COND_REGNO] = S2PP_HX_C_REG;
+  for (r = FIRST_S2PP_HX_REGNO; r <= LAST_S2PP_HX_REGNO; ++r)
+    rs6000_regno_regclass[r] = S2PP_HX_REGS;
+  rs6000_regno_regclass[S2PP_HX_ACC_REGNO] = S2PP_HX_ACC_REG;
+
   rs6000_regno_regclass[CR0_REGNO] = CR0_REGS;
   for (r = CR1_REGNO; r <= CR7_REGNO; ++r)
     rs6000_regno_regclass[r] = CR_REGS;
@@ -3163,6 +3211,9 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
   reg_class_to_reg_type[(int)S2PP_C_REG] = S2PP_C_REG_TYPE;
   reg_class_to_reg_type[(int)S2PP_REGS] = S2PP_REG_TYPE;
   reg_class_to_reg_type[(int)S2PP_ACC_REG] = S2PP_ACC_REG_TYPE;
+  reg_class_to_reg_type[(int)S2PP_HX_C_REG] = S2PP_HX_C_REG_TYPE;
+  reg_class_to_reg_type[(int)S2PP_HX_REGS] = S2PP_HX_REG_TYPE;
+  reg_class_to_reg_type[(int)S2PP_HX_ACC_REG] = S2PP_HX_ACC_REG_TYPE;
   reg_class_to_reg_type[(int)VRSAVE_REGS] = SPR_REG_TYPE;
   reg_class_to_reg_type[(int)VSCR_REGS] = SPR_REG_TYPE;
   reg_class_to_reg_type[(int)LINK_REGS] = SPR_REG_TYPE;
@@ -3176,7 +3227,7 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       reg_class_to_reg_type[(int)FLOAT_REGS] = VSX_REG_TYPE;
       reg_class_to_reg_type[(int)ALTIVEC_REGS] = VSX_REG_TYPE;
     }
-  else if (TARGET_S2PP)
+  else if (TARGET_S2PP || TARGET_S2PP_HX)
     {
       reg_class_to_reg_type[(int)FLOAT_REGS] = NO_REG_TYPE;
     }
@@ -3281,6 +3332,16 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       rs6000_vector_align[V16QImode] = align32;
       rs6000_vector_mem[V8HImode] = VECTOR_S2PP;
       rs6000_vector_mem[V16QImode] = VECTOR_S2PP;
+    }
+
+  if (TARGET_S2PP_HX)
+    {
+      rs6000_vector_unit[V64HImode] = VECTOR_S2PP_HX;
+      rs6000_vector_unit[V128QImode] = VECTOR_S2PP_HX;
+      rs6000_vector_align[V64HImode] = align32;
+      rs6000_vector_align[V128QImode] = align32;
+      rs6000_vector_mem[V64HImode] = VECTOR_S2PP_HX;
+      rs6000_vector_mem[V128QImode] = VECTOR_S2PP_HX;
     }
 
   /* V2DImode, full mode depends on ISA 2.07 vector mode.  Allow under VSX to
@@ -3388,6 +3449,13 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
       rs6000_constraints[RS6000_CONSTRAINT_kv] = S2PP_REGS;
       rs6000_constraints[RS6000_CONSTRAINT_kc] = S2PP_C_REG;
       rs6000_constraints[RS6000_CONSTRAINT_ka] = S2PP_ACC_REG;
+    }
+
+  if (TARGET_S2PP_HX)
+    {
+      rs6000_constraints[RS6000_CONSTRAINT_qv] = S2PP_HX_REGS;
+      rs6000_constraints[RS6000_CONSTRAINT_qc] = S2PP_HX_C_REG;
+      rs6000_constraints[RS6000_CONSTRAINT_qa] = S2PP_HX_ACC_REG;
     }
 
   if (TARGET_MFPGPR)						/* DFmode  */
@@ -3548,28 +3616,31 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 	}
       else
 	{
-	  reg_addr[V16QImode].reload_store = CODE_FOR_reload_v16qi_si_store;
-	  reg_addr[V16QImode].reload_load  = CODE_FOR_reload_v16qi_si_load;
-	  reg_addr[V8HImode].reload_store  = CODE_FOR_reload_v8hi_si_store;
-	  reg_addr[V8HImode].reload_load   = CODE_FOR_reload_v8hi_si_load;
-	  if (!TARGET_S2PP)
+	  if (!TARGET_S2PP_HX)
 	    {
-	      reg_addr[V4SImode].reload_store  = CODE_FOR_reload_v4si_si_store;
-	      reg_addr[V4SImode].reload_load   = CODE_FOR_reload_v4si_si_load;
-	      reg_addr[V2DImode].reload_store  = CODE_FOR_reload_v2di_si_store;
-	      reg_addr[V2DImode].reload_load   = CODE_FOR_reload_v2di_si_load;
-	      reg_addr[V1TImode].reload_store  = CODE_FOR_reload_v1ti_si_store;
-	      reg_addr[V1TImode].reload_load   = CODE_FOR_reload_v1ti_si_load;
-	      reg_addr[V4SFmode].reload_store  = CODE_FOR_reload_v4sf_si_store;
-	      reg_addr[V4SFmode].reload_load   = CODE_FOR_reload_v4sf_si_load;
-	      reg_addr[V2DFmode].reload_store  = CODE_FOR_reload_v2df_si_store;
-	      reg_addr[V2DFmode].reload_load   = CODE_FOR_reload_v2df_si_load;
-	      reg_addr[DFmode].reload_store    = CODE_FOR_reload_df_si_store;
-	      reg_addr[DFmode].reload_load     = CODE_FOR_reload_df_si_load;
-	      reg_addr[DDmode].reload_store    = CODE_FOR_reload_dd_si_store;
-	      reg_addr[DDmode].reload_load     = CODE_FOR_reload_dd_si_load;
-	      reg_addr[SFmode].reload_store    = CODE_FOR_reload_sf_si_store;
-	      reg_addr[SFmode].reload_load     = CODE_FOR_reload_sf_si_load;
+	      reg_addr[V16QImode].reload_store = CODE_FOR_reload_v16qi_si_store;
+	      reg_addr[V16QImode].reload_load  = CODE_FOR_reload_v16qi_si_load;
+	      reg_addr[V8HImode].reload_store  = CODE_FOR_reload_v8hi_si_store;
+	      reg_addr[V8HImode].reload_load   = CODE_FOR_reload_v8hi_si_load;
+	      if (!TARGET_S2PP)
+		{
+		  reg_addr[V4SImode].reload_store  = CODE_FOR_reload_v4si_si_store;
+		  reg_addr[V4SImode].reload_load   = CODE_FOR_reload_v4si_si_load;
+		  reg_addr[V2DImode].reload_store  = CODE_FOR_reload_v2di_si_store;
+		  reg_addr[V2DImode].reload_load   = CODE_FOR_reload_v2di_si_load;
+		  reg_addr[V1TImode].reload_store  = CODE_FOR_reload_v1ti_si_store;
+		  reg_addr[V1TImode].reload_load   = CODE_FOR_reload_v1ti_si_load;
+		  reg_addr[V4SFmode].reload_store  = CODE_FOR_reload_v4sf_si_store;
+		  reg_addr[V4SFmode].reload_load   = CODE_FOR_reload_v4sf_si_load;
+		  reg_addr[V2DFmode].reload_store  = CODE_FOR_reload_v2df_si_store;
+		  reg_addr[V2DFmode].reload_load   = CODE_FOR_reload_v2df_si_load;
+		  reg_addr[DFmode].reload_store    = CODE_FOR_reload_df_si_store;
+		  reg_addr[DFmode].reload_load     = CODE_FOR_reload_df_si_load;
+		  reg_addr[DDmode].reload_store    = CODE_FOR_reload_dd_si_store;
+		  reg_addr[DDmode].reload_load     = CODE_FOR_reload_dd_si_load;
+		  reg_addr[SFmode].reload_store    = CODE_FOR_reload_sf_si_store;
+		  reg_addr[SFmode].reload_load     = CODE_FOR_reload_sf_si_load;
+		}
 	    }
 	  if (FLOAT128_VECTOR_P (KFmode))
 	    {
@@ -3777,6 +3848,9 @@ rs6000_init_hard_regno_mode_ok (bool global_init_p)
 
       else if (c == S2PP_REGS)
 	reg_size = UNITS_PER_S2PP_WORD;
+
+      else if (c == S2PP_HX_REGS)
+	reg_size = UNITS_PER_S2PP_HX_WORD;
 
       else if (c == FLOAT_REGS)
 	reg_size = UNITS_PER_FP_WORD;
@@ -3999,7 +4073,8 @@ rs6000_builtin_mask_calculate (void)
 	  | ((TARGET_LONG_DOUBLE_128)	    ? RS6000_BTM_LDBL128   : 0)
 	  | ((TARGET_FLOAT128_TYPE)	    ? RS6000_BTM_FLOAT128  : 0)
 	  | ((TARGET_FLOAT128_HW)	    ? RS6000_BTM_FLOAT128_HW : 0)
-	  | ((TARGET_S2PP)		    ? RS6000_BTM_S2PP : 0));
+	  | ((TARGET_S2PP)		    ? RS6000_BTM_S2PP : 0)
+	  | ((TARGET_S2PP_HX)		    ? RS6000_BTM_S2PP_HX : 0));
 }
 
 /* Implement TARGET_MD_ASM_ADJUST.  All asm statements are considered
@@ -4423,7 +4498,7 @@ rs6000_option_override_internal (bool global_init_p)
     rs6000_isa_flags |= (ISA_2_7_MASKS_SERVER & ~ignore_masks);
   else if (TARGET_VSX)
     rs6000_isa_flags |= (ISA_2_6_MASKS_SERVER & ~ignore_masks);
-  else if (TARGET_POPCNTD || TARGET_S2PP)
+  else if (TARGET_POPCNTD || TARGET_S2PP || TARGET_S2PP_HX)
     rs6000_isa_flags |= (ISA_2_6_MASKS_EMBEDDED & ~ignore_masks);
   else if (TARGET_DFP)
     rs6000_isa_flags |= (ISA_2_5_MASKS_SERVER & ~ignore_masks);
@@ -5678,6 +5753,15 @@ rs6000_preferred_simd_mode (scalar_mode mode)
 	return V16QImode;
       default:;
       }
+  if (TARGET_S2PP_HX)
+    switch (mode)
+      {
+      case E_HImode:
+	return V64HImode;
+      case E_QImode:
+	return V128QImode;
+      default:;
+      }
   if (TARGET_PAIRED_FLOAT
       && mode == SFmode)
     return V2SFmode;
@@ -6239,6 +6323,7 @@ direct_return (void)
 	  && info->first_fp_reg_save == 64
 	  && info->first_altivec_reg_save == LAST_ALTIVEC_REGNO + 1
 	  && info->first_s2pp_reg_save == LAST_S2PP_REGNO + 1
+	  && info->first_s2pp_hx_reg_save == LAST_S2PP_HX_REGNO + 1
 	  && ! info->lr_save_p
 	  && ! info->cr_save_p
 	  && info->vrsave_size == 0
@@ -6698,7 +6783,6 @@ easy_s2pp_constant (rtx op, machine_mode mode)
   return false;
 }
 
-
 /* Generate a VEC_DUPLICATE representing a vspltis[bhw] instruction whose
    result is OP.  Abort if it is not possible.  */
 
@@ -6728,6 +6812,80 @@ gen_easy_s2pp_constant (rtx op)
 
   if (vspltis_constant (op, step, copies))
     return gen_rtx_VEC_DUPLICATE (V16QImode, gen_lowpart (QImode, val));
+
+  gcc_unreachable ();
+}
+
+/* Return true if OP is of the given MODE and can be synthesized
+   with a vspltisb, vspltish or vspltisw.  */
+
+bool
+easy_s2pp_hx_constant (rtx op, machine_mode mode)
+{
+  unsigned step, copies;
+
+  if (mode == VOIDmode)
+    mode = GET_MODE (op);
+  else if (mode != GET_MODE (op))
+    return false;
+
+  step = GET_MODE_NUNITS (mode) / 4;
+  copies = 1;
+
+  /* Then try with a vspltish.  */
+  if (step == 1)
+    copies <<= 1;
+  else
+    step >>= 1;
+
+  if (vspltis_constant (op, step, copies))
+    return true;
+
+  /* And finally a vspltisb.  */
+  if (step == 1)
+    copies <<= 1;
+  else
+    step >>= 1;
+
+  if (vspltis_constant (op, step, copies))
+    return true;
+
+  if (vspltis_shifted (op) != 0)
+    return true;
+
+  return false;
+}
+
+
+/* Generate a VEC_DUPLICATE representing a vspltis[bhw] instruction whose
+   result is OP.  Abort if it is not possible.  */
+
+rtx
+gen_easy_s2pp_hx_constant (rtx op)
+{
+  machine_mode mode = GET_MODE (op);
+  int nunits = GET_MODE_NUNITS (mode);
+  rtx val = CONST_VECTOR_ELT (op, BYTES_BIG_ENDIAN ? nunits - 1 : 0);
+  unsigned step = nunits / 4;
+  unsigned copies = 1;
+
+  /* Try with a vspltish.  */
+  if (step == 1)
+    copies <<= 1;
+  else
+    step >>= 1;
+
+  if (vspltis_constant (op, step, copies))
+    return gen_rtx_VEC_DUPLICATE (V64HImode, gen_lowpart (HImode, val));
+
+  /* And finally a vspltisb.  */
+  if (step == 1)
+    copies <<= 1;
+  else
+    step >>= 1;
+
+  if (vspltis_constant (op, step, copies))
+    return gen_rtx_VEC_DUPLICATE (V128QImode, gen_lowpart (QImode, val));
 
   gcc_unreachable ();
 }
@@ -6927,6 +7085,27 @@ output_vec_const_move (rtx *operands)
 	return "#";
       }
       else if (mode == V16QImode){
+	return "#";
+      }
+      else
+	gcc_unreachable ();
+    }
+
+  if (TARGET_S2PP_HX)
+    {
+      rtx splat_vec;
+
+      splat_vec = gen_easy_s2pp_hx_constant (vec);
+      gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
+      operands[1] = XEXP (splat_vec, 0);
+      if (!EASY_VECTOR_15 (INTVAL (operands[1]))){
+	return "#";
+      }
+      mode = GET_MODE (splat_vec);
+      if (mode == V64HImode){
+	return "#";
+      }
+      else if (mode == V128QImode){
 	return "#";
       }
       else
@@ -8457,6 +8636,10 @@ reg_offset_addressing_ok_p (machine_mode mode)
 {
   switch (mode)
     {
+    case E_V128QImode:
+    case E_V64HImode:
+      if (VECTOR_MEM_S2PP_HX_P (mode))
+        return false;
     case E_V16QImode:
     case E_V8HImode:
       if (VECTOR_MEM_S2PP_P (mode))
@@ -10277,6 +10460,15 @@ rs6000_conditional_register_usage (void)
       fixed_regs[S2PP_ACC_REGNO] = call_used_regs[S2PP_ACC_REGNO]
 		 = call_really_used_regs[S2PP_ACC_REGNO] = 1;
     }
+  if (TARGET_S2PP_HX)
+    {
+      /* conditional register. */
+      fixed_regs[S2PP_HX_COND_REGNO] = call_used_regs[S2PP_HX_COND_REGNO]
+		 = call_really_used_regs[S2PP_HX_COND_REGNO] = 1;
+      /* accumulator register. */
+      fixed_regs[S2PP_HX_ACC_REGNO] = call_used_regs[S2PP_HX_ACC_REGNO]
+		 = call_really_used_regs[S2PP_HX_ACC_REGNO] = 1;
+    }
 }
 
 
@@ -10735,7 +10927,7 @@ rs6000_emit_move (rtx dest, rtx source, machine_mode mode)
 					      ? 32 : MEM_ALIGN (operands[1]))))
       && ! MEM_VOLATILE_P (operands [0])
       && ! MEM_VOLATILE_P (operands [1])
-      && !TARGET_S2PP)
+      && !TARGET_S2PP && !TARGET_S2PP_HX)
     {
       emit_move_insn (adjust_address (operands[0], SImode, 0),
 		      adjust_address (operands[1], SImode, 0));
@@ -11396,6 +11588,7 @@ rs6000_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
       valcum.fregno = FP_ARG_MIN_REG;
       valcum.vregno = ALTIVEC_ARG_MIN_REG;
       valcum.kvregno = S2PP_ARG_MIN_REG;
+      valcum.qvregno = S2PP_HX_ARG_MIN_REG;
       /* Do a trial code generation as if this were going to be passed
 	 as an argument; if any part goes in memory, we return NULL.  */
       valret = rs6000_darwin64_record_arg (&valcum, type, true, true);
@@ -11510,6 +11703,7 @@ init_cumulative_args (CUMULATIVE_ARGS *cum, tree fntype,
   cum->fregno = FP_ARG_MIN_REG;
   cum->vregno = ALTIVEC_ARG_MIN_REG;
   cum->kvregno = S2PP_ARG_MIN_REG;
+  cum->qvregno = S2PP_HX_ARG_MIN_REG;
   cum->prototype = (fntype && prototype_p (fntype));
   cum->call_cookie = ((DEFAULT_ABI == ABI_V4 && libcall)
 		      ? CALL_LIBCALL : CALL_NORMAL);
@@ -11585,7 +11779,7 @@ init_cumulative_args (CUMULATIVE_ARGS *cum, tree fntype,
 			      == long_double_type_node))))
 		rs6000_passes_long_double = true;
 	    }
-	  if (ALTIVEC_OR_VSX_VECTOR_MODE (return_mode) || S2PP_VECTOR_MODE (return_mode)
+	  if (ALTIVEC_OR_VSX_VECTOR_MODE (return_mode) || S2PP_VECTOR_MODE (return_mode) || S2PP_HX_VECTOR_MODE (return_mode)
 	      || PAIRED_VECTOR_MODE (return_mode))
 	    rs6000_passes_vector = true;
 	}
@@ -12038,7 +12232,7 @@ rs6000_function_arg_advance_1 (CUMULATIVE_ARGS *cum, machine_mode mode,
 		      && TYPE_MAIN_VARIANT (type) == long_double_type_node)))
 	    rs6000_passes_long_double = true;
 	}
-      if ((named && (ALTIVEC_OR_VSX_VECTOR_MODE (mode) || S2PP_VECTOR_MODE (mode)))
+      if ((named && (ALTIVEC_OR_VSX_VECTOR_MODE (mode) || S2PP_VECTOR_MODE (mode) || S2PP_HX_VECTOR_MODE (mode)))
 	  || (PAIRED_VECTOR_MODE (mode)
 	      && !cum->stdarg
 	      && cum->sysv_gregno <= GP_ARG_MAX_REG))
@@ -17500,11 +17694,12 @@ rs6000_init_builtins (void)
   machine_mode mode;
 
   if (TARGET_DEBUG_BUILTIN)
-    fprintf (stderr, "rs6000_init_builtins%s%s%s%s\n",
+    fprintf (stderr, "rs6000_init_builtins%s%s%s%s%s\n",
 	     (TARGET_PAIRED_FLOAT) ? ", paired"	 : "",
 	     (TARGET_ALTIVEC)	   ? ", altivec" : "",
 	     (TARGET_VSX)	   ? ", vsx"	 : "",
-	     (TARGET_S2PP)	   ? ", s2pp"	 : "");
+	     (TARGET_S2PP)	   ? ", s2pp"	 : "",
+	     (TARGET_S2PP_HX)	   ? ", s2pp_hx"	 : "");
 
   V2SI_type_node = build_vector_type (intSI_type_node, 2);
   V2SF_type_node = build_vector_type (float_type_node, 2);
@@ -17515,13 +17710,21 @@ rs6000_init_builtins (void)
   V4SI_type_node = rs6000_vector_type ("__vector signed int",
 				       intSI_type_node, 4);
   V4SF_type_node = rs6000_vector_type ("__vector float", float_type_node, 4);
+  V64HI_type_node = rs6000_vector_type ("__vector_hx signed short",
+				       intHI_type_node, 64);
   V8HI_type_node = rs6000_vector_type ("__vector signed short",
 				       intHI_type_node, 8);
+  V128QI_type_node = rs6000_vector_type ("__vector_hx signed char",
+					intQI_type_node, 128);
   V16QI_type_node = rs6000_vector_type ("__vector signed char",
 					intQI_type_node, 16);
 
+  unsigned_V128QI_type_node = rs6000_vector_type ("__vector_hx unsigned char",
+					unsigned_intQI_type_node, 128);
   unsigned_V16QI_type_node = rs6000_vector_type ("__vector unsigned char",
 					unsigned_intQI_type_node, 16);
+  unsigned_V64HI_type_node = rs6000_vector_type ("__vector_hx unsigned short",
+				       unsigned_intHI_type_node, 64);
   unsigned_V8HI_type_node = rs6000_vector_type ("__vector unsigned short",
 				       unsigned_intHI_type_node, 8);
   unsigned_V4SI_type_node = rs6000_vector_type ("__vector unsigned int",
@@ -17651,8 +17854,12 @@ rs6000_init_builtins (void)
   builtin_mode_to_type[V4SFmode][0] = V4SF_type_node;
   builtin_mode_to_type[V8HImode][0] = V8HI_type_node;
   builtin_mode_to_type[V8HImode][1] = unsigned_V8HI_type_node;
+  builtin_mode_to_type[V64HImode][0] = V64HI_type_node;
+  builtin_mode_to_type[V64HImode][1] = unsigned_V64HI_type_node;
   builtin_mode_to_type[V16QImode][0] = V16QI_type_node;
   builtin_mode_to_type[V16QImode][1] = unsigned_V16QI_type_node;
+  builtin_mode_to_type[V128QImode][0] = V128QI_type_node;
+  builtin_mode_to_type[V128QImode][1] = unsigned_V128QI_type_node;
 
   tdecl = add_builtin_type ("__bool char", bool_char_type_node);
   TYPE_NAME (bool_char_type_node) = tdecl;
@@ -17666,8 +17873,12 @@ rs6000_init_builtins (void)
   tdecl = add_builtin_type ("__pixel", pixel_type_node);
   TYPE_NAME (pixel_type_node) = tdecl;
 
+  bool_V128QI_type_node = rs6000_vector_type ("__vector_hx __bool char",
+					     bool_char_type_node, 128);
   bool_V16QI_type_node = rs6000_vector_type ("__vector __bool char",
 					     bool_char_type_node, 16);
+  bool_V64HI_type_node = rs6000_vector_type ("__vector_hx __bool short",
+					    bool_short_type_node, 64);
   bool_V8HI_type_node = rs6000_vector_type ("__vector __bool short",
 					    bool_short_type_node, 8);
   bool_V4SI_type_node = rs6000_vector_type ("__vector __bool int",
@@ -17678,6 +17889,8 @@ rs6000_init_builtins (void)
 					    bool_long_long_type_node, 2);
   pixel_V8HI_type_node = rs6000_vector_type ("__vector __pixel",
 					     pixel_type_node, 8);
+  pixel_V64HI_type_node = rs6000_vector_type ("__vector_hx __pixel",
+					     pixel_type_node, 64);
 
   /* Paired builtins are only available if you build a compiler with the
      appropriate options, so only create those builtins with the appropriate
@@ -21411,6 +21624,10 @@ rs6000_preferred_reload_class (rtx x, enum reg_class rclass)
       && VECTOR_UNIT_S2PP_P (mode) && easy_vector_constant (x, mode))
     return rclass;
 
+  if ((rclass == S2PP_HX_REGS)
+      && VECTOR_UNIT_S2PP_HX_P (mode) && easy_vector_constant (x, mode))
+    return rclass;
+
   if ((rclass == FLOAT_REGS || rclass == VSX_REGS)
       && (reg_addr[mode].addr_mask[RELOAD_REG_FPR] & RELOAD_REG_VALID) == 0)
     return NO_REGS;
@@ -21653,6 +21870,11 @@ rs6000_secondary_reload_class (enum reg_class rclass, machine_mode mode,
       && rclass == S2PP_REGS)
     return NO_REGS;
 
+  /* Memory, and s2pp_hx registers can go into s2pp_hx registers.  */
+  if ((regno == -1 || S2PP_HX_REGNO_P (regno))
+      && rclass == S2PP_HX_REGS)
+    return NO_REGS;
+
 
   /* We can copy among the CR registers.  */
   if ((rclass == CR_REGS || rclass == CR0_REGS)
@@ -21757,6 +21979,10 @@ rs6000_can_change_mode_class (machine_mode from,
 
   if (TARGET_S2PP && rclass == S2PP_REGS
       && (S2PP_VECTOR_MODE (from) + S2PP_VECTOR_MODE (to)) == 1)
+    return false;
+
+  if (TARGET_S2PP_HX && rclass == S2PP_HX_REGS
+      && (S2PP_HX_VECTOR_MODE (from) + S2PP_HX_VECTOR_MODE (to)) == 1)
     return false;
 
   return true;
@@ -24821,6 +25047,8 @@ rs6000_split_multireg_move (rtx dst, rtx src)
     reg_mode = V16QImode;
   else if (S2PP_REGNO_P (reg))
     reg_mode = V16QImode;
+  else if (S2PP_HX_REGNO_P (reg))
+    reg_mode = V128QImode;
   else
     reg_mode = word_mode;
   reg_mode_size = GET_MODE_SIZE (reg_mode);
@@ -25134,6 +25362,21 @@ first_s2pp_reg_to_save (void)
   return i;
 }
 
+/* Similar, for s2pp_hx regs.  */
+
+static int
+first_s2pp_hx_reg_to_save (void)
+{
+  int i;
+
+  /* Find lowest numbered live register.  */
+  for (i = FIRST_SAVED_S2PP_HX_REGNO; i <= LAST_S2PP_HX_REGNO; ++i)
+    if (save_reg_p (i))
+      break;
+
+  return i;
+}
+
 /* Return a 32-bit mask of the AltiVec registers we need to set in
    VRSAVE.  Bit n of the return value is 1 if Vn is live.  The MSB in
    the 32-bit word is 0.  */
@@ -25193,6 +25436,7 @@ compute_save_world_info (rs6000_stack_t *info)
        && info->first_gp_reg_save == FIRST_SAVED_GP_REGNO
        && info->first_altivec_reg_save == FIRST_SAVED_ALTIVEC_REGNO
        && info->first_s2pp_reg_save == FIRST_SAVED_S2PP_REGNO
+       && info->first_s2pp_hx_reg_save == FIRST_SAVED_S2PP_HX_REGNO
        && info->cr_save_p);
 
   /* This will not work in conjunction with sibcalls.  Make sure there
@@ -25229,7 +25473,9 @@ compute_save_world_info (rs6000_stack_t *info)
 		  && (info->first_altivec_reg_save
 		      >= FIRST_SAVED_ALTIVEC_REGNO)
 		  && (info->first_s2pp_reg_save
-		      >= FIRST_SAVED_S2PP_REGNO));
+		      >= FIRST_SAVED_S2PP_REGNO)
+		  && (info->first_s2pp_hx_reg_save
+		      >= FIRST_SAVED_S2PP_HX_REGNO));
     }
 
   return;
@@ -25310,6 +25556,9 @@ rs6000_savres_strategy (rs6000_stack_t *info,
   if (info->first_s2pp_reg_save == LAST_S2PP_REGNO + 1)
     strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
 
+  if (info->first_s2pp_hx_reg_save == LAST_S2PP_HX_REGNO + 1)
+    strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
+
   /* Define cutoff for using out-of-line functions to save registers.  */
   if (DEFAULT_ABI == ABI_V4 || TARGET_ELF)
     {
@@ -25334,6 +25583,8 @@ rs6000_savres_strategy (rs6000_stack_t *info,
 	  if (info->first_altivec_reg_save == LAST_ALTIVEC_REGNO)
 	    strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
 	  if (info->first_s2pp_reg_save == LAST_S2PP_REGNO)
+	    strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
+	  if (info->first_s2pp_hx_reg_save == LAST_S2PP_HX_REGNO)
 	    strategy |= SAVE_INLINE_VRS | REST_INLINE_VRS;
 	}
     }
@@ -25419,6 +25670,24 @@ rs6000_savres_strategy (rs6000_stack_t *info,
   if ((strategy & SAVE_INLINE_VRS)
       && !(strategy & REST_INLINE_VRS))
     for (int i = info->first_s2pp_reg_save; i < LAST_S2PP_REGNO + 1; i++)
+      if (!save_reg_p (i))
+	{
+	  strategy |= REST_INLINE_VRS;
+	  break;
+	}
+
+  /* Similarly, for s2pp_hx regs.  */
+  if (!(strategy & REST_INLINE_VRS))
+    for (int i = info->first_s2pp_hx_reg_save; i < LAST_S2PP_HX_REGNO + 1; i++)
+      if (fixed_regs[i])
+	{
+	  strategy |= REST_INLINE_VRS;
+	  break;
+	}
+
+  if ((strategy & SAVE_INLINE_VRS)
+      && !(strategy & REST_INLINE_VRS))
+    for (int i = info->first_s2pp_hx_reg_save; i < LAST_S2PP_HX_REGNO + 1; i++)
       if (!save_reg_p (i))
 	{
 	  strategy |= REST_INLINE_VRS;
@@ -25703,6 +25972,10 @@ rs6000_stack_info (void)
   info->s2pp_size = 16 * (LAST_S2PP_REGNO + 1
 				 - info->first_s2pp_reg_save);
 
+  info->first_s2pp_hx_reg_save = first_s2pp_hx_reg_to_save ();
+  info->s2pp_hx_size = UNITS_PER_S2PP_HX_WORD * (LAST_S2PP_HX_REGNO + 1
+				 - info->first_s2pp_hx_reg_save);
+
   /* Does this function call anything?  */
   info->calls_p = (!crtl->is_leaf || cfun->machine->ra_needs_full_frame);
 
@@ -25840,6 +26113,20 @@ rs6000_stack_info (void)
 	  info->ehrd_offset = info->s2pp_save_offset;
 	}
 
+      else if (TARGET_S2PP_HX)
+	{
+	  /* Align stack so vector save area is on a word boundary.  */
+	  if (info->s2pp_hx_size != 0)
+	    info->s2pp_hx_padding_size = 4 - (-info->cr_save_offset % 4);
+
+	  info->s2pp_hx_save_offset = info->cr_save_offset
+				      - info->s2pp_hx_padding_size
+				      - info->s2pp_hx_size;
+
+	  /* Adjust for s2pp_hx case.  */
+	  info->ehrd_offset = info->s2pp_hx_save_offset;
+	}
+
       else
 	info->ehrd_offset = info->cr_save_offset;
 
@@ -25854,6 +26141,8 @@ rs6000_stack_info (void)
 				  + info->altivec_padding_size
 				  + info->s2pp_size
 				  + info->s2pp_padding_size
+				  + info->s2pp_hx_size
+				  + info->s2pp_hx_padding_size
 				  + ehrd_size
 				  + ehcr_size
 				  + info->cr_size
@@ -25967,6 +26256,10 @@ debug_stack_info (rs6000_stack_t *info)
     fprintf (stderr, "\tfirst_s2pp_reg_save = %5d\n",
 	     info->first_s2pp_reg_save);
 
+  if (info->first_s2pp_hx_reg_save <= LAST_S2PP_HX_REGNO)
+    fprintf (stderr, "\tfirst_s2pp_hx_reg_save = %5d\n",
+	     info->first_s2pp_hx_reg_save);
+
   if (info->lr_save_p)
     fprintf (stderr, "\tlr_save_p           = %5d\n", info->lr_save_p);
 
@@ -25995,6 +26288,10 @@ debug_stack_info (rs6000_stack_t *info)
   if (info->s2pp_size)
     fprintf (stderr, "\ts2pp_save_offset    = %5d\n",
 	     info->s2pp_save_offset);
+
+  if (info->s2pp_hx_size)
+    fprintf (stderr, "\ts2pp_hx_save_offset    = %5d\n",
+	     info->s2pp_hx_save_offset);
 
   if (info->vrsave_size)
     fprintf (stderr, "\tvrsave_save_offset  = %5d\n",
@@ -26035,6 +26332,9 @@ debug_stack_info (rs6000_stack_t *info)
   if (info->s2pp_size)
     fprintf (stderr, "\ts2pp_size           = %5d\n", info->s2pp_size);
 
+  if (info->s2pp_hx_size)
+    fprintf (stderr, "\ts2pp_hx_size           = %5d\n", info->s2pp_hx_size);
+
   if (info->vrsave_size)
     fprintf (stderr, "\tvrsave_size         = %5d\n", info->vrsave_size);
 
@@ -26045,6 +26345,10 @@ debug_stack_info (rs6000_stack_t *info)
   if (info->s2pp_padding_size)
     fprintf (stderr, "\ts2pp_padding_size   = %5d\n",
 	     info->s2pp_padding_size);
+
+  if (info->s2pp_hx_padding_size)
+    fprintf (stderr, "\ts2pp_hx_padding_size   = %5d\n",
+	     info->s2pp_hx_padding_size);
 
   if (info->cr_size)
     fprintf (stderr, "\tcr_size             = %5d\n", info->cr_size);
@@ -27164,7 +27468,8 @@ emit_frame_save (rtx frame_reg, machine_mode mode,
   /* Some cases that need register indexed addressing.  */
   gcc_checking_assert (!(TARGET_ALTIVEC_ABI && ALTIVEC_VECTOR_MODE (mode))
 			 || (TARGET_VSX && ALTIVEC_OR_VSX_VECTOR_MODE (mode))
-			 || (TARGET_S2PP && S2PP_VECTOR_MODE (mode)));
+			 || (TARGET_S2PP && S2PP_VECTOR_MODE (mode))
+			 || (TARGET_S2PP_HX && S2PP_HX_VECTOR_MODE (mode)));
 
   reg = gen_rtx_REG (mode, regno);
   rtx_insn *insn = emit_insn (gen_frame_store (reg, frame_reg, offset));
@@ -27323,10 +27628,12 @@ rs6000_savres_routine_sym (rs6000_stack_t *info, int sel)
 	       ? info->first_gp_reg_save
 	       : (sel & SAVRES_REG) == SAVRES_FPR
 	       ? info->first_fp_reg_save - 32
-	       : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP
+	       : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP && !TARGET_S2PP_HX
 	       ? info->first_altivec_reg_save - FIRST_ALTIVEC_REGNO
 	       : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
 	       ? info->first_s2pp_reg_save - FIRST_S2PP_REGNO
+	       : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP_HX
+	       ? info->first_s2pp_hx_reg_save - FIRST_S2PP_HX_REGNO
 	       : -1);
   rtx sym;
   int select = sel;
@@ -27419,19 +27726,23 @@ rs6000_emit_savres_rtx (rs6000_stack_t *info,
 	       ? info->first_gp_reg_save
 	       : (sel & SAVRES_REG) == SAVRES_FPR
 	       ? info->first_fp_reg_save
-	       : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP
+	       : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP && !TARGET_S2PP_HX
 	       ? info->first_altivec_reg_save
 	       : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
 	       ? info->first_s2pp_reg_save
+	       : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP_HX
+	       ? info->first_s2pp_hx_reg_save
 	       : -1);
   end_reg = ((sel & SAVRES_REG) == SAVRES_GPR
 	     ? 32
 	     : (sel & SAVRES_REG) == SAVRES_FPR
 	     ? 64
-	     : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP
+	     : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP && !TARGET_S2PP_HX
 	     ? LAST_ALTIVEC_REGNO + 1
 	     : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
 	     ? LAST_S2PP_REGNO + 1
+	     : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP_HX
+	     ? LAST_S2PP_HX_REGNO + 1
 	     : -1);
   n_regs = end_reg - start_reg;
   p = rtvec_alloc (3 + ((sel & SAVRES_LR) ? 1 : 0)
@@ -28136,6 +28447,7 @@ rs6000_emit_prologue (void)
       /* PS (2018-06-18): the +1 is to account for last_regno+1
          as above e.g. for gpr, last reg num == 31, make 32? */
       sz += LAST_S2PP_REGNO - info->first_s2pp_reg_save + 1;
+      sz += LAST_S2PP_HX_REGNO - info->first_s2pp_hx_reg_save + 1;
       p = rtvec_alloc (sz);
       j = 0;
       RTVEC_ELT (p, j++) = gen_rtx_CLOBBER (VOIDmode,
@@ -28166,6 +28478,12 @@ rs6000_emit_prologue (void)
 					  info->first_s2pp_reg_save + i),
 			     frame_reg_rtx,
 			     info->s2pp_save_offset + frame_off + 16 * i);
+      for (i = 0; info->first_s2pp_hx_reg_save + i <= LAST_S2PP_HX_REGNO; i++)
+	RTVEC_ELT (p, j++)
+	  = gen_frame_store (gen_rtx_REG (V64HImode,
+					  info->first_s2pp_hx_reg_save + i),
+			     frame_reg_rtx,
+			     info->s2pp_hx_save_offset + frame_off + UNITS_PER_S2PP_HX_WORD * i);
       for (i = 0; i < 32 - info->first_gp_reg_save; i++)
 	RTVEC_ELT (p, j++)
 	  = gen_frame_store (gen_rtx_REG (reg_mode, info->first_gp_reg_save + i),
@@ -28218,6 +28536,7 @@ rs6000_emit_prologue (void)
 	       || info->first_gp_reg_save < 32
 	       || info->altivec_size != 0
 	       || info->s2pp_size != 0
+	       || info->s2pp_hx_size != 0
 	       || info->vrsave_size != 0
 	       || crtl->calls_eh_return)
 	ptr_regno = 12;
@@ -28245,6 +28564,8 @@ rs6000_emit_prologue (void)
 	    ptr_off = info->altivec_save_offset + info->altivec_size;
 	  else if (!(strategy & SAVE_INLINE_VRS) && info->s2pp_size != 0)
 	    ptr_off = info->s2pp_save_offset + info->s2pp_size;
+	  else if (!(strategy & SAVE_INLINE_VRS) && info->s2pp_hx_size != 0)
+	    ptr_off = info->s2pp_hx_save_offset + info->s2pp_hx_size;
 	  frame_off = -ptr_off;
 	}
       sp_adjust = rs6000_emit_allocate_stack (info->total_size,
@@ -28701,6 +29022,25 @@ rs6000_emit_prologue (void)
 	  frame_off = -ptr_off;
 	}
 
+      else if ((strategy & SAVE_INLINE_VRS) == 0
+	  || (info->s2pp_hx_size != 0
+	      && (info->s2pp_hx_save_offset + info->s2pp_hx_size - UNITS_PER_S2PP_HX_WORD
+		  + info->total_size - frame_off) > 32767))
+	{
+	  int sel = SAVRES_SAVE | SAVRES_VR;
+	  unsigned ptr_regno = ptr_regno_for_savres (sel);
+
+	  if (using_static_chain_p
+	      && ptr_regno == STATIC_CHAIN_REGNUM)
+	    ptr_regno = 12;
+	  if (REGNO (frame_reg_rtx) != ptr_regno)
+	    START_USE (ptr_regno);
+	  ptr_reg = gen_rtx_REG (Pmode, ptr_regno);
+	  frame_reg_rtx = ptr_reg;
+	  ptr_off = info->s2pp_hx_save_offset + info->s2pp_hx_size;
+	  frame_off = -ptr_off;
+	}
+
       else if (REGNO (frame_reg_rtx) == 1)
 	frame_off = info->total_size;
       sp_adjust = rs6000_emit_allocate_stack (info->total_size,
@@ -28729,6 +29069,24 @@ rs6000_emit_prologue (void)
 	  {
 	      int offset = info->s2pp_save_offset + frame_off + 16 * i;
 	      rtx savereg = gen_rtx_REG (V8HImode, i+info->first_s2pp_reg_save);
+	      rtx areg = gen_rtx_REG (Pmode, 0);
+	      emit_move_insn (areg, GEN_INT (offset));
+	      rtx mem = gen_frame_mem (V8HImode,gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
+	      insn = emit_move_insn (mem, savereg);
+	      rs6000_frame_related (insn, frame_reg_rtx, sp_off-frame_off, areg,
+				    GEN_INT(offset));
+	  }
+    }
+
+   if (!WORLD_SAVE_P (info)
+      && info->s2pp_hx_size != 0 && (strategy & SAVE_INLINE_VRS) == 0)
+    {
+      int i;
+      for (i = 0; info->first_s2pp_hx_reg_save + i <= LAST_S2PP_HX_REGNO; i++)
+        if (save_reg_p (info->first_s2pp_hx_reg_save + i))
+	  {
+	      int offset = info->s2pp_hx_save_offset + frame_off + UNITS_PER_S2PP_HX_WORD * i;
+	      rtx savereg = gen_rtx_REG (V64HImode, i+info->first_s2pp_hx_reg_save);
 	      rtx areg = gen_rtx_REG (Pmode, 0);
 	      emit_move_insn (areg, GEN_INT (offset));
 	      rtx mem = gen_frame_mem (V8HImode,gen_rtx_PLUS (Pmode, frame_reg_rtx, areg));
@@ -29341,6 +29699,7 @@ rs6000_emit_epilogue (int sibcall)
 		       + 32 - info->first_gp_reg_save
 		       + LAST_ALTIVEC_REGNO + 1 - info->first_altivec_reg_save
 		       + LAST_S2PP_REGNO + 1 - info->first_s2pp_reg_save
+		       + LAST_S2PP_HX_REGNO + 1 - info->first_s2pp_hx_reg_save
 		       + 63 + 1 - info->first_fp_reg_save);
 
       strcpy (rname, ((crtl->calls_eh_return) ?
@@ -29398,6 +29757,16 @@ rs6000_emit_epilogue (int sibcall)
 			      frame_reg_rtx, info->s2pp_save_offset + 16 * i);
 	  if (flag_shrink_wrap
 	      && save_reg_p (info->first_s2pp_reg_save + i))
+	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
+	}
+      for (i = 0; info->first_s2pp_hx_reg_save + i <= LAST_S2PP_HX_REGNO; i++)
+	{
+	  rtx reg = gen_rtx_REG (V64HImode, info->first_s2pp_hx_reg_save + i);
+	  RTVEC_ELT (p, j++)
+	    = gen_frame_load (reg,
+			      frame_reg_rtx, info->s2pp_hx_save_offset + UNITS_PER_S2PP_HX_WORD * i);
+	  if (flag_shrink_wrap
+	      && save_reg_p (info->first_s2pp_hx_reg_save + i))
 	    cfa_restores = alloc_reg_note (REG_CFA_RESTORE, reg, cfa_restores);
 	}
       for (i = 0; info->first_fp_reg_save + i <= 63; i++)
@@ -33826,8 +34195,10 @@ rs6000_attribute_takes_identifier_p (const_tree attr_id)
 {
   if (TARGET_S2PP)
     return is_attribute_p ("s2pp", attr_id);
+  else if (TARGET_S2PP_HX)
+    return is_attribute_p ("s2pp_hx", attr_id);
   else
-  return is_attribute_p ("altivec", attr_id);
+    return is_attribute_p ("altivec", attr_id);
 }
 
 /* Handle the "altivec" attribute.  The attribute may have
@@ -34023,6 +34394,90 @@ rs6000_handle_s2pp_attribute (tree *node,
       switch (mode)
 	{
 	case V8HImode: result = pixel_V8HI_type_node;
+	default: break;
+	}
+    default: break;
+    }
+
+  /* Propagate qualifiers attached to the element type
+     onto the vector type.  */
+  if (result && result != type && TYPE_QUALS (type))
+    result = build_qualified_type (result, TYPE_QUALS (type));
+
+  *no_add_attrs = true;  /* No need to hang on to the attribute.  */
+
+  if (result)
+    *node = lang_hooks.types.reconstruct_complex_type (*node, result);
+
+  return NULL_TREE;
+}
+
+static tree
+rs6000_handle_s2pp_hx_attribute (tree *node,
+				 tree name ATTRIBUTE_UNUSED,
+				 tree args,
+				 int flags ATTRIBUTE_UNUSED,
+				 bool *no_add_attrs)
+{
+  tree type = *node, result = NULL_TREE;
+  enum machine_mode mode;
+  int unsigned_p;
+  char s2pp_hx_type
+    = ((args && TREE_CODE (args) == TREE_LIST && TREE_VALUE (args)
+	&& TREE_CODE (TREE_VALUE (args)) == IDENTIFIER_NODE)
+       ? *IDENTIFIER_POINTER (TREE_VALUE (args))
+       : '?');
+
+  while (POINTER_TYPE_P (type)
+	 || TREE_CODE (type) == FUNCTION_TYPE
+	 || TREE_CODE (type) == METHOD_TYPE
+	 || TREE_CODE (type) == ARRAY_TYPE)
+    type = TREE_TYPE (type);
+
+  mode = TYPE_MODE (type);
+
+  /* Check for invalid s2pp_hx type qualifiers.  */
+  if (type == long_double_type_node)
+    error ("use of %<long double%> in Vec types is invalid");
+  else if (type == boolean_type_node)
+    error ("use of boolean types in Vec types is invalid");
+  else if (TREE_CODE (type) == COMPLEX_TYPE)
+    error ("use of %<complex%> in Vec types is invalid");
+  else if (DECIMAL_FLOAT_MODE_P (mode))
+    error ("use of decimal floating point types in Vec types is invalid");
+
+  switch (s2pp_hx_type)
+    {
+    case 'v': /* AWH: make 'k' --> nope, this is for identifying the vector type? */
+      unsigned_p = TYPE_UNSIGNED (type);
+      switch (mode)
+	{
+	case E_HImode:
+	  result = (unsigned_p ? unsigned_V64HI_type_node : V64HI_type_node);
+	  break;
+	case E_QImode:
+	  result = (unsigned_p ? unsigned_V128QI_type_node : V128QI_type_node);
+	  break;
+	  /* If the user says 'vector int bool', we may be handed the 'bool'
+	     attribute _before_ the 'vector' attribute, and so select the
+	     proper type in the 'b' case below.  */
+	case V64HImode: case V128QImode:
+	  result = type;
+	default: break;
+	}
+      break;
+    case 'b':
+      switch (mode)
+	{
+	case E_HImode: case V64HImode: result = bool_V64HI_type_node; break;
+	case E_QImode: case V128QImode: result = bool_V128QI_type_node;
+	default: break;
+	}
+      break;
+    case 'p':
+      switch (mode)
+	{
+	case V64HImode: result = pixel_V64HI_type_node;
 	default: break;
 	}
     default: break;
@@ -36242,7 +36697,7 @@ rs6000_register_move_cost (machine_mode mode,
       if (! reg_classes_intersect_p (to, GENERAL_REGS))
 	rclass = to;
 
-      if (rclass == FLOAT_REGS || rclass == ALTIVEC_REGS || rclass == VSX_REGS || rclass == S2PP_REGS)
+      if (rclass == FLOAT_REGS || rclass == ALTIVEC_REGS || rclass == VSX_REGS || rclass == S2PP_REGS || rclass == S2PP_HX_REGS)
 	ret = (rs6000_memory_move_cost (mode, rclass, false)
 	       + rs6000_memory_move_cost (mode, GENERAL_REGS, false));
 
@@ -36314,6 +36769,8 @@ rs6000_memory_move_cost (machine_mode mode, reg_class_t rclass,
     ret = 4 * hard_regno_nregs (FIRST_ALTIVEC_REGNO, mode);
   else if (reg_classes_intersect_p (rclass, S2PP_REGS))
     ret = 4 * hard_regno_nregs (FIRST_S2PP_REGNO, mode);
+  else if (reg_classes_intersect_p (rclass, S2PP_HX_REGS))
+    ret = (UNITS_PER_S2PP_HX_WORD / UNITS_PER_WORD) * hard_regno_nregs (FIRST_S2PP_HX_REGNO, mode);
   else
     ret = 4 + rs6000_register_move_cost (mode, rclass, GENERAL_REGS);
 
@@ -37446,6 +37903,9 @@ rs6000_compute_pressure_classes (enum reg_class *pressure_classes)
       /* PS (2018-06-18): what aboud cond and acc registers here? */
       if (TARGET_S2PP)
         pressure_classes[n++] = S2PP_REGS;
+      /* PS (2018-06-18): what aboud cond and acc registers here? */
+      if (TARGET_S2PP_HX)
+        pressure_classes[n++] = S2PP_HX_REGS;
     }
   pressure_classes[n++] = CR_REGS;
   pressure_classes[n++] = SPECIAL_REGS;
@@ -37619,6 +38079,9 @@ rs6000_vector_mode_supported_p (machine_mode mode)
   else if (VECTOR_MEM_S2PP_P (mode))
     return true;
 
+  else if (VECTOR_MEM_S2PP_HX_P (mode))
+    return true;
+
   else
     return false;
 }
@@ -37776,6 +38239,7 @@ static struct rs6000_opt_mask const rs6000_opt_masks[] =
   { "recip-precision",		OPTION_MASK_RECIP_PRECISION,	false, true  },
   { "save-toc-indirect",	OPTION_MASK_SAVE_TOC_INDIRECT,	false, true  },
   { "s2pp",			OPTION_MASK_S2PP,		false, true  },
+  { "s2pp_hx",			OPTION_MASK_S2PP_HX,		false, true  },
   { "string",			0,				false, true  },
   { "toc-fusion",		OPTION_MASK_TOC_FUSION,		false, true  },
   { "update",			OPTION_MASK_NO_UPDATE,		true , true  },
@@ -37830,6 +38294,7 @@ static struct rs6000_opt_mask const rs6000_builtin_mask_names[] =
   { "float128",		 RS6000_BTM_FLOAT128,   false, false },
   { "float128-hw",	 RS6000_BTM_FLOAT128_HW,false, false },
   { "s2pp",		 RS6000_BTM_S2PP,	false, false },
+  { "s2pp_hx",		 RS6000_BTM_S2PP_HX,	false, false },
 };
 
 /* Option variables that we want to support inside attribute((target)) and

@@ -493,6 +493,9 @@ extern enum rs6000_vector rs6000_vector_unit[];
 #define VECTOR_UNIT_S2PP_P(MODE)			\
   (rs6000_vector_unit[(MODE)] == VECTOR_S2PP)
 
+#define VECTOR_UNIT_S2PP_HX_P(MODE)			\
+  (rs6000_vector_unit[(MODE)] == VECTOR_S2PP_HX)
+
 /* Describe whether to use VSX loads or Altivec loads.  For now, just use the
    same unit as the vector unit we are using, but we may want to migrate to
    using VSX style loads even for types handled by altivec.  */
@@ -522,6 +525,9 @@ extern enum rs6000_vector rs6000_vector_mem[];
 
 #define VECTOR_MEM_S2PP_P(MODE)				\
   (rs6000_vector_mem[(MODE)] == VECTOR_S2PP)
+
+#define VECTOR_MEM_S2PP_HX_P(MODE)				\
+  (rs6000_vector_mem[(MODE)] == VECTOR_S2PP_HX)
 
 /* Return the alignment of a given vector type, which is set based on the
    vector unit use.  VSX for instance can load 32 or 64 bit aligned words
@@ -875,6 +881,7 @@ extern unsigned char rs6000_recip_bits[];
 #define UNITS_PER_VSX_WORD 16
 #define UNITS_PER_PAIRED_WORD 8
 #define UNITS_PER_S2PP_WORD 16
+#define UNITS_PER_S2PP_HX_WORD 128
 
 /* Type used for ptrdiff_t, as a string used in a declaration.  */
 #define PTRDIFF_TYPE "int"
@@ -987,8 +994,8 @@ enum data_align { align_abi, align_opt, align_both };
    a count register, a link register, and 8 condition register fields,
    which we view here as separate registers.  AltiVec adds 32 vector
    registers and a VRsave register. s2pp adds 32 vector registers, a
-   vector conditional and an accumulation register.
-
+   vector conditional and an accumulation register. s2pp_hx adds
+   32 vector registers, a vector conditional and an accumulation register.
 
    In addition, the difference between the frame and argument pointers is
    a function of the number of registers saved, so we need to have a
@@ -1005,7 +1012,7 @@ enum data_align { align_abi, align_opt, align_both };
 
    The 3 HTM registers aren't also included in DWARF_FRAME_REGISTERS.  */
 
-#define FIRST_PSEUDO_REGISTER 149
+#define FIRST_PSEUDO_REGISTER 183
 
 /* This must be included for pre gcc 3.0 glibc compatibility.  */
 #define PRE_GCC3_DWARF_FRAME_REGISTERS 77
@@ -1050,6 +1057,11 @@ enum data_align { align_abi, align_opt, align_both };
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
    1,						   \
+   /* s2pp_hx registers.  */			   \
+   1,						   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   1,						   \
 }
 
 /* 1 for registers not available across function calls.
@@ -1071,6 +1083,11 @@ enum data_align { align_abi, align_opt, align_both };
    1, 1						   \
    , 1, 1, 1, 1,				   \
    /* s2pp registers.  */			   \
+   1,						   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   1,						   \
+   /* s2pp_hx registers.  */			   \
    1,						   \
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
@@ -1099,12 +1116,18 @@ enum data_align { align_abi, align_opt, align_both };
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
    0,						   \
+   /* s2pp_hx registers.  */			   \
+   0,						   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		   \
+   0,						   \
 }
 
 #define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 
 #define FIRST_SAVED_ALTIVEC_REGNO (FIRST_ALTIVEC_REGNO+20)
 #define FIRST_SAVED_S2PP_REGNO    (FIRST_S2PP_REGNO+19)
+#define FIRST_SAVED_S2PP_HX_REGNO    (FIRST_S2PP_HX_REGNO+19)
 #define FIRST_SAVED_FP_REGNO	  (14+32)
 #define FIRST_SAVED_GP_REGNO	  (FIXED_R13 ? 14 : 13)
 
@@ -1148,6 +1171,13 @@ enum data_align { align_abi, align_opt, align_both };
 	kv18 - kv15	(not saved or used for anything)
 	kv31 - kv19	(saved; order given to save least number)
 	ka		(not saved)
+	qc		(not saved)
+	qv0 - qv1	(not saved or used for anything)
+	qv14 - qv3	(not saved; incoming vector arg registers)
+	qv2		(not saved; incoming vector arg reg; return value)
+	qv18 - qv15	(not saved or used for anything)
+	qv31 - qv19	(saved; order given to save least number)
+	qa		(not saved)
 */
 
 #if FIXED_R2 == 1
@@ -1194,7 +1224,12 @@ enum data_align { align_abi, align_opt, align_both };
    115,								\
    116, 117, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121,	\
    120, 119, 118, 134, 133, 132, 131, 147, 146, 145, 144, 143,	\
-   142, 141, 140, 139, 138, 137, 136, 135, 148			\
+   142, 141, 140, 139, 138, 137, 136, 135, 148,			\
+   /* s2pp_hx registers.  */					\
+   149,								\
+   150, 151, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155,	\
+   154, 153, 152, 168, 167, 166, 165, 181, 180, 179, 178, 177,	\
+   176, 175, 174, 173, 172, 171, 170, 169, 182			\
 }
 
 /* True if register is floating-point.  */
@@ -1226,6 +1261,11 @@ enum data_align { align_abi, align_opt, align_both };
 #define S2PP_REGNO_P(N) ((N) >= FIRST_S2PP_REGNO && (N) <= LAST_S2PP_REGNO)
 #define S2PP_COND_REGNO_P(N) ((N) == S2PP_COND_REGNO)
 #define S2PP_ACC_REGNO_P(N) ((N) == S2PP_ACC_REGNO)
+
+/* True if register is a s2pp_hx register. */
+#define S2PP_HX_REGNO_P(N) ((N) >= FIRST_S2PP_HX_REGNO && (N) <= LAST_S2PP_HX_REGNO)
+#define S2PP_HX_COND_REGNO_P(N) ((N) == S2PP_HX_COND_REGNO)
+#define S2PP_HX_ACC_REGNO_P(N) ((N) == S2PP_HX_ACC_REGNO)
 
 /* Alternate name for any vector register supporting floating point, no matter
    which instruction set(s) are available.  */
@@ -1284,6 +1324,10 @@ enum data_align { align_abi, align_opt, align_both };
 #define S2PP_VECTOR_MODE(MODE)						\
   ((MODE) == V16QImode							\
    || (MODE) == V8HImode)
+
+#define S2PP_HX_VECTOR_MODE(MODE)						\
+  ((MODE) == V128QImode							\
+   || (MODE) == V64HImode)
 
 /* Post-reload, we can't use any new AltiVec registers, as we already
    emitted the vrsave mask.  */
@@ -1384,6 +1428,9 @@ enum reg_class
   S2PP_REGS,
   S2PP_C_REG,
   S2PP_ACC_REG,
+  S2PP_HX_REGS,
+  S2PP_HX_C_REG,
+  S2PP_HX_ACC_REG,
   ALL_REGS,
   LIM_REG_CLASSES
 };
@@ -1416,6 +1463,9 @@ enum reg_class
   "S2PP_REGS",								\
   "S2PP_C_REG",								\
   "S2PP_ACC_REG",							\
+  "S2PP_HX_REGS",							\
+  "S2PP_HX_C_REG",							\
+  "S2PP_HX_ACC_REG",						\
   "ALL_REGS"								\
 }
 
@@ -1426,51 +1476,57 @@ enum reg_class
 #define REG_CLASS_CONTENTS						\
 {									\
   /* NO_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	\
   /* BASE_REGS.  */							\
-  { 0xfffffffe, 0x00000000, 0x00000008, 0x00008000, 0x00000000 },	\
+  { 0xfffffffe, 0x00000000, 0x00000008, 0x00008000, 0x00000000, 0x00000000 },	\
   /* GENERAL_REGS.  */							\
-  { 0xffffffff, 0x00000000, 0x00000008, 0x00008000, 0x00000000 },	\
+  { 0xffffffff, 0x00000000, 0x00000008, 0x00008000, 0x00000000, 0x00000000 },	\
   /* FLOAT_REGS.  */							\
-  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	\
   /* ALTIVEC_REGS.  */							\
-  { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0xffffe000, 0x00001fff, 0x00000000, 0x00000000 },	\
   /* VSX_REGS.  */							\
-  { 0x00000000, 0xffffffff, 0xffffe000, 0x00001fff, 0x00000000 },	\
+  { 0x00000000, 0xffffffff, 0xffffe000, 0x00001fff, 0x00000000, 0x00000000 },	\
   /* VRSAVE_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00002000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00002000, 0x00000000, 0x00000000 },	\
   /* VSCR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x00000000, 0x00000000 },	\
   /* SPR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00010000, 0x00000000, 0x00000000 },	\
   /* NON_SPECIAL_REGS.  */						\
-  { 0xffffffff, 0xffffffff, 0x00000008, 0x00008000, 0x00000000 },	\
+  { 0xffffffff, 0xffffffff, 0x00000008, 0x00008000, 0x00000000, 0x00000000 },	\
   /* LINK_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000, 0x00000000 },	\
   /* CTR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000004, 0x00000000, 0x00000000, 0x00000000 },	\
   /* LINK_OR_CTR_REGS.  */						\
-  { 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000006, 0x00000000, 0x00000000, 0x00000000 },	\
   /* SPECIAL_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000006, 0x00002000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000006, 0x00002000, 0x00000000, 0x00000000 },	\
   /* SPEC_OR_GEN_REGS.  */						\
-  { 0xffffffff, 0x00000000, 0x0000000e, 0x0000a000, 0x00100000 },	\
+  { 0xffffffff, 0x00000000, 0x0000000e, 0x0000a000, 0x00300000, 0x00400000 },	\
   /* CR0_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000010, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000010, 0x00000000, 0x00000000, 0x00000000 },	\
   /* CR_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000ff0, 0x00000000, 0x00000000, 0x00000000 },	\
   /* NON_FLOAT_REGS.  */						\
-  { 0xffffffff, 0x00000000, 0x00000ffe, 0xfff88000, 0x001fffff },	\
+  { 0xffffffff, 0x00000000, 0x00000ffe, 0xfff88000, 0xffffffff, 0x00000000 },	\
   /* CA_REGS.  */							\
-  { 0x00000000, 0x00000000, 0x00001000, 0x00000000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00001000, 0x00000000, 0x00000000, 0x00000000 },	\
   /* S2PP_REGS */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0xfff00000, 0x000fffff },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0xfff00000, 0x000fffff, 0x00000000 },	\
   /* S2PP_C_REG */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00080000, 0x00000000 },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00080000, 0x00000000, 0x00000000 },	\
   /* S2PP_ACC_REG */							\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00100000 },	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00100000, 0x00000000 },	\
+  /* S2PP_HX_REGS */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0xffc00000, 0x003fffff },	\
+  /* S2PP_HX_C_REG */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00200000, 0x00000000 },	\
+  /* S2PP_HX_ACC_REG */							\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00400000 },	\
   /* ALL_REGS.  */							\
-  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffffffff, 0x001fffff }	\
+  { 0xffffffff, 0xffffffff, 0xfffffffe, 0xffffffff, 0xffffffff, 0x007fffff }	\
 }
 
 /* The same information, inverted:
@@ -1493,6 +1549,9 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_ka,		/* s2pp accumulator register */
   RS6000_CONSTRAINT_kc,		/* s2pp conditional register */
   RS6000_CONSTRAINT_kv,		/* s2pp vector register */
+  RS6000_CONSTRAINT_qa,		/* s2pp_hx accumulator register */
+  RS6000_CONSTRAINT_qc,		/* s2pp_hx conditional register */
+  RS6000_CONSTRAINT_qv,		/* s2pp_hx vector register */
   RS6000_CONSTRAINT_wa,		/* Any VSX register */
   RS6000_CONSTRAINT_wb,		/* Altivec register if ISA 3.0 vector. */
   RS6000_CONSTRAINT_wd,		/* VSX register for V2DF */
@@ -1538,6 +1597,10 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 /* Return whether a given register class can hold s2pp objects. */
 #define S2PP_REG_CLASS_P(CLASS)			\
   ((CLASS) == S2PP_REGS)
+
+/* Return whether a given register class can hold s2pp_hx objects. */
+#define S2PP_HX_REG_CLASS_P(CLASS)			\
+  ((CLASS) == S2PP_HX_REGS)
 
 /* Return whether a given register class targets general purpose registers.  */
 #define GPR_REG_CLASS_P(CLASS) ((CLASS) == GENERAL_REGS || (CLASS) == BASE_REGS)
@@ -1728,6 +1791,10 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define S2PP_ARG_MAX_REG (S2PP_ARG_MIN_REG + 12)
 #define S2PP_ARG_NUM_REG (S2PP_ARG_MAX_REG - S2PP_ARG_MIN_REG + 1)
 
+/* Minimum and maximum s2pp_hx registers used to hold arguments */
+#define S2PP_HX_ARG_MIN_REG (FIRST_S2PP_HX_REGNO + 2)
+#define S2PP_HX_ARG_MAX_REG (S2PP_HX_ARG_MIN_REG + 12)
+#define S2PP_HX_ARG_NUM_REG (S2PP_HX_ARG_MAX_REG - S2PP_HX_ARG_MIN_REG + 1)
 
 /* Maximum number of registers per ELFv2 homogeneous aggregate argument.  */
 #define AGGR_ARG_NUM_REG 8
@@ -1737,6 +1804,7 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define FP_ARG_RETURN FP_ARG_MIN_REG
 #define ALTIVEC_ARG_RETURN (FIRST_ALTIVEC_REGNO + 2)
 #define S2PP_ARG_RETURN S2PP_ARG_MIN_REG
+#define S2PP_HX_ARG_RETURN S2PP_HX_ARG_MIN_REG
 #define FP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2 ? FP_ARG_RETURN	\
 			   : (FP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 #define ALTIVEC_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2		\
@@ -1746,6 +1814,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 #define S2PP_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2			\
 				? S2PP_ARG_RETURN			\
 				: (S2PP_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
+#define S2PP_HX_ARG_MAX_RETURN (DEFAULT_ABI != ABI_ELFv2			\
+				? S2PP_HX_ARG_RETURN			\
+				: (S2PP_HX_ARG_RETURN + AGGR_ARG_NUM_REG - 1))
 
 /* Flags for the call/call_value rtl operations set up by function_arg */
 #define CALL_NORMAL		0x00000000	/* no special processing */
@@ -1770,7 +1841,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || (IN_RANGE ((N), ALTIVEC_ARG_RETURN, ALTIVEC_ARG_MAX_RETURN)	\
        && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI)			\
    || (IN_RANGE ((N), S2PP_ARG_RETURN, S2PP_ARG_MAX_RETURN)		\
-       && TARGET_S2PP))
+       && TARGET_S2PP)			\
+   || (IN_RANGE ((N), S2PP_HX_ARG_RETURN, S2PP_HX_ARG_MAX_RETURN)		\
+       && TARGET_S2PP_HX))
 
 /* 1 if N is a possible register number for function argument passing.
    On RS/6000, these are r3-r10 and fp1-fp13.
@@ -1782,7 +1855,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || (IN_RANGE ((N), FP_ARG_MIN_REG, FP_ARG_MAX_REG)			\
        && TARGET_HARD_FLOAT)						\
    || (IN_RANGE ((N), S2PP_ARG_MIN_REG, S2PP_ARG_MAX_REG)		\
-       && TARGET_S2PP))
+       && TARGET_S2PP)			\
+   || (IN_RANGE ((N), S2PP_HX_ARG_MIN_REG, S2PP_HX_ARG_MAX_REG)		\
+       && TARGET_S2PP_HX))
 
 /* Define a data type for recording info about an argument list
    during the scan of that argument list.  This data type should
@@ -1808,6 +1883,7 @@ typedef struct rs6000_args
   int fregno;			/* next available FP register */
   int vregno;			/* next available AltiVec register */
   int kvregno;			/* next available s2pp register */
+  int qvregno;			/* next available s2pp_hx register */
   int nargs_prototype;		/* # args left in the current prototype */
   int prototype;		/* Whether a prototype was defined */
   int stdarg;			/* Whether function is a stdarg function.  */
@@ -2443,6 +2519,41 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   &rs6000_reg_names[146][0],	/* s2pp */				\
   &rs6000_reg_names[147][0],	/* s2pp */				\
   &rs6000_reg_names[148][0],	/* s2pp acc  */				\
+									\
+  &rs6000_reg_names[149][0],	/* s2pp_hx cond  */			\
+  &rs6000_reg_names[150][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[151][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[152][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[153][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[154][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[155][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[156][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[157][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[158][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[159][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[160][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[161][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[162][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[163][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[164][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[165][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[166][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[167][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[168][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[169][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[170][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[171][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[172][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[173][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[174][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[175][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[176][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[177][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[178][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[179][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[180][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[181][0],	/* s2pp_hx */				\
+  &rs6000_reg_names[182][0],	/* s2pp_hx acc  */				\
 }
 
 /* Table of additional register names to use in user input.  */
@@ -2507,7 +2618,17 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
   {"kv19", 135}, {"kv20", 136}, {"kv21", 137}, {"kv22", 138},	\
   {"kv23", 139}, {"kv24", 140}, {"kv25", 141}, {"kv26", 142},	\
   {"kv27", 143}, {"kv28", 144}, {"kv29", 145}, {"kv30", 146},	\
-  {"kv31", 147}, {"ka", 148}					\
+  {"kv31", 147}, {"ka", 148},					\
+  /* s2pp_hx registers */						\
+  {"qc", 149},   {"qv0", 150},	{"qv1", 151},  {"qv2", 152},	\
+  {"qv3", 153},  {"qv4"	, 154}, {"qv5", 155},  {"qv6", 156},	\
+  {"qv7", 157},  {"qv8"	, 158}, {"qv9", 159},  {"qv10", 160},	\
+  {"qv11", 161}, {"qv12", 162}, {"qv13", 163}, {"qv14", 164},	\
+  {"qv15", 165}, {"qv16", 166}, {"qv17", 167}, {"qv18", 168},	\
+  {"qv19", 169}, {"qv20", 170}, {"qv21", 171}, {"qv22", 172},	\
+  {"qv23", 173}, {"qv24", 174}, {"qv25", 175}, {"qv26", 176},	\
+  {"qv27", 177}, {"qv28", 178}, {"qv29", 179}, {"qv30", 180},	\
+  {"qv31", 181}, {"qa", 182}					\
 }
 
 /* This is how to output an element of a case-vector that is relative.  */
@@ -2640,6 +2761,7 @@ extern int frame_pointer_needed;
 #define RS6000_BTM_FLOAT128_HW	MASK_FLOAT128_HW /* IEEE 128-bit float h/w.  */
 
 #define RS6000_BTM_S2PP		MASK_S2PP	/* s2pp vectors. */
+#define RS6000_BTM_S2PP_HX	MASK_S2PP_HX	/* s2pp_hx vectors. */
 
 #define RS6000_BTM_COMMON	(RS6000_BTM_ALTIVEC			\
 				 | RS6000_BTM_VSX			\
@@ -2661,7 +2783,8 @@ extern int frame_pointer_needed;
 				 | RS6000_BTM_POWERPC64			\
 				 | RS6000_BTM_FLOAT128			\
 				 | RS6000_BTM_FLOAT128_HW		\
-				 | RS6000_BTM_S2PP)
+				 | RS6000_BTM_S2PP		\
+				 | RS6000_BTM_S2PP_HX)
 
 /* Define builtin enum index.  */
 
@@ -2712,6 +2835,7 @@ enum rs6000_builtin_type_index
   RS6000_BTI_opaque_V2SF,
   RS6000_BTI_opaque_p_V2SI,
   RS6000_BTI_opaque_V4SI,
+  RS6000_BTI_V128QI,              /* __vector_hx signed char for s2pp_hx */
   RS6000_BTI_V16QI,              /* __vector signed char */
   RS6000_BTI_V1TI,
   RS6000_BTI_V2SI,
@@ -2721,9 +2845,12 @@ enum rs6000_builtin_type_index
   RS6000_BTI_V4HI,
   RS6000_BTI_V4SI,
   RS6000_BTI_V4SF,
+  RS6000_BTI_V64HI,
   RS6000_BTI_V8HI,
+  RS6000_BTI_unsigned_V128QI,     /* __vector_hx unsigned char for s2pp_hx */
   RS6000_BTI_unsigned_V16QI,     /* __vector unsigned char */
   RS6000_BTI_unsigned_V1TI,
+  RS6000_BTI_unsigned_V64HI,
   RS6000_BTI_unsigned_V8HI,
   RS6000_BTI_unsigned_V4SI,
   RS6000_BTI_unsigned_V2DI,
@@ -2738,10 +2865,13 @@ enum rs6000_builtin_type_index
 				    meaningful as a vector type.
 				    There is no corresponding scalar
 				    __pixel data type.)  */
+  RS6000_BTI_bool_V128QI,         /* __vector_hx __bool char for s2pp_hx */
   RS6000_BTI_bool_V16QI,         /* __vector __bool char */
+  RS6000_BTI_bool_V64HI,          /* __vector_hx __bool short for s2pp_hx */
   RS6000_BTI_bool_V8HI,          /* __vector __bool short */
   RS6000_BTI_bool_V4SI,          /* __vector __bool int */
   RS6000_BTI_bool_V2DI,          /* __vector __bool long */
+  RS6000_BTI_pixel_V64HI,         /* __vector_hx __pixel for s2pp_hx */
   RS6000_BTI_pixel_V8HI,         /* __vector __pixel */
   RS6000_BTI_long,	         /* long_integer_type_node */
   RS6000_BTI_unsigned_long,      /* long_unsigned_type_node */
@@ -2774,6 +2904,7 @@ enum rs6000_builtin_type_index
 #define opaque_V2SF_type_node         (rs6000_builtin_types[RS6000_BTI_opaque_V2SF])
 #define opaque_p_V2SI_type_node       (rs6000_builtin_types[RS6000_BTI_opaque_p_V2SI])
 #define opaque_V4SI_type_node         (rs6000_builtin_types[RS6000_BTI_opaque_V4SI])
+#define V128QI_type_node               (rs6000_builtin_types[RS6000_BTI_V128QI])
 #define V16QI_type_node               (rs6000_builtin_types[RS6000_BTI_V16QI])
 #define V1TI_type_node                (rs6000_builtin_types[RS6000_BTI_V1TI])
 #define V2DI_type_node                (rs6000_builtin_types[RS6000_BTI_V2DI])
@@ -2783,9 +2914,12 @@ enum rs6000_builtin_type_index
 #define V4HI_type_node                (rs6000_builtin_types[RS6000_BTI_V4HI])
 #define V4SI_type_node                (rs6000_builtin_types[RS6000_BTI_V4SI])
 #define V4SF_type_node                (rs6000_builtin_types[RS6000_BTI_V4SF])
+#define V64HI_type_node                (rs6000_builtin_types[RS6000_BTI_V64HI])
 #define V8HI_type_node                (rs6000_builtin_types[RS6000_BTI_V8HI])
+#define unsigned_V128QI_type_node      (rs6000_builtin_types[RS6000_BTI_unsigned_V128QI])
 #define unsigned_V16QI_type_node      (rs6000_builtin_types[RS6000_BTI_unsigned_V16QI])
 #define unsigned_V1TI_type_node       (rs6000_builtin_types[RS6000_BTI_unsigned_V1TI])
+#define unsigned_V64HI_type_node       (rs6000_builtin_types[RS6000_BTI_unsigned_V64HI])
 #define unsigned_V8HI_type_node       (rs6000_builtin_types[RS6000_BTI_unsigned_V8HI])
 #define unsigned_V4SI_type_node       (rs6000_builtin_types[RS6000_BTI_unsigned_V4SI])
 #define unsigned_V2DI_type_node       (rs6000_builtin_types[RS6000_BTI_unsigned_V2DI])
@@ -2794,10 +2928,13 @@ enum rs6000_builtin_type_index
 #define bool_int_type_node            (rs6000_builtin_types[RS6000_BTI_bool_int])
 #define bool_long_long_type_node      (rs6000_builtin_types[RS6000_BTI_bool_long_long])
 #define pixel_type_node               (rs6000_builtin_types[RS6000_BTI_pixel])
+#define bool_V128QI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V128QI])
 #define bool_V16QI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V16QI])
+#define bool_V64HI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V64HI])
 #define bool_V8HI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V8HI])
 #define bool_V4SI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V4SI])
 #define bool_V2DI_type_node	      (rs6000_builtin_types[RS6000_BTI_bool_V2DI])
+#define pixel_V64HI_type_node	      (rs6000_builtin_types[RS6000_BTI_pixel_V64HI])
 #define pixel_V8HI_type_node	      (rs6000_builtin_types[RS6000_BTI_pixel_V8HI])
 
 #define long_long_integer_type_internal_node  (rs6000_builtin_types[RS6000_BTI_long_long])
