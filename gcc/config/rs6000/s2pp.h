@@ -26,6 +26,13 @@
 
 #include <stdbool.h>
 
+#if defined(__S2PP_HX__)
+#if defined(__vector)
+#error s2pp HX vector unit __vector support can't be used with another vector unit's support present
+#endif
+#define __vector __vector_hx
+#endif
+
 /* Condition register codes for s2pp predicates. */
 
 #define __C_GT 1

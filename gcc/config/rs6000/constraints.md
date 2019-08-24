@@ -61,6 +61,16 @@
 (define_register_constraint "ka" "rs6000_constraints[RS6000_CONSTRAINT_ka]"
   "s2pp accumulator register")
 
+;; s2pp_hx vector register constraint
+(define_register_constraint "qv" "rs6000_constraints[RS6000_CONSTRAINT_qv]"
+  "s2pp_hx vector register")
+
+(define_register_constraint "qc" "rs6000_constraints[RS6000_CONSTRAINT_qc]"
+  "s2pp_hx conditional register")
+
+(define_register_constraint "qa" "rs6000_constraints[RS6000_CONSTRAINT_qa]"
+  "s2pp_hx accumulator register")
+
 ;; Use w as a prefix to add VSX modes
 ;; any VSX register
 (define_register_constraint "wa" "rs6000_constraints[RS6000_CONSTRAINT_wa]"

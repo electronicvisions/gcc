@@ -70,6 +70,9 @@ VECTOR_MODES (INT, 16);       /* V16QI V8HI  V4SI V2DI */
 VECTOR_MODE (INT, TI, 1);     /*                  V1TI */
 VECTOR_MODES (FLOAT, 16);     /*       V8HF  V4SF V2DF */
 
+/* S2PP_HX.  */
+VECTOR_MODES (INT, 128);       /* V128QI V64HI */
+
 /* Two VMX/VSX vectors (for permute, select, concat, etc.)  */
 VECTOR_MODES (INT, 32);       /* V32QI V16HI V8SI V4DI */
 VECTOR_MODES (FLOAT, 32);     /*       V16HF V8SF V4DF */

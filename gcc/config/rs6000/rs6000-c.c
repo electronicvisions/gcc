@@ -652,6 +652,11 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 	  cpp_get_callbacks (pfile)->macro_to_expand = rs6000_macro_to_expand;
 	}
     }
+  if (TARGET_S2PP_HX)
+    {
+      /* Define the s2pp_hx syntactic elements.  */
+      builtin_define ("__vector_hx=__attribute__((s2pp_hx(vector__)))");
+    }
   if (TARGET_EXTRA_BUILTINS && cpp_get_options (pfile)->lang != CLK_ASM)
     {
       /* Define the AltiVec syntactic elements.  */

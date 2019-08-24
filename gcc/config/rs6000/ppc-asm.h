@@ -273,6 +273,41 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define k31	31
 #endif
 
+#ifdef __S2PP_HX__
+#define q0	0
+#define q1	1
+#define q2	2
+#define q3	3
+#define q4	4
+#define q5	5
+#define q6	6
+#define q7	7
+#define q8	8
+#define q9	9
+#define q10	10
+#define q11	11
+#define q12	12
+#define q13	13
+#define q14	14
+#define q15	15
+#define q16	16
+#define q17	17
+#define q18	18
+#define q19	19
+#define q20	20
+#define q21	21
+#define q22	22
+#define q23	23
+#define q24	24
+#define q25	25
+#define q26	26
+#define q27	27
+#define q28	28
+#define q29	29
+#define q30	30
+#define q31	31
+#endif
+
 /*
  * Macros to glue together two tokens.
  */
