@@ -310,6 +310,80 @@
 		     | RS6000_BTC_SPECIAL),				\
 		    CODE_FOR_nothing)			/* ICODE */
 
+/* s2pp_hx_hx convenience macros. */
+#define BU_S2PP_HX_1(ENUM, NAME, ATTR, ICODE)				\
+  RS6000_BUILTIN_1 (S2PP_HX_BUILTIN_ ## ENUM,		/* ENUM */	\
+		    "__builtin_s2pp_hx_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
+		     | RS6000_BTC_UNARY),				\
+		    CODE_FOR_ ## ICODE)			/* ICODE */
+
+#define BU_S2PP_HX_2(ENUM, NAME, ATTR, ICODE)				\
+  RS6000_BUILTIN_2 (S2PP_HX_BUILTIN_ ## ENUM,		/* ENUM */	\
+		    "__builtin_s2pp_hx_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
+		     | RS6000_BTC_BINARY),				\
+		    CODE_FOR_ ## ICODE)			/* ICODE */
+
+#define BU_S2PP_HX_3(ENUM, NAME, ATTR, ICODE)				\
+  RS6000_BUILTIN_3 (S2PP_HX_BUILTIN_ ## ENUM,		/* ENUM */	\
+		    "__builtin_s2pp_hx_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
+		     | RS6000_BTC_TERNARY),				\
+		    CODE_FOR_ ## ICODE)			/* ICODE */
+
+#define BU_S2PP_HX_X(ENUM, NAME, ATTR)					\
+  RS6000_BUILTIN_X (S2PP_HX_BUILTIN_ ## ENUM,		/* ENUM */	\
+		    "__builtin_s2pp_hx_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
+		     | RS6000_BTC_SPECIAL),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+/* s2pp_hx overloaded builtin function macros.  */
+#define BU_S2PP_HX_OVERLOAD_1(ENUM, NAME)					\
+  RS6000_BUILTIN_1 (S2PP_HX_BUILTIN_VEC_ ## ENUM,	/* ENUM */		\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_UNARY),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_HX_OVERLOAD_2(ENUM, NAME)					\
+  RS6000_BUILTIN_2 (S2PP_HX_BUILTIN_VEC_ ## ENUM,	/* ENUM */		\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_BINARY),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_HX_OVERLOAD_3(ENUM, NAME)					\
+  RS6000_BUILTIN_3 (S2PP_HX_BUILTIN_VEC_ ## ENUM,	/* ENUM */		\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_TERNARY),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_HX_OVERLOAD_P(ENUM, NAME)					\
+  RS6000_BUILTIN_P (S2PP_HX_BUILTIN_VEC_ ## ENUM,	/* ENUM */		\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_PREDICATE),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
+#define BU_S2PP_HX_OVERLOAD_X(ENUM, NAME)					\
+  RS6000_BUILTIN_X (S2PP_HX_BUILTIN_VEC_ ## ENUM,	/* ENUM */		\
+		    "__builtin_vec_" NAME,		/* NAME */	\
+		    RS6000_BTM_S2PP_HX,			/* MASK */	\
+		    (RS6000_BTC_OVERLOADED		/* ATTR */	\
+		     | RS6000_BTC_SPECIAL),				\
+		    CODE_FOR_nothing)			/* ICODE */
+
 #define BU_VSX_1(ENUM, NAME, ATTR, ICODE)				\
   RS6000_BUILTIN_1 (VSX_BUILTIN_ ## ENUM,		/* ENUM */	\
 		    "__builtin_vsx_" NAME,		/* NAME */	\
@@ -1843,6 +1917,250 @@ BU_S2PP_OVERLOAD_X (STEP,    "step")
 BU_S2PP_OVERLOAD_X (PROMOTE, "promote")
 BU_S2PP_OVERLOAD_X (SPLAT,   "splat")
 BU_S2PP_OVERLOAD_X (SPLATS,  "splats")
+
+/* s2pp_hx builtin functions. */
+BU_S2PP_HX_1 (FXV_HXSPLATB, "fxvsplatb", CONST, s2pp_hx_fxvsplatb)
+BU_S2PP_HX_1 (FXV_HXSPLATH, "fxvsplath", CONST, s2pp_hx_fxvsplath)
+
+BU_S2PP_HX_2 (FXV_HXADDACHM,  "fxvaddachm",  CONST, s2pp_hx_fxvaddachm)
+BU_S2PP_HX_2 (FXV_HXADDACBM,  "fxvaddacbm",  CONST, s2pp_hx_fxvaddacbm)
+BU_S2PP_HX_2 (FXV_HXADDACHFS, "fxvaddachfs", CONST, s2pp_hx_fxvaddachfs)
+BU_S2PP_HX_2 (FXV_HXADDACBFS, "fxvaddacbfs", CONST, s2pp_hx_fxvaddacbfs)
+
+BU_S2PP_HX_2 (FXV_HXADDB, "fxvaddb", CONST, s2pp_hx_fxvaddbm)
+BU_S2PP_HX_2 (FXV_HXADDH, "fxvaddh", CONST, s2pp_hx_fxvaddhm)
+BU_S2PP_HX_2 (FXV_HXSUBB, "fxvsubb", CONST, s2pp_hx_fxvsubbm)
+BU_S2PP_HX_2 (FXV_HXSUBH, "fxvsubh", CONST, s2pp_hx_fxvsubhm)
+BU_S2PP_HX_2 (FXV_HXMULB, "fxvmulb", CONST, s2pp_hx_fxvmulb)
+BU_S2PP_HX_2 (FXV_HXMULH, "fxvmulh", CONST, s2pp_hx_fxvmulh)
+
+BU_S2PP_HX_1 (FXV_HXSHLB, "fxvshlb", CONST, s2pp_hx_fxvshlb)
+BU_S2PP_HX_1 (FXV_HXSHLH, "fxvshlh", CONST, s2pp_hx_fxvshlh)
+BU_S2PP_HX_1 (FXV_HXSHRB, "fxvshrb", CONST, s2pp_hx_fxvshrb)
+BU_S2PP_HX_1 (FXV_HXSHRH, "fxvshrh", CONST, s2pp_hx_fxvshrh)
+BU_S2PP_HX_2 (FXV_HXSHB,  "fxvshb",  CONST, s2pp_hx_fxvshb)
+BU_S2PP_HX_2 (FXV_HXSHH,  "fxvshh",  CONST, s2pp_hx_fxvshh)
+
+BU_S2PP_HX_3 (FXV_HXPCKBU,  "fxvpckbu",  MEM, s2pp_hx_fxvpckbu)
+BU_S2PP_HX_3 (FXV_HXPCKBL,  "fxvpckbl",  MEM, s2pp_hx_fxvpckbl)
+BU_S2PP_HX_3 (FXV_HXUPCKBL, "fxvupckbl", MEM, s2pp_hx_fxvupckbl)
+BU_S2PP_HX_3 (FXV_HXUPCKBR, "fxvupckbr", MEM, s2pp_hx_fxvupckbr)
+
+BU_S2PP_HX_3 (FXV_HXMAHM,  "fxvmahm",  CONST, s2pp_hx_fxvmahm)
+BU_S2PP_HX_3 (FXV_HXMABM,  "fxvmabm",  CONST, s2pp_hx_fxvmabm)
+BU_S2PP_HX_3 (FXV_HXMAHFS, "fxvmahfs", CONST, s2pp_hx_fxvmahfs)
+BU_S2PP_HX_3 (FXV_HXMABFS, "fxvmabfs", CONST, s2pp_hx_fxvmabfs)
+
+BU_S2PP_HX_3 (FXV_HXSEL_V64HI,  "fxvsel_v64hi",  CONST, s2pp_hx_fxvsel_v64hi)
+BU_S2PP_HX_3 (FXV_HXSEL_V128QI, "fxvsel_v128qi", CONST, s2pp_hx_fxvsel_v128qi)
+
+BU_S2PP_HX_2 (FXV_HXADDBM,   "fxvaddbm",   CONST, s2pp_hx_fxvaddbm)
+BU_S2PP_HX_2 (FXV_HXADDHM,   "fxvaddhm",   CONST, s2pp_hx_fxvaddhm)
+BU_S2PP_HX_3 (FXV_HXADDBM_C, "fxvaddbm_c", CONST, s2pp_hx_fxvaddbm_c)
+BU_S2PP_HX_3 (FXV_HXADDHM_C, "fxvaddhm_c", CONST, s2pp_hx_fxvaddhm_c)
+BU_S2PP_HX_3 (FXV_HXADDBFS,  "fxvaddbfs",  CONST, s2pp_hx_fxvaddbfs_c)
+BU_S2PP_HX_3 (FXV_HXADDHFS,  "fxvaddhfs",  CONST, s2pp_hx_fxvaddhfs_c)
+BU_S2PP_HX_3 (FXV_HXSUBBM,   "fxvsubbm",   CONST, s2pp_hx_fxvsubbm)
+BU_S2PP_HX_3 (FXV_HXSUBHM,   "fxvsubhm",   CONST, s2pp_hx_fxvsubhm)
+BU_S2PP_HX_3 (FXV_HXSUBBFS,  "fxvsubbfs",  CONST, s2pp_hx_fxvsubbfs)
+BU_S2PP_HX_3 (FXV_HXSUBHFS,  "fxvsubhfs",  CONST, s2pp_hx_fxvsubhfs)
+BU_S2PP_HX_3 (FXV_HXMULBM,   "fxvmulbm",   CONST, s2pp_hx_fxvmulbm)
+BU_S2PP_HX_3 (FXV_HXMULHM,   "fxvmulhm",   CONST, s2pp_hx_fxvmulhm)
+BU_S2PP_HX_3 (FXV_HXMULBFS,  "fxvmulbfs",  CONST, s2pp_hx_fxvmulbfs)
+BU_S2PP_HX_3 (FXV_HXMULHFS,  "fxvmulhfs",  CONST, s2pp_hx_fxvmulhfs)
+
+BU_S2PP_HX_X (FXV_HXLAX_V64HI,      "fxvlax_v64hi",      MEM)
+BU_S2PP_HX_X (FXV_HXLAX_V128QI,     "fxvlax_v128qi",     MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_V64HI,     "fxvstax_v64hi",     MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_V128QI,    "fxvstax_v128qi",    MEM)
+BU_S2PP_HX_X (FXV_HXLAX_GT_V64HI,   "fxvlax_gt_v64hi",   MEM)
+BU_S2PP_HX_X (FXV_HXLAX_GT_V128QI,  "fxvlax_gt_v128qi",  MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_GT_V64HI,  "fxvstax_gt_v64hi",  MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_GT_V128QI, "fxvstax_gt_v128qi", MEM)
+BU_S2PP_HX_X (FXV_HXLAX_LT_V64HI,   "fxvlax_lt_v64hi",   MEM)
+BU_S2PP_HX_X (FXV_HXLAX_LT_V128QI,  "fxvlax_lt_v128qi",  MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_LT_V64HI,  "fxvstax_lt_v64hi",  MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_LT_V128QI, "fxvstax_lt_v128qi", MEM)
+BU_S2PP_HX_X (FXV_HXLAX_EQ_V64HI,   "fxvlax_eq_v64hi",   MEM)
+BU_S2PP_HX_X (FXV_HXLAX_EQ_V128QI,  "fxvlax_eq_v128qi",  MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_EQ_V64HI,  "fxvoutx_eq_v64hi",  MEM)
+BU_S2PP_HX_X (FXV_HXSTAX_EQ_V128QI, "fxvoutx_eq_v128qi", MEM)
+
+BU_S2PP_HX_X (FXV_HXINX_V64HI,      "fxvinx_v64hi",      MEM)
+BU_S2PP_HX_X (FXV_HXINX_V128QI,     "fxvinx_v128qi",     MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_V64HI,     "fxvoutx_v64hi",     MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_V128QI,    "fxvoutx_v128qi",    MEM)
+BU_S2PP_HX_X (FXV_HXINX_GT_V64HI,   "fxvinx_gt_v64hi",   MEM)
+BU_S2PP_HX_X (FXV_HXINX_GT_V128QI,  "fxvinx_gt_v128qi",  MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_GT_V64HI,  "fxvoutx_gt_v64hi",  MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_GT_V128QI, "fxvoutx_gt_v128qi", MEM)
+BU_S2PP_HX_X (FXV_HXINX_LT_V64HI,   "fxvinx_lt_v64hi",   MEM)
+BU_S2PP_HX_X (FXV_HXINX_LT_V128QI,  "fxvinx_lt_v128qi",  MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_LT_V64HI,  "fxvoutx_lt_v64hi",  MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_LT_V128QI, "fxvoutx_lt_v128qi", MEM)
+BU_S2PP_HX_X (FXV_HXINX_EQ_V64HI,   "fxvinx_eq_v64hi",   MEM)
+BU_S2PP_HX_X (FXV_HXINX_EQ_V128QI,  "fxvinx_eq_v128qi",  MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_EQ_V64HI,  "fxvoutx_eq_v64hi",  MEM)
+BU_S2PP_HX_X (FXV_HXOUTX_EQ_V128QI, "fxvoutx_eq_v128qi", MEM)
+
+BU_S2PP_HX_X (MASK_FOR_LOAD,  "mask_for_load",  MISC)
+BU_S2PP_HX_X (MASK_FOR_STORE, "mask_for_store", MISC)
+
+BU_S2PP_HX_X (ST_INTERNAL_64hi,  "st_internal_64hi",  MEM)
+BU_S2PP_HX_X (LD_INTERNAL_64hi,  "ld_internal_64hi",  MEM)
+BU_S2PP_HX_X (ST_INTERNAL_128qi, "st_internal_128qi", MEM)
+BU_S2PP_HX_X (LD_INTERNAL_128qi, "ld_internal_128qi", MEM)
+
+BU_S2PP_HX_X (OUT_INTERNAL_64hi,  "out_internal_64hi",  MEM)
+BU_S2PP_HX_X (IN_INTERNAL_64hi,   "in_internal_64hi",   MEM)
+BU_S2PP_HX_X (OUT_INTERNAL_128qi, "out_internal_128qi", MEM)
+BU_S2PP_HX_X (IN_INTERNAL_128qi,  "in_internal_128qi",  MEM)
+
+BU_S2PP_HX_X (VEC_SET_V64HI,   "vec_set_v64hi",   CONST)
+BU_S2PP_HX_X (VEC_SET_V128QI,  "vec_set_v128qi",  CONST)
+BU_S2PP_HX_X (VEC_EXT_V64HI,   "vec_ext_v64hi",   CONST)
+BU_S2PP_HX_X (VEC_EXT_V128QI,  "vec_ext_v128qi",  CONST)
+BU_S2PP_HX_X (VEC_INIT_V64HI,  "vec_init_v64hi",  CONST)
+BU_S2PP_HX_X (VEC_INIT_V128QI, "vec_init_v128qi", CONST)
+
+BU_S2PP_HX_X (FXV_HXCMPB,   "fxvcmpb",  VOID)
+BU_S2PP_HX_X (FXV_HXCMPH,   "fxvcmph",  VOID)
+
+BU_S2PP_HX_X (FXV_HXMTACB,  "fxvmtacb",   VOID)
+BU_S2PP_HX_X (FXV_HXMTACH,  "fxvmtach",   VOID)
+BU_S2PP_HX_X (FXV_HXMTACBF, "fxvmtacbf",  VOID)
+BU_S2PP_HX_X (FXV_HXMTACHF, "fxvmtachf",  VOID)
+
+BU_S2PP_HX_X (FXV_HXMATACHM,     "fxvmatachm",    VOID)
+BU_S2PP_HX_X (FXV_HXMATACBM,     "fxvmatacbm",    VOID)
+BU_S2PP_HX_X (FXV_HXMULTACHM,    "fxvmultachm",   VOID)
+BU_S2PP_HX_X (FXV_HXMULTACBM,    "fxvmultacbm",   VOID)
+BU_S2PP_HX_X (FXV_HXADDACTACHM,  "fxvaddactachm", VOID)
+BU_S2PP_HX_X (FXV_HXADDACTACBM,  "fxvaddactacbm", VOID)
+BU_S2PP_HX_X (FXV_HXADDTACH,     "fxvaddtach",    VOID)
+BU_S2PP_HX_X (FXV_HXADDTACB,     "fxvaddtacb",    VOID)
+BU_S2PP_HX_X (FXV_HXMATACHFS,    "fxvmatachfs",   VOID)
+BU_S2PP_HX_X (FXV_HXMATACBFS,    "fxvmatacbfs",   VOID)
+BU_S2PP_HX_X (FXV_HXMULTACHFS,   "fxvmultachfs",  VOID)
+BU_S2PP_HX_X (FXV_HXMULTACBFS,   "fxvmultacbfs",  VOID)
+BU_S2PP_HX_X (FXV_HXADDACTACHF,  "fxvaddactachf", VOID)
+BU_S2PP_HX_X (FXV_HXADDACTACBF,  "fxvaddactacbf", VOID)
+
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXCMPB, "fxvcmpb")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXCMPH, "fxvcmph")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXCMP,  "fxvcmp")
+
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMTACB,  "fxvmtacb")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMTACH,  "fxvmtach")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMTAC,   "fxvmtac")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMTACBF, "fxvmtacbf")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMTACHF, "fxvmtachf")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMTACF,  "fxvmtacf")
+
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDACTACHM, "fxvaddactachm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDACTACBM, "fxvaddactacbm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDACTACM,  "fxvaddactacm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDACTACHF, "fxvaddactachf")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDACTACBF, "fxvaddactacbf")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDACTACF,  "fxvaddactacf")
+
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDACHM, "fxvaddachm")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDACBM, "fxvaddacbm")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDACM,  "fxvaddacm")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDACHFS,"fxvaddachfs")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDACBFS,"fxvaddacbfs")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDACFS, "fxvaddacfs")
+
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDTACH, "fxvaddtach")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDTACB, "fxvaddtacb")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXADDTAC,  "fxvaddtac")
+
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXSHL,  "fxvshl")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXSHLB, "fxvshlb")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXSHLH, "fxvshlh")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXSHR,  "fxvshr")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXSHRB, "fxvshrb")
+BU_S2PP_HX_OVERLOAD_1 (FXV_HXSHRH, "fxvshrh")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXSH,   "fxvsh")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXSHB,  "fxvshb")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXSHH,  "fxvshh")
+
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADD, "fxvadd")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXSUB, "fxvsub")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXMUL, "fxvmul")
+
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDBM, "fxvaddbm")
+BU_S2PP_HX_OVERLOAD_2 (FXV_HXADDHM, "fxvaddhm")
+
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXADDBM_C, "fxvaddbm_c")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXADDHM_C, "fxvaddhm_c")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXADDM,    "fxvaddm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXADDBFS,  "fxvaddbfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXADDHFS,  "fxvaddhfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXADDFS,   "fxvaddfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSUBBM,   "fxvsubbm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSUBHM,   "fxvsubhm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSUBM,    "fxvsubm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSUBBFS,  "fxvsubbfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSUBHFS,  "fxvsubhfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSUBFS,   "fxvsubfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMULBM,   "fxvmulbm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMULHM,   "fxvmulhm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMULM,    "fxvmulm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMULBFS,  "fxvmulbfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMULHFS,  "fxvmulhfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMULFS,   "fxvmulfs")
+
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMATACHM,   "fxvmatachm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMATACBM,   "fxvmatacbm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMATACM,    "fxvmatacm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMULTACHM,  "fxvmultachm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMULTACBM,  "fxvmultacbm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMULTACM,   "fxvmultacm")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMATACHFS,  "fxvmatachfs")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMATACBFS,  "fxvmatacbfs")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMATACFS,   "fxvmatacfs")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMULTACHFS, "fxvmultachfs")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMULTACBFS, "fxvmultacbfs")
+BU_S2PP_HX_OVERLOAD_X (FXV_HXMULTACFS,  "fxvmultacfs")
+
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMAHM,   "fxvmahm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMABM,   "fxvmabm")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMAM,    "fxvmam")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMAHFS,  "fxvmahfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMABFS,  "fxvmabfs")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXMAFS,   "fxvmafs")
+
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXPCKBU,  "fxvpckbu")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXPCKBL,  "fxvpckbl")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXUPCKBL, "fxvupckbl")
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXUPCKBR, "fxvupckbr")
+
+BU_S2PP_HX_OVERLOAD_3 (FXV_HXSEL, "fxvsel")
+
+BU_S2PP_HX_OVERLOAD_X (OUT,    "out")
+BU_S2PP_HX_OVERLOAD_X (IN,     "in")
+BU_S2PP_HX_OVERLOAD_X (OUT_GT, "out_gt")
+BU_S2PP_HX_OVERLOAD_X (IN_GT,  "in_gt")
+BU_S2PP_HX_OVERLOAD_X (OUT_LT, "out_lt")
+BU_S2PP_HX_OVERLOAD_X (IN_LT,  "in_lt")
+BU_S2PP_HX_OVERLOAD_X (OUT_EQ, "out_eq")
+BU_S2PP_HX_OVERLOAD_X (IN_EQ,  "in_eq")
+
+BU_S2PP_HX_OVERLOAD_X (ST,      "st")
+BU_S2PP_HX_OVERLOAD_X (LD,      "ld")
+BU_S2PP_HX_OVERLOAD_X (ST_GT,   "st_gt")
+BU_S2PP_HX_OVERLOAD_X (LD_GT,   "ld_gt")
+BU_S2PP_HX_OVERLOAD_X (ST_LT,   "st_lt")
+BU_S2PP_HX_OVERLOAD_X (LD_LT,   "ld_lt")
+BU_S2PP_HX_OVERLOAD_X (ST_EQ,   "st_eq")
+BU_S2PP_HX_OVERLOAD_X (LD_EQ,   "ld_eq")
+BU_S2PP_HX_OVERLOAD_X (EXTRACT, "extract")
+BU_S2PP_HX_OVERLOAD_X (INSERT,  "insert")
+BU_S2PP_HX_OVERLOAD_X (STEP,    "step")
+BU_S2PP_HX_OVERLOAD_X (PROMOTE, "promote")
+BU_S2PP_HX_OVERLOAD_X (SPLAT,   "splat")
+BU_S2PP_HX_OVERLOAD_X (SPLATS,  "splats")
 
 
 /* 3 argument VSX builtins.  */

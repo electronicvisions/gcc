@@ -145,6 +145,69 @@
   return S2PP_ACC_REGNO_P (REGNO (op));
 })
 
+;; Return 1 if op is a s2pp_hx register.
+(define_predicate "s2pp_hx_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    {
+      if (TARGET_NO_SF_SUBREG && sf_subreg_operand (op, mode))
+	return 0;
+
+      op = SUBREG_REG (op);
+    }
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) >= FIRST_PSEUDO_REGISTER)
+    return 1;
+
+  return S2PP_HX_REGNO_P (REGNO (op));
+})
+
+;; Return 1 if op is a s2pp_hx cond register.
+(define_predicate "s2pp_hx_cond_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    {
+      if (TARGET_NO_SF_SUBREG && sf_subreg_operand (op, mode))
+	return 0;
+
+      op = SUBREG_REG (op);
+    }
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) >= FIRST_PSEUDO_REGISTER)
+    return 1;
+
+  return S2PP_HX_COND_REGNO_P (REGNO (op));
+})
+
+;; Return 1 if op is a s2pp_hx accumulator register.
+(define_predicate "s2pp_hx_acc_register_operand"
+  (match_operand 0 "register_operand")
+{
+  if (GET_CODE (op) == SUBREG)
+    {
+      if (TARGET_NO_SF_SUBREG && sf_subreg_operand (op, mode))
+	return 0;
+
+      op = SUBREG_REG (op);
+    }
+
+  if (!REG_P (op))
+    return 0;
+
+  if (REGNO (op) >= FIRST_PSEUDO_REGISTER)
+    return 1;
+
+  return S2PP_HX_ACC_REGNO_P (REGNO (op));
+})
+
 ;; Return 1 if op is a VSX register.
 (define_predicate "vsx_register_operand"
   (match_operand 0 "register_operand")
@@ -789,6 +852,13 @@
       if (zero_constant (op, mode))
         return true;
       return easy_s2pp_constant (op, mode);
+    }
+
+  if (VECTOR_MEM_S2PP_HX_P (mode))
+    {
+      if (zero_constant (op, mode))
+        return true;
+      return easy_s2pp_hx_constant (op, mode);
     }
 
   return false;

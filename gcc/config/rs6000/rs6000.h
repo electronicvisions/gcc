@@ -718,7 +718,7 @@ extern int rs6000_vector_align[];
    compiler for those builtins, and those machines don't support altivec or
    VSX.  */
 
-#define TARGET_EXTRA_BUILTINS	(!TARGET_S2PP && !TARGET_PAIRED_FLOAT	 \
+#define TARGET_EXTRA_BUILTINS	(!TARGET_S2PP && !TARGET_S2PP_HX && !TARGET_PAIRED_FLOAT	 \
 				 && ((TARGET_POWERPC64			 \
 				      || TARGET_PPC_GPOPT /* 970/power4 */ \
 				      || TARGET_POPCNTB	  /* ISA 2.02 */ \
@@ -2836,6 +2836,7 @@ enum rs6000_builtin_type_index
   RS6000_BTI_opaque_V2SI,
   RS6000_BTI_opaque_V2SF,
   RS6000_BTI_opaque_p_V2SI,
+  RS6000_BTI_opaque_V32SI,
   RS6000_BTI_opaque_V4SI,
   RS6000_BTI_V128QI,              /* __vector_hx signed char for s2pp_hx */
   RS6000_BTI_V16QI,              /* __vector signed char */
@@ -2905,6 +2906,7 @@ enum rs6000_builtin_type_index
 #define opaque_V2SI_type_node         (rs6000_builtin_types[RS6000_BTI_opaque_V2SI])
 #define opaque_V2SF_type_node         (rs6000_builtin_types[RS6000_BTI_opaque_V2SF])
 #define opaque_p_V2SI_type_node       (rs6000_builtin_types[RS6000_BTI_opaque_p_V2SI])
+#define opaque_V32SI_type_node         (rs6000_builtin_types[RS6000_BTI_opaque_V32SI])
 #define opaque_V4SI_type_node         (rs6000_builtin_types[RS6000_BTI_opaque_V4SI])
 #define V128QI_type_node               (rs6000_builtin_types[RS6000_BTI_V128QI])
 #define V16QI_type_node               (rs6000_builtin_types[RS6000_BTI_V16QI])
