@@ -121,6 +121,31 @@
 			       (UNSPEC_FXVOUTX_LT "_lt_")
 			       (UNSPEC_FXVOUTX_EQ "_eq_")])
 
+;; s2pp load and store instructions
+(define_expand "vector_s2pp_load_<mode>"
+  [(set (match_operand:FXVI 0 "vint_operand" "")
+	(match_operand:FXVI 1 "memory_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "")
+
+(define_expand "vector_s2pp_store_<mode>"
+  [(set (match_operand:FXVI 0 "memory_operand" "")
+	(match_operand:FXVI 1 "vint_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "")
+
+(define_expand "vector_s2pp_input_<mode>"
+  [(set (match_operand:FXVI 0 "vint_operand" "")
+	(match_operand:FXVI 1 "memory_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "")
+
+(define_expand "vector_s2pp_output_<mode>"
+  [(set (match_operand:FXVI 0 "memory_operand" "")
+	(match_operand:FXVI 1 "vint_operand" ""))]
+  "VECTOR_MEM_S2PP_P (<MODE>mode)"
+  "")
+
 ;; s2pp sync instruction
 (define_insn "sync"
   [(unspec_volatile [(const_int 0)] UNSPEC_FXVSYNC)]
