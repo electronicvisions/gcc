@@ -1777,9 +1777,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
    || (IN_RANGE ((N), FP_ARG_RETURN, FP_ARG_MAX_RETURN)			\
        && TARGET_HARD_FLOAT)						\
    || (IN_RANGE ((N), ALTIVEC_ARG_RETURN, ALTIVEC_ARG_MAX_RETURN)	\
-       && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI))			\
+       && TARGET_ALTIVEC && TARGET_ALTIVEC_ABI)			\
    || (IN_RANGE ((N), S2PP_ARG_RETURN, S2PP_ARG_MAX_RETURN)		\
-       && TARGET_S2PP)
+       && TARGET_S2PP))
 
 /* 1 if N is a possible register number for function argument passing.
    On RS/6000, these are r3-r10 and fp1-fp13.

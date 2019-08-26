@@ -28056,7 +28056,7 @@ rs6000_emit_savres_rtx (rs6000_stack_t *info,
 	     ? 32
 	     : (sel & SAVRES_REG) == SAVRES_FPR
 	     ? 64
-	     : (sel & SAVRES_REG) == SAVRES_VR
+	     : (sel & SAVRES_REG) == SAVRES_VR && !TARGET_S2PP
 	     ? LAST_ALTIVEC_REGNO + 1
 	     : (sel & SAVRES_REG) == SAVRES_VR && TARGET_S2PP
 	     ? LAST_S2PP_REGNO + 1
