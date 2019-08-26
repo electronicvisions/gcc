@@ -36,6 +36,9 @@
 ;; Vector float modes
 (define_mode_iterator VEC_F [V4SF V2DF])
 
+;; Vector s2pp_hx modes
+(define_mode_iterator VEC_FXV_HX [V128QI V64HI])
+
 ;; Vector arithmetic modes
 (define_mode_iterator VEC_A [V16QI V8HI V4SI V2DI V4SF V2DF])
 
@@ -65,7 +68,10 @@
 (define_mode_iterator VI [V4SI V8HI V16QI])
 
 ;; Base type from vector mode
-(define_mode_attr VEC_base [(V16QI "QI")
+(define_mode_attr VEC_base [
+			    (V128QI "QI")
+			    (V64HI "HI")
+			    (V16QI "QI")
 			    (V8HI  "HI")
 			    (V4SI  "SI")
 			    (V2DI  "DI")
@@ -75,7 +81,10 @@
 			    (TI    "TI")])
 
 ;; As above, but in lower case
-(define_mode_attr VEC_base_l [(V16QI "qi")
+(define_mode_attr VEC_base_l [
+			      (V128QI "qi")
+			      (V64HI "hi")
+			      (V16QI "qi")
 			      (V8HI  "hi")
 			      (V4SI  "si")
 			      (V2DI  "di")
@@ -149,6 +158,26 @@
     {
       rs6000_emit_le_vsx_move (operands[0], operands[1], <MODE>mode);
       DONE;
+    }
+})
+
+;; s2pp_hx move instructions
+(define_expand "mov<mode>"
+  [(set (match_operand:VEC_FXV_HX 0 "nonimmediate_operand")
+	(match_operand:VEC_FXV_HX 1 "any_operand"))]
+  "VECTOR_MEM_S2PP_HX_P (<MODE>mode)"
+{
+  if (can_create_pseudo_p ())
+    {
+      if (CONSTANT_P (operands[1]))
+	{
+	  if (!easy_vector_constant (operands[1], <MODE>mode))
+	    operands[1] = force_const_mem (<MODE>mode, operands[1]);
+	}
+
+      if (!vlogical_operand (operands[0], <MODE>mode)
+	  && !vlogical_operand (operands[1], <MODE>mode))
+	operands[1] = force_reg (<MODE>mode, operands[1]);
     }
 })
 

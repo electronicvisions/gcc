@@ -20,8 +20,6 @@
 #error Use the "-msdata=none" flag to enable s2pp support
 #endif
 
-#if defined(__S2PP__)
-
 #include <stdint.h>
 
 #include <stdbool.h>
@@ -130,12 +128,21 @@
 #define fxv_upckbl_c __builtin_vec_fxvupckbl
 #define fxv_upckbr_c __builtin_vec_fxvupckbr
 
+#if defined(__S2PP__)
 #define fxv_splath __builtin_s2pp_fxvsplath
 #define fxv_splatb __builtin_s2pp_fxvsplatb
 #define vec_splat_s16(x) __builtin_s2pp_fxvsplath ((x))
 #define vec_splat_s8(x) __builtin_s2pp_fxvsplatb ((x))
 #define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
 #define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
+#else
+#define fxv_splath __builtin_s2pp_hx_fxvsplath
+#define fxv_splatb __builtin_s2pp_hx_fxvsplatb
+#define vec_splat_s16(x) __builtin_s2pp_hx_fxvsplath ((x))
+#define vec_splat_s8(x) __builtin_s2pp_hx_fxvsplatb ((x))
+#define vec_splat_u16(x) ((__vector unsigned short) vec_splat_s16 ((x)))
+#define vec_splat_u8(x) ((__vector unsigned char) vec_splat_s8 ((x)))
+#endif
 
 #define fxv_cmp __builtin_vec_fxvcmp
 #define fxv_cmpb __builtin_vec_fxvcmpb
@@ -227,5 +234,3 @@
 
 #define vec_step(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
 #define fxv_steps(x) __builtin_vec_step (* (__typeof__ (x) *) 0)
-
-#endif

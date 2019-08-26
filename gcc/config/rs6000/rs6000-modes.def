@@ -49,6 +49,12 @@ VECTOR_MODES (FLOAT, 16);     /*       V8HF  V4SF V2DF */
 
 /* S2PP_HX.  */
 VECTOR_MODES (INT, 128);       /* V128QI V64HI */
+INT_MODE(PI, 128);
+
+/* Keep the PI mode from confusing the compiler into thinking
+   that these modes could actually be used for computation.  They are
+   only holders for vectors during data movement. TODO: unclear if correct or still too large. */
+#define MAX_BITSIZE_MODE_ANY_INT (128)
 
 /* Two VMX/VSX vectors (for permute, select, concat, etc.)  */
 VECTOR_MODES (INT, 32);       /* V32QI V16HI V8SI V4DI */
