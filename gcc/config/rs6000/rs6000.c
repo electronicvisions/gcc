@@ -15935,7 +15935,7 @@ get_element_number (tree vec_type, tree arg)
 
 /* Expand vec_set builtin.  */
 static rtx
-s2pp_expand_vec_set_builtin (tree exp)
+vector_expand_vec_set_builtin (tree exp)
 {
   machine_mode tmode, mode1;
   tree arg0, arg1, arg2;
@@ -15967,7 +15967,7 @@ s2pp_expand_vec_set_builtin (tree exp)
 
 /* Expand vec_ext builtin.  */
 static rtx
-s2pp_expand_vec_ext_builtin (tree exp, rtx target)
+vector_expand_vec_ext_builtin (tree exp, rtx target)
 {
   machine_mode tmode, mode0;
   tree arg0, arg1;
@@ -15978,10 +15978,19 @@ s2pp_expand_vec_ext_builtin (tree exp, rtx target)
   arg1 = CALL_EXPR_ARG (exp, 1);
 
   op0 = expand_normal (arg0);
-  op1 = expand_normal (arg0);
+  op1 = expand_normal (arg1);
 
   if (TREE_CODE (arg1) == INTEGER_CST)
-    (void) get_element_number (TREE_TYPE (arg0), arg1);
+    {
+      unsigned HOST_WIDE_INT elt;
+      unsigned HOST_WIDE_INT size = TYPE_VECTOR_SUBPARTS (TREE_TYPE (arg0));
+      unsigned int truncated_selector;
+      /* Even if !tree_fits_uhwi_p (arg1)), TREE_INT_CST_LOW (arg0)
+	 returns low-order bits of INTEGER_CST for modulo indexing.  */
+      elt = TREE_INT_CST_LOW (arg1);
+      truncated_selector = elt % size;
+      op1 = GEN_INT (truncated_selector);
+    }
 
   tmode = TYPE_MODE (TREE_TYPE (TREE_TYPE (arg0)));
   mode0 = TYPE_MODE (TREE_TYPE (arg0));
@@ -16159,11 +16168,11 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 
     case S2PP_BUILTIN_VEC_SET_V8HI:
     case S2PP_BUILTIN_VEC_SET_V16QI:
-      return s2pp_expand_vec_set_builtin (exp);
+      return vector_expand_vec_set_builtin (exp);
 
     case S2PP_BUILTIN_VEC_EXT_V8HI:
     case S2PP_BUILTIN_VEC_EXT_V16QI:
-      return s2pp_expand_vec_ext_builtin (exp, target);
+      return vector_expand_vec_ext_builtin (exp, target);
 
     case S2PP_BUILTIN_FXVCMPB:
       return s2pp_expand_unaryx_builtin (CODE_FOR_s2pp_fxvcmpb, exp);
@@ -16256,79 +16265,6 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
   return NULL_RTX;
 }
 
-
-/* Expand vec_set builtin.  */
-static rtx
-altivec_expand_vec_set_builtin (tree exp)
-{
-  machine_mode tmode, mode1;
-  tree arg0, arg1, arg2;
-  int elt;
-  rtx op0, op1;
-
-  arg0 = CALL_EXPR_ARG (exp, 0);
-  arg1 = CALL_EXPR_ARG (exp, 1);
-  arg2 = CALL_EXPR_ARG (exp, 2);
-
-  tmode = TYPE_MODE (TREE_TYPE (arg0));
-  mode1 = TYPE_MODE (TREE_TYPE (TREE_TYPE (arg0)));
-  gcc_assert (VECTOR_MODE_P (tmode));
-
-  op0 = expand_expr (arg0, NULL_RTX, tmode, EXPAND_NORMAL);
-  op1 = expand_expr (arg1, NULL_RTX, mode1, EXPAND_NORMAL);
-  elt = get_element_number (TREE_TYPE (arg0), arg2);
-
-  if (GET_MODE (op1) != mode1 && GET_MODE (op1) != VOIDmode)
-    op1 = convert_modes (mode1, GET_MODE (op1), op1, true);
-
-  op0 = force_reg (tmode, op0);
-  op1 = force_reg (mode1, op1);
-
-  rs6000_expand_vector_set (op0, op1, elt);
-
-  return op0;
-}
-
-/* Expand vec_ext builtin.  */
-static rtx
-altivec_expand_vec_ext_builtin (tree exp, rtx target)
-{
-  machine_mode tmode, mode0;
-  tree arg0, arg1;
-  rtx op0;
-  rtx op1;
-
-  arg0 = CALL_EXPR_ARG (exp, 0);
-  arg1 = CALL_EXPR_ARG (exp, 1);
-
-  op0 = expand_normal (arg0);
-  op1 = expand_normal (arg1);
-
-  if (TREE_CODE (arg1) == INTEGER_CST)
-    {
-      unsigned HOST_WIDE_INT elt;
-      unsigned HOST_WIDE_INT size = TYPE_VECTOR_SUBPARTS (TREE_TYPE (arg0));
-      unsigned int truncated_selector;
-      /* Even if !tree_fits_uhwi_p (arg1)), TREE_INT_CST_LOW (arg0)
-	 returns low-order bits of INTEGER_CST for modulo indexing.  */
-      elt = TREE_INT_CST_LOW (arg1);
-      truncated_selector = elt % size;
-      op1 = GEN_INT (truncated_selector);
-    }
-
-  tmode = TYPE_MODE (TREE_TYPE (TREE_TYPE (arg0)));
-  mode0 = TYPE_MODE (TREE_TYPE (arg0));
-  gcc_assert (VECTOR_MODE_P (mode0));
-
-  op0 = force_reg (mode0, op0);
-
-  if (optimize || !target || !register_operand (target, tmode))
-    target = gen_reg_rtx (tmode);
-
-  rs6000_expand_vector_extract (target, op0, op1);
-
-  return target;
-}
 
 /* Expand the builtin in EXP and store the result in TARGET.  Store
    true in *EXPANDEDP if we found a builtin to expand.  */
@@ -16549,7 +16485,7 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
     case VSX_BUILTIN_VEC_SET_V2DF:
     case VSX_BUILTIN_VEC_SET_V2DI:
     case VSX_BUILTIN_VEC_SET_V1TI:
-      return altivec_expand_vec_set_builtin (exp);
+      return vector_expand_vec_set_builtin (exp);
 
     case ALTIVEC_BUILTIN_VEC_EXT_V4SI:
     case ALTIVEC_BUILTIN_VEC_EXT_V8HI:
@@ -16558,7 +16494,7 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
     case VSX_BUILTIN_VEC_EXT_V2DF:
     case VSX_BUILTIN_VEC_EXT_V2DI:
     case VSX_BUILTIN_VEC_EXT_V1TI:
-      return altivec_expand_vec_ext_builtin (exp, target);
+      return vector_expand_vec_ext_builtin (exp, target);
 
     case P9V_BUILTIN_VEC_EXTRACT4B:
       arg1 = CALL_EXPR_ARG (exp, 1);
