@@ -19697,7 +19697,7 @@ rs6000_common_init_builtins (void)
      least the general purpose extensions (970 and newer) to allow the use of
      the target attribute..  */
 
-  if (TARGET_EXTRA_BUILTINS || TARGET_S2PP)
+  if (TARGET_EXTRA_BUILTINS)
     builtin_mask |= RS6000_BTM_COMMON;
 
   /* Add the ternary operators.  */
