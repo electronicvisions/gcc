@@ -261,14 +261,6 @@
 		     | RS6000_BTC_TERNARY),				\
 		    CODE_FOR_ ## ICODE)			/* ICODE */
 
-#define BU_S2PP_P(ENUM, NAME, ATTR, ICODE)				\
-  RS6000_BUILTIN_P (S2PP_BUILTIN_ ## ENUM,		/* ENUM */	\
-		    "__builtin_s2pp_" NAME,		/* NAME */	\
-		    RS6000_BTM_S2PP,			/* MASK */	\
-		    (RS6000_BTC_ ## ATTR		/* ATTR */	\
-		     | RS6000_BTC_PREDICATE),				\
-		    CODE_FOR_ ## ICODE)			/* ICODE */
-
 #define BU_S2PP_X(ENUM, NAME, ATTR)					\
   RS6000_BUILTIN_X (S2PP_BUILTIN_ ## ENUM,		/* ENUM */	\
 		    "__builtin_s2pp_" NAME,		/* NAME */	\
