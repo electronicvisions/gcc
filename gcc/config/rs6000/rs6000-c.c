@@ -99,7 +99,7 @@ static GTY(()) tree __uint128_type;
 static tree expand_bool_pixel;
 
 static cpp_hashnode *
-altivec_categorize_keyword (const cpp_token *tok)
+vector_categorize_keyword (const cpp_token *tok)
 {
   if (tok->type == CPP_NAME)
     {
@@ -191,8 +191,7 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
   if (!(TARGET_ALTIVEC || TARGET_S2PP))
     return NULL;
 
-  /* PS (2018-06-17): the altivec function is good for s2pp here */
-  ident = altivec_categorize_keyword (tok);
+  ident = vector_categorize_keyword (tok);
 
   if (ident != expand_this)
     expand_this = NULL;
@@ -203,7 +202,7 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
       do
 	tok = cpp_peek_token (pfile, idx++);
       while (tok->type == CPP_PADDING);
-      ident = altivec_categorize_keyword (tok);
+      ident = vector_categorize_keyword (tok);
 
       if (ident == C_CPP_HASHNODE (__pixel_keyword))
 	{
@@ -243,7 +242,7 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 	      do
 		tok = cpp_peek_token (pfile, idx++);
 	      while (tok->type == CPP_PADDING);
-	      ident = altivec_categorize_keyword (tok);
+	      ident = vector_categorize_keyword (tok);
 	      if (ident == C_CPP_HASHNODE (__pixel_keyword))
 		{
 		  expand_this = C_CPP_HASHNODE (__vector_keyword);
@@ -273,7 +272,7 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 	      do
 		tok = cpp_peek_token (pfile, idx++);
 	      while (tok->type == CPP_PADDING);
-	      ident = altivec_categorize_keyword (tok);
+	      ident = vector_categorize_keyword (tok);
 
 	      if (ident == C_CPP_HASHNODE (__pixel_keyword))
 		expand_bool_pixel = __pixel_keyword;
@@ -285,7 +284,7 @@ rs6000_macro_to_expand (cpp_reader *pfile, const cpp_token *tok)
 		  do
 		    tok = cpp_peek_token (pfile, idx++);
 		  while (tok->type == CPP_PADDING);
-		  ident = altivec_categorize_keyword (tok);
+		  ident = vector_categorize_keyword (tok);
 		  if (ident == C_CPP_HASHNODE (__pixel_keyword))
 		    expand_bool_pixel = __pixel_keyword;
 		  else if (ident == C_CPP_HASHNODE (__bool_keyword))
@@ -823,7 +822,7 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
 }
 
 
-struct altivec_builtin_types
+struct vector_builtin_types
 {
   enum rs6000_builtins code;
   enum rs6000_builtins overloaded_code;
@@ -833,155 +832,7 @@ struct altivec_builtin_types
   signed char op3;
 };
 
-const struct altivec_builtin_types altivec_overloaded_builtins[] = {
-  /* Unary AltiVec/VSX builtins.  */
-  { ALTIVEC_BUILTIN_VEC_ABS, ALTIVEC_BUILTIN_ABS_V16QI,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABS, ALTIVEC_BUILTIN_ABS_V8HI,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABS, ALTIVEC_BUILTIN_ABS_V4SI,
-    RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABS, P8V_BUILTIN_ABS_V2DI,
-    RS6000_BTI_V2DI, RS6000_BTI_V2DI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABS, ALTIVEC_BUILTIN_ABS_V4SF,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABS, VSX_BUILTIN_XVABSDP,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABSS, ALTIVEC_BUILTIN_ABSS_V16QI,
-    RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABSS, ALTIVEC_BUILTIN_ABSS_V8HI,
-    RS6000_BTI_V8HI, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ABSS, ALTIVEC_BUILTIN_ABSS_V4SI,
-    RS6000_BTI_V4SI, RS6000_BTI_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_CEIL, ALTIVEC_BUILTIN_VRFIP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_CEIL, VSX_BUILTIN_XVRDPIP,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_EXPTE, ALTIVEC_BUILTIN_VEXPTEFP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_FLOOR, VSX_BUILTIN_XVRDPIM,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_FLOOR, ALTIVEC_BUILTIN_VRFIM,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_LOGE, ALTIVEC_BUILTIN_VLOGEFP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_unsigned_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_bool_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_bool_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_pixel_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_unsigned_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_MTVSCR, ALTIVEC_BUILTIN_MTVSCR,
-    RS6000_BTI_void, RS6000_BTI_bool_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_RE, ALTIVEC_BUILTIN_VREFP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_RE, VSX_BUILTIN_XVREDP,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ROUND, ALTIVEC_BUILTIN_VRFIN,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_ROUND, VSX_BUILTIN_XVRDPI,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_RECIP, ALTIVEC_BUILTIN_VRECIPFP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0 },
-  { ALTIVEC_BUILTIN_VEC_RECIP, VSX_BUILTIN_RECIP_V2DF,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0 },
-  { ALTIVEC_BUILTIN_VEC_RSQRT, ALTIVEC_BUILTIN_VRSQRTFP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_RSQRT, VSX_BUILTIN_RSQRT_2DF,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_RSQRTE, ALTIVEC_BUILTIN_VRSQRTEFP,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_RSQRTE, VSX_BUILTIN_XVRSQRTEDP,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_TRUNC, ALTIVEC_BUILTIN_VRFIZ,
-    RS6000_BTI_V4SF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_TRUNC, VSX_BUILTIN_XVRDPIZ,
-    RS6000_BTI_V2DF, RS6000_BTI_V2DF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHSB,
-    RS6000_BTI_V8HI, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHSB,
-    RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHSH,
-    RS6000_BTI_V4SI, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHSH,
-    RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, P8V_BUILTIN_VUPKHSW,
-    RS6000_BTI_V2DI, RS6000_BTI_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, P8V_BUILTIN_VUPKHSW,
-    RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHPX,
-    RS6000_BTI_unsigned_V4SI, RS6000_BTI_pixel_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, VSX_BUILTIN_DOUBLEH_V4SF,
-    RS6000_BTI_V2DF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHSH, ALTIVEC_BUILTIN_VUPKHSH,
-    RS6000_BTI_V4SI, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHSH, ALTIVEC_BUILTIN_VUPKHSH,
-    RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHSH, P8V_BUILTIN_VUPKHSW,
-    RS6000_BTI_V2DI, RS6000_BTI_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHSH, P8V_BUILTIN_VUPKHSW,
-    RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHPX, ALTIVEC_BUILTIN_VUPKHPX,
-    RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHPX, ALTIVEC_BUILTIN_VUPKHPX,
-    RS6000_BTI_unsigned_V4SI, RS6000_BTI_pixel_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHSB, ALTIVEC_BUILTIN_VUPKHSB,
-    RS6000_BTI_V8HI, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKHSB, ALTIVEC_BUILTIN_VUPKHSB,
-    RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, ALTIVEC_BUILTIN_VUPKLSB,
-    RS6000_BTI_V8HI, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, ALTIVEC_BUILTIN_VUPKLSB,
-    RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, ALTIVEC_BUILTIN_VUPKLPX,
-    RS6000_BTI_unsigned_V4SI, RS6000_BTI_pixel_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, ALTIVEC_BUILTIN_VUPKLSH,
-    RS6000_BTI_V4SI, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, ALTIVEC_BUILTIN_VUPKLSH,
-    RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, P8V_BUILTIN_VUPKLSW,
-    RS6000_BTI_V2DI, RS6000_BTI_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, P8V_BUILTIN_VUPKLSW,
-    RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, VSX_BUILTIN_DOUBLEL_V4SF,
-    RS6000_BTI_V2DF, RS6000_BTI_V4SF, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKLPX, ALTIVEC_BUILTIN_VUPKLPX,
-    RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKLPX, ALTIVEC_BUILTIN_VUPKLPX,
-    RS6000_BTI_unsigned_V4SI, RS6000_BTI_pixel_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKLSH, ALTIVEC_BUILTIN_VUPKLSH,
-    RS6000_BTI_V4SI, RS6000_BTI_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKLSH, ALTIVEC_BUILTIN_VUPKLSH,
-    RS6000_BTI_bool_V4SI, RS6000_BTI_bool_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKLSB, ALTIVEC_BUILTIN_VUPKLSB,
-    RS6000_BTI_V8HI, RS6000_BTI_V16QI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_VUPKLSB, ALTIVEC_BUILTIN_VUPKLSB,
-    RS6000_BTI_bool_V8HI, RS6000_BTI_bool_V16QI, 0, 0 },
-};
-
-struct s2pp_builtin_types
-{
-  enum rs6000_builtins code;
-  enum rs6000_builtins overloaded_code;
-  signed char ret_type;
-  signed char op1;
-  signed char op2;
-  signed char op3;
-};
-
-const struct s2pp_builtin_types s2pp_overloaded_builtins[] = {
+const struct vector_builtin_types s2pp_overloaded_builtins[] = {
 //ADD builtins
   { S2PP_BUILTIN_VEC_FXVADD, S2PP_BUILTIN_FXVADDB,
     RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
@@ -2095,7 +1946,7 @@ const struct s2pp_builtin_types s2pp_overloaded_builtins[] = {
     RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI }
 };
 
-const struct altivec_builtin_types altivec_overloaded_builtins[] = {
+const struct vector_builtin_types altivec_overloaded_builtins[] = {
   /* Unary AltiVec/VSX builtins.  */
   { ALTIVEC_BUILTIN_VEC_ABS, ALTIVEC_BUILTIN_ABS_V16QI,
     RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
@@ -2185,7 +2036,7 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V4SI, 0, 0 },
   { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHPX,
     RS6000_BTI_unsigned_V4SI, RS6000_BTI_pixel_V8HI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKH, ALTIVEC_BUILTIN_VUPKHPX,
+  { ALTIVEC_BUILTIN_VEC_UNPACKH, VSX_BUILTIN_DOUBLEH_V4SF,
     RS6000_BTI_V2DF, RS6000_BTI_V4SF, 0, 0 },
   { ALTIVEC_BUILTIN_VEC_VUPKHSH, ALTIVEC_BUILTIN_VUPKHSH,
     RS6000_BTI_V4SI, RS6000_BTI_V8HI, 0, 0 },
@@ -2217,7 +2068,7 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
     RS6000_BTI_V2DI, RS6000_BTI_V4SI, 0, 0 },
   { ALTIVEC_BUILTIN_VEC_UNPACKL, P8V_BUILTIN_VUPKLSW,
     RS6000_BTI_bool_V2DI, RS6000_BTI_bool_V4SI, 0, 0 },
-  { ALTIVEC_BUILTIN_VEC_UNPACKL, ALTIVEC_BUILTIN_VUPKLPX,
+  { ALTIVEC_BUILTIN_VEC_UNPACKL, VSX_BUILTIN_DOUBLEL_V4SF,
     RS6000_BTI_V2DF, RS6000_BTI_V4SF, 0, 0 },
   { ALTIVEC_BUILTIN_VEC_VUPKLPX, ALTIVEC_BUILTIN_VUPKLPX,
     RS6000_BTI_unsigned_V4SI, RS6000_BTI_unsigned_V8HI, 0, 0 },
@@ -5860,7 +5711,7 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
 
   /* cmpge is the same as cmpgt for all cases except floating point.
      There is further code to deal with this special case in
-     altivec_build_resolved_builtin.  */
+     vector_build_resolved_builtin.  */
   { ALTIVEC_BUILTIN_VEC_VCMPGE_P, ALTIVEC_BUILTIN_VCMPGTUB_P,
     RS6000_BTI_INTSI, RS6000_BTI_INTSI, RS6000_BTI_bool_V16QI, RS6000_BTI_unsigned_V16QI },
   { ALTIVEC_BUILTIN_VEC_VCMPGE_P, ALTIVEC_BUILTIN_VCMPGTUB_P,
@@ -7311,7 +7162,7 @@ const struct altivec_builtin_types altivec_overloaded_builtins[] = {
 };
 
 
-/* Convert a type stored into a struct altivec_builtin_types as ID,
+/* Convert a type stored into a struct vector_builtin_types as ID,
    into a tree.  The types are in rs6000_builtin_types: negative values
    create a pointer type for the type associated to ~ID.  Note it is
    a logical NOT, rather than a negation, otherwise you cannot represent
@@ -7326,7 +7177,7 @@ rs6000_builtin_type (int id)
 }
 
 /* Check whether the type of an argument, T, is compatible with a type ID
-   stored into a struct altivec_builtin_types.  Integer types are considered
+   stored into a struct vector_builtin_types.  Integer types are considered
    compatible; otherwise, the language hook lang_hooks.types_compatible_p makes
    the decision.  Also allow long double and _Float128 to be compatible if
    -mabi=ieeelongdouble.  */
@@ -7373,7 +7224,7 @@ fully_fold_convert (tree type, tree expr)
   return result;
 }
 
-/* Build a tree for a function call to an Altivec non-overloaded builtin.
+/* Build a tree for a function call to an Altivec/s2pp non-overloaded builtin.
    The overloaded builtin that matched the types and args is described
    by DESC.  The N arguments are given in ARGS, respectively.  
 
@@ -7381,8 +7232,8 @@ fully_fold_convert (tree type, tree expr)
    a small exception for vec_{all,any}_{ge,le} predicates. */
 
 static tree
-altivec_build_resolved_builtin (tree *args, int n,
-				const struct altivec_builtin_types *desc)
+vector_build_resolved_builtin (tree *args, int n,
+				const struct vector_builtin_types *desc)
 {
   tree impl_fndecl = rs6000_builtin_decls[desc->overloaded_code];
   tree ret_type = rs6000_builtin_type (desc->ret_type);
@@ -7442,48 +7293,6 @@ altivec_build_resolved_builtin (tree *args, int n,
   return fold_convert (ret_type, call);
 }
 
-/* Build a tree for a function call to an s2pp non-overloaded builtin. */
-
-static tree
-s2pp_build_resolved_builtin (tree *args, int n,
-				const struct s2pp_builtin_types *desc)
-{
-  tree impl_fndecl = rs6000_builtin_decls[desc->overloaded_code];
-  tree ret_type = rs6000_builtin_type (desc->ret_type);
-  tree argtypes = TYPE_ARG_TYPES (TREE_TYPE (impl_fndecl));
-  tree arg_type[3];
-  tree call;
-
-  int i;
-  for (i = 0; i < n; i++)
-    arg_type[i] = TREE_VALUE (argtypes), argtypes = TREE_CHAIN (argtypes);
-
-  switch (n)
-    {
-    case 0:
-      call = build_call_expr (impl_fndecl, 0);
-      break;
-    case 1:
-      call = build_call_expr (impl_fndecl, 1,
-			      fully_fold_convert (arg_type[0], args[0]));
-      break;
-    case 2:
-      call = build_call_expr (impl_fndecl, 2,
-			      fully_fold_convert (arg_type[0], args[0]),
-			      fully_fold_convert (arg_type[1], args[1]));
-      break;
-    case 3:
-      call = build_call_expr (impl_fndecl, 3,
-			      fully_fold_convert (arg_type[0], args[0]),
-			      fully_fold_convert (arg_type[1], args[1]),
-			      fully_fold_convert (arg_type[2], args[2]));
-      break;
-    default:
-      gcc_unreachable ();
-    }
-  return fold_convert (ret_type, call);
-}
-
 /* Implementation of the resolve_overloaded_builtin target hook, to
    support s2pp's overloaded builtins.  */
 
@@ -7497,7 +7306,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
     = (enum rs6000_builtins)DECL_FUNCTION_CODE (fndecl);
   tree fnargs = TYPE_ARG_TYPES (TREE_TYPE (fndecl));
   tree types[3], args[3];
-  const struct s2pp_builtin_types *desc;
+  const struct vector_builtin_types *desc;
   unsigned int n;
 
   if (!rs6000_overloaded_builtin_p (fcode))
@@ -7762,7 +7571,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	&& (desc->op3 == RS6000_BTI_NOT_OPAQUE
 	    || rs6000_builtin_type_compatible (types[2], desc->op3))
 	&& rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
-      return s2pp_build_resolved_builtin (args, n, desc);
+      return vector_build_resolved_builtin (args, n, desc);
 
  bad:
   error ("invalid parameter combination for s2pp intrinsic");
@@ -7782,7 +7591,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
     = (enum rs6000_builtins)DECL_FUNCTION_CODE (fndecl);
   tree fnargs = TYPE_ARG_TYPES (TREE_TYPE (fndecl));
   tree types[3], args[3];
-  const struct altivec_builtin_types *desc;
+  const struct vector_builtin_types *desc;
   unsigned int n;
 
   if (!rs6000_overloaded_builtin_p (fcode))
@@ -8601,7 +8410,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	  {
 	    if (rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
 	      {
-		result = altivec_build_resolved_builtin (args, n, desc);
+		result = vector_build_resolved_builtin (args, n, desc);
 		/* overloaded_code is set above */
 		if (!rs6000_builtin_is_supported_p (overloaded_code))
 		  unsupported_builtin = true;
@@ -8655,7 +8464,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	  {
 	    if (rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
 	      {
-		result = altivec_build_resolved_builtin (args, n, desc);
+		result = vector_build_resolved_builtin (args, n, desc);
 		/* overloaded_code is set above.  */
 		if (!rs6000_builtin_is_supported_p (overloaded_code))
 		  unsupported_builtin = true;
@@ -8681,7 +8490,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	      {
 		if (rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
 		  {
-		    result = altivec_build_resolved_builtin (args, n, desc);
+		    result = vector_build_resolved_builtin (args, n, desc);
 		    if (!rs6000_builtin_is_supported_p (desc->overloaded_code))
 		      {
 			/* Allow loop to continue in case a different
@@ -8716,7 +8525,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	  error ("builtin function %qs not supported in this compiler "
 		 "configuration", name);
 	/* If an error-representing  result tree was returned from
-	   altivec_build_resolved_builtin above, use it.  */
+	   vector_build_resolved_builtin above, use it.  */
 	return (result != NULL) ? result : error_mark_node;
       }
   }
