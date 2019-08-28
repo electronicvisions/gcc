@@ -14498,48 +14498,6 @@ paired_expand_lv_builtin (enum insn_code icode, tree exp, rtx target)
 }
 
 static rtx
-s2pp_expand_stv_builtin (enum insn_code icode, tree exp)
-{
-  tree arg0 = CALL_EXPR_ARG (exp, 0);
-  tree arg1 = CALL_EXPR_ARG (exp, 1);
-  tree arg2 = CALL_EXPR_ARG (exp, 2);
-  rtx op0 = expand_normal (arg0);
-  rtx op1 = expand_normal (arg1);
-  rtx op2 = expand_normal (arg2);
-  rtx pat, addr;
-  enum machine_mode tmode = insn_data[icode].operand[0].mode;
-  enum machine_mode smode = insn_data[icode].operand[1].mode;
-  enum machine_mode mode1 = Pmode;
-  enum machine_mode mode2 = Pmode;
-
-  /* Invalid arguments.  Bail before doing anything stoopid!  */
-  if (arg0 == error_mark_node
-      || arg1 == error_mark_node
-      || arg2 == error_mark_node)
-    return const0_rtx;
-
-  if (! (*insn_data[icode].operand[1].predicate) (op0, smode))
-    op0 = copy_to_mode_reg (smode, op0);
-
-  op2 = copy_to_mode_reg (mode2, op2);
-
-  if (op1 == const0_rtx)
-    {
-      addr = gen_rtx_MEM (tmode, op2);
-    }
-  else
-    {
-      op1 = copy_to_mode_reg (mode1, op1);
-      addr = gen_rtx_MEM (tmode, gen_rtx_PLUS (Pmode, op1, op2));
-    }
-
-  pat = GEN_FCN (icode) (addr, op0);
-  if (pat)
-    emit_insn (pat);
-  return NULL_RTX;
-}
-
-static rtx
 s2pp_expand_ld_builtin (tree exp, rtx target, bool *expandedp)
 {
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
@@ -14938,7 +14896,7 @@ altivec_expand_stxvl_builtin (enum insn_code icode, tree exp)
 }
 
 static rtx
-altivec_expand_stv_builtin (enum insn_code icode, tree exp)
+vector_expand_stv_builtin (enum insn_code icode, tree exp)
 {
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
@@ -15840,38 +15798,38 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
   switch (fcode)
     {
     case S2PP_BUILTIN_FXVSTAX_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v8hi, exp);
     case S2PP_BUILTIN_FXVSTAX_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_v16qi, exp);
     case S2PP_BUILTIN_FXVSTAX_GT_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v8hi, exp);
     case S2PP_BUILTIN_FXVSTAX_GT_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_gt_v16qi, exp);
     case S2PP_BUILTIN_FXVSTAX_LT_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v8hi, exp);
     case S2PP_BUILTIN_FXVSTAX_LT_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_lt_v16qi, exp);
     case S2PP_BUILTIN_FXVSTAX_EQ_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v8hi, exp);
     case S2PP_BUILTIN_FXVSTAX_EQ_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvstax_eq_v16qi, exp);
 
     case S2PP_BUILTIN_FXVOUTX_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v8hi, exp);
     case S2PP_BUILTIN_FXVOUTX_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_v16qi, exp);
     case S2PP_BUILTIN_FXVOUTX_GT_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v8hi, exp);
     case S2PP_BUILTIN_FXVOUTX_GT_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_gt_v16qi, exp);
     case S2PP_BUILTIN_FXVOUTX_LT_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v8hi, exp);
     case S2PP_BUILTIN_FXVOUTX_LT_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_lt_v16qi, exp);
     case S2PP_BUILTIN_FXVOUTX_EQ_V8HI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v8hi, exp);
     case S2PP_BUILTIN_FXVOUTX_EQ_V16QI:
-      return s2pp_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_s2pp_fxvoutx_eq_v16qi, exp);
 
     case S2PP_BUILTIN_VEC_INIT_V8HI:
     case S2PP_BUILTIN_VEC_INIT_V16QI:
@@ -16010,46 +15968,46 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
   switch (fcode)
     {
     case ALTIVEC_BUILTIN_STVX_V2DF:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvx_v2df, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvx_v2df, exp);
     case ALTIVEC_BUILTIN_STVX_V2DI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvx_v2di, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvx_v2di, exp);
     case ALTIVEC_BUILTIN_STVX_V4SF:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvx_v4sf, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvx_v4sf, exp);
     case ALTIVEC_BUILTIN_STVX:
     case ALTIVEC_BUILTIN_STVX_V4SI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvx_v4si, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvx_v4si, exp);
     case ALTIVEC_BUILTIN_STVX_V8HI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvx_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvx_v8hi, exp);
     case ALTIVEC_BUILTIN_STVX_V16QI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvx_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvx_v16qi, exp);
     case ALTIVEC_BUILTIN_STVEBX:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvebx, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvebx, exp);
     case ALTIVEC_BUILTIN_STVEHX:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvehx, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvehx, exp);
     case ALTIVEC_BUILTIN_STVEWX:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvewx, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvewx, exp);
     case ALTIVEC_BUILTIN_STVXL_V2DF:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvxl_v2df, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvxl_v2df, exp);
     case ALTIVEC_BUILTIN_STVXL_V2DI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvxl_v2di, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvxl_v2di, exp);
     case ALTIVEC_BUILTIN_STVXL_V4SF:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvxl_v4sf, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvxl_v4sf, exp);
     case ALTIVEC_BUILTIN_STVXL:
     case ALTIVEC_BUILTIN_STVXL_V4SI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvxl_v4si, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvxl_v4si, exp);
     case ALTIVEC_BUILTIN_STVXL_V8HI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvxl_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvxl_v8hi, exp);
     case ALTIVEC_BUILTIN_STVXL_V16QI:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvxl_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvxl_v16qi, exp);
 
     case ALTIVEC_BUILTIN_STVLX:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvlx, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvlx, exp);
     case ALTIVEC_BUILTIN_STVLXL:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvlxl, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvlxl, exp);
     case ALTIVEC_BUILTIN_STVRX:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvrx, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvrx, exp);
     case ALTIVEC_BUILTIN_STVRXL:
-      return altivec_expand_stv_builtin (CODE_FOR_altivec_stvrxl, exp);
+      return vector_expand_stv_builtin (CODE_FOR_altivec_stvrxl, exp);
 
     case P9V_BUILTIN_STXVL:
       return altivec_expand_stxvl_builtin (CODE_FOR_stxvl, exp);
@@ -16058,19 +16016,19 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
       return altivec_expand_stxvl_builtin (CODE_FOR_xst_len_r, exp);
 
     case VSX_BUILTIN_STXVD2X_V1TI:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v1ti, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v1ti, exp);
     case VSX_BUILTIN_STXVD2X_V2DF:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v2df, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v2df, exp);
     case VSX_BUILTIN_STXVD2X_V2DI:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v2di, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v2di, exp);
     case VSX_BUILTIN_STXVW4X_V4SF:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v4sf, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v4sf, exp);
     case VSX_BUILTIN_STXVW4X_V4SI:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v4si, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v4si, exp);
     case VSX_BUILTIN_STXVW4X_V8HI:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v8hi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v8hi, exp);
     case VSX_BUILTIN_STXVW4X_V16QI:
-      return altivec_expand_stv_builtin (CODE_FOR_vsx_store_v16qi, exp);
+      return vector_expand_stv_builtin (CODE_FOR_vsx_store_v16qi, exp);
 
     /* For the following on big endian, it's ok to use any appropriate
        unaligned-supporting store, so use a generic expander.  For
@@ -16080,43 +16038,43 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
      {
         enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v1ti
 			       : CODE_FOR_vsx_st_elemrev_v1ti);
-        return altivec_expand_stv_builtin (code, exp);
+        return vector_expand_stv_builtin (code, exp);
       }
     case VSX_BUILTIN_ST_ELEMREV_V2DF:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v2df
 			       : CODE_FOR_vsx_st_elemrev_v2df);
-	return altivec_expand_stv_builtin (code, exp);
+	return vector_expand_stv_builtin (code, exp);
       }
     case VSX_BUILTIN_ST_ELEMREV_V2DI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v2di
 			       : CODE_FOR_vsx_st_elemrev_v2di);
-	return altivec_expand_stv_builtin (code, exp);
+	return vector_expand_stv_builtin (code, exp);
       }
     case VSX_BUILTIN_ST_ELEMREV_V4SF:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v4sf
 			       : CODE_FOR_vsx_st_elemrev_v4sf);
-	return altivec_expand_stv_builtin (code, exp);
+	return vector_expand_stv_builtin (code, exp);
       }
     case VSX_BUILTIN_ST_ELEMREV_V4SI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v4si
 			       : CODE_FOR_vsx_st_elemrev_v4si);
-	return altivec_expand_stv_builtin (code, exp);
+	return vector_expand_stv_builtin (code, exp);
       }
     case VSX_BUILTIN_ST_ELEMREV_V8HI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v8hi
 			       : CODE_FOR_vsx_st_elemrev_v8hi);
-	return altivec_expand_stv_builtin (code, exp);
+	return vector_expand_stv_builtin (code, exp);
       }
     case VSX_BUILTIN_ST_ELEMREV_V16QI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_store_v16qi
 			       : CODE_FOR_vsx_st_elemrev_v16qi);
-	return altivec_expand_stv_builtin (code, exp);
+	return vector_expand_stv_builtin (code, exp);
       }
 
     case ALTIVEC_BUILTIN_MFVSCR:
