@@ -794,21 +794,12 @@ extern unsigned char rs6000_recip_bits[];
 #define OPTION_TARGET_CPU_DEFAULT TARGET_CPU_DEFAULT
 
 /* Target pragma.  */
-#ifdef TARGET_S2PP
 #define REGISTER_TARGET_PRAGMAS() do {				\
   c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
   targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
-  targetm.resolve_overloaded_builtin = s2pp_resolve_overloaded_builtin; \
+  targetm.resolve_overloaded_builtin = vector_resolve_overloaded_builtin; \
   rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
 } while (0)
-#else
-#define REGISTER_TARGET_PRAGMAS() do {				\
-  c_register_pragma (0, "longcall", rs6000_pragma_longcall);	\
-  targetm.target_option.pragma_parse = rs6000_pragma_target_parse; \
-  targetm.resolve_overloaded_builtin = altivec_resolve_overloaded_builtin; \
-  rs6000_target_modify_macros_ptr = rs6000_target_modify_macros; \
-} while (0)
-#endif
 
 /* Target #defines.  */
 #define TARGET_CPU_CPP_BUILTINS() \
