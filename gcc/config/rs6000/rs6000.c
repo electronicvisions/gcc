@@ -14426,30 +14426,6 @@ rs6000_expand_unop_builtin (enum insn_code icode, tree exp, rtx target)
 	}
     }
 
-  /* Special handling for void intrinsic
-     fxvcmp has only one mode -> 2nd mode is mode from other insn */
-  if (icode == CODE_FOR_s2pp_fxvcmpb
-	|| icode == CODE_FOR_s2pp_fxvcmph
-	|| icode == CODE_FOR_s2pp_fxvmtacb
-	|| icode == CODE_FOR_s2pp_fxvmtach)
-    {
-      /* PS (2018-06-18): still dunno, what this does and why it's
-         different to the altivec handling, i.e. why we don't use the
-         handling below for emit insn, etc. */
-      fprintf (stderr, "icode: %d, code_for_fxvcmpb: %d, code_for_fxvcmph: %d",
-	icode, CODE_FOR_s2pp_fxvcmpb, CODE_FOR_s2pp_fxvcmph);
-      if (! (*insn_data[icode].operand[0].predicate) (op0, tmode))
-        op0 = copy_to_mode_reg (tmode, op0);
-      /* PS (2018-06-18): does this even exist with one argument?
-         below, there's two. */
-      pat = GEN_FCN (icode) (op0);
-      if (! pat)
-        return 0;
-      emit_insn (pat);
-      /* PS (2018-06-18): why NULL_RTX instead of target as below? */
-      return NULL_RTX;
-    }
-
   if (target == 0
       || GET_MODE (target) != tmode
       || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
