@@ -13942,37 +13942,6 @@ static const struct builtin_description bdesc_altivec_preds[] =
 #include "rs6000-builtin.def"
 };
 
-#undef RS6000_BUILTIN_0
-#undef RS6000_BUILTIN_1
-#undef RS6000_BUILTIN_2
-#undef RS6000_BUILTIN_3
-#undef RS6000_BUILTIN_A
-#undef RS6000_BUILTIN_D
-#undef RS6000_BUILTIN_H
-#undef RS6000_BUILTIN_P
-#undef RS6000_BUILTIN_Q
-#undef RS6000_BUILTIN_X
-
-#define RS6000_BUILTIN_0(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_1(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_2(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_3(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_A(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_D(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_H(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_P(ENUM, NAME, MASK, ATTR, ICODE) \
-  { MASK, ICODE, NAME, ENUM },
-
-#define RS6000_BUILTIN_Q(ENUM, NAME, MASK, ATTR, ICODE)
-#define RS6000_BUILTIN_X(ENUM, NAME, MASK, ATTR, ICODE)
-
-/* s2pp predicates.  */
-
-static const struct builtin_description bdesc_s2pp_preds[] =
-{
-#include "rs6000-builtin.def"
-};
-
 /* PAIRED predicates.  */
 #undef RS6000_BUILTIN_0
 #undef RS6000_BUILTIN_1
