@@ -832,7 +832,7 @@ struct vector_builtin_types
   signed char op3;
 };
 
-const struct vector_builtin_types s2pp_overloaded_builtins[] = {
+const struct vector_builtin_types vector_overloaded_builtins[] = {
 //ADD builtins
   { S2PP_BUILTIN_VEC_FXVADD, S2PP_BUILTIN_FXVADDB,
     RS6000_BTI_V16QI, RS6000_BTI_bool_V16QI, RS6000_BTI_V16QI, 0 },
@@ -1943,10 +1943,8 @@ const struct vector_builtin_types s2pp_overloaded_builtins[] = {
   { S2PP_BUILTIN_VEC_FXVADDTACH, S2PP_BUILTIN_FXVADDTACH,
     RS6000_BTI_void, RS6000_BTI_V8HI, RS6000_BTI_V8HI, RS6000_BTI_INTSI },
   { S2PP_BUILTIN_VEC_FXVADDTACH, S2PP_BUILTIN_FXVADDTACH,
-    RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI }
-};
+    RS6000_BTI_void, RS6000_BTI_unsigned_V8HI, RS6000_BTI_unsigned_V8HI, RS6000_BTI_INTSI },
 
-const struct vector_builtin_types altivec_overloaded_builtins[] = {
   /* Unary AltiVec/VSX builtins.  */
   { ALTIVEC_BUILTIN_VEC_ABS, ALTIVEC_BUILTIN_ABS_V16QI,
     RS6000_BTI_V16QI, RS6000_BTI_V16QI, 0, 0 },
@@ -7294,10 +7292,10 @@ vector_build_resolved_builtin (tree *args, int n,
 }
 
 /* Implementation of the resolve_overloaded_builtin target hook, to
-   support s2pp's overloaded builtins.  */
+   support Altivec's and s2pp's overloaded builtins.  */
 
 tree
-s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
+vector_resolve_overloaded_builtin (location_t loc, tree fndecl,
 				    void *passed_arglist)
 {
   vec<tree, va_gc> *arglist = static_cast<vec<tree, va_gc> *> (passed_arglist);
@@ -7313,7 +7311,7 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
     return NULL_TREE;
 
   if (TARGET_DEBUG_BUILTIN)
-    fprintf (stderr, "s2pp_resolve_overloaded_builtin, code = %4d, %s\n",
+    fprintf (stderr, "vector_resolve_overloaded_builtin, code = %4d, %s\n",
 	     (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
 
   if (fcode == S2PP_BUILTIN_VEC_SPLATS)
@@ -7492,115 +7490,6 @@ s2pp_resolve_overloaded_builtin (location_t loc, tree fndecl,
       return stmt;
     }
 
-  for (n = 0;
-       !VOID_TYPE_P (TREE_VALUE (fnargs)) && n < nargs;
-       fnargs = TREE_CHAIN (fnargs), n++)
-    {
-      tree decl_type = TREE_VALUE (fnargs);
-      tree arg = (*arglist)[n];
-      tree type;
-
-      if (arg == error_mark_node)
-	return error_mark_node;
-
-      if (n >= 3)
-        abort ();
-
-      arg = default_conversion (arg);
-
-      /* The C++ front-end converts float * to const void * using
-	 NOP_EXPR<const void *> (NOP_EXPR<void *> (x)).  */
-      type = TREE_TYPE (arg);
-      if (POINTER_TYPE_P (type)
-	  && TREE_CODE (arg) == NOP_EXPR
-	  && lang_hooks.types_compatible_p (TREE_TYPE (arg),
-					    const_ptr_type_node)
-	  && lang_hooks.types_compatible_p (TREE_TYPE (TREE_OPERAND (arg, 0)),
-					    ptr_type_node))
-	{
-	  arg = TREE_OPERAND (arg, 0);
-          type = TREE_TYPE (arg);
-	}
-
-      /* Remove the const from the pointers to simplify the overload
-	 matching further down.  */
-      if (POINTER_TYPE_P (decl_type)
-	  && POINTER_TYPE_P (type)
-	  && TYPE_QUALS (TREE_TYPE (type)) != 0)
-	{
-          if (TYPE_READONLY (TREE_TYPE (type))
-	      && !TYPE_READONLY (TREE_TYPE (decl_type)))
-	    warning (0, "passing arg %d of %qE discards qualifiers from"
-		        "pointer target type", n + 1, fndecl);
-	  type = build_pointer_type (build_qualified_type (TREE_TYPE (type),
-							   0));
-	  arg = fold_convert (type, arg);
-	}
-
-      args[n] = arg;
-      types[n] = type;
-    }
-
-  /* If the number of arguments did not match the prototype, return NULL
-     and the generic code will issue the appropriate error message.  */
-  if (!VOID_TYPE_P (TREE_VALUE (fnargs)) || n < nargs)
-    return NULL;
-
-  if (n == 0)
-    abort ();
-
-  if (fcode == S2PP_BUILTIN_VEC_STEP)
-    {
-      if (TREE_CODE (types[0]) != VECTOR_TYPE)
-	goto bad;
-
-      return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
-    }
-
-  for (desc = s2pp_overloaded_builtins;
-       desc->code && desc->code != fcode; desc++)
-    continue;
-
-  /* For arguments after the last, we have RS6000_BTI_NOT_OPAQUE in
-     the opX fields.  */
-  for (; desc->code == fcode; desc++)
-    if ((desc->op1 == RS6000_BTI_NOT_OPAQUE
-	 || rs6000_builtin_type_compatible (types[0], desc->op1))
-	&& (desc->op2 == RS6000_BTI_NOT_OPAQUE
-	    || rs6000_builtin_type_compatible (types[1], desc->op2))
-	&& (desc->op3 == RS6000_BTI_NOT_OPAQUE
-	    || rs6000_builtin_type_compatible (types[2], desc->op3))
-	&& rs6000_builtin_decls[desc->overloaded_code] != NULL_TREE)
-      return vector_build_resolved_builtin (args, n, desc);
-
- bad:
-  error ("invalid parameter combination for s2pp intrinsic");
-  return error_mark_node;
-}
-
-/* Implementation of the resolve_overloaded_builtin target hook, to
-   support Altivec's overloaded builtins.  */
-
-tree
-altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
-				    void *passed_arglist)
-{
-  vec<tree, va_gc> *arglist = static_cast<vec<tree, va_gc> *> (passed_arglist);
-  unsigned int nargs = vec_safe_length (arglist);
-  enum rs6000_builtins fcode
-    = (enum rs6000_builtins)DECL_FUNCTION_CODE (fndecl);
-  tree fnargs = TYPE_ARG_TYPES (TREE_TYPE (fndecl));
-  tree types[3], args[3];
-  const struct vector_builtin_types *desc;
-  unsigned int n;
-
-  if (!rs6000_overloaded_builtin_p (fcode))
-    return NULL_TREE;
-
-  if (TARGET_DEBUG_BUILTIN)
-    fprintf (stderr, "altivec_resolve_overloaded_builtin, code = %4d, %s\n",
-	     (int)fcode, IDENTIFIER_POINTER (DECL_NAME (fndecl)));
- 
   /* vec_lvsl and vec_lvsr are deprecated for use with LE element order.  */
   if (fcode == ALTIVEC_BUILTIN_VEC_LVSL && !VECTOR_ELT_ORDER_BIG)
     warning (OPT_Wdeprecated,
@@ -7712,7 +7601,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 		vec<tree, va_gc> *params = make_tree_vector ();
 		vec_safe_push (params, arg0);
 		vec_safe_push (params, arg1);
-		tree call = altivec_resolve_overloaded_builtin
+		tree call = vector_resolve_overloaded_builtin
 		  (loc, rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_CMPEQ],
 		   params);
 		/* Use save_expr to ensure that operands used more than once
@@ -7722,7 +7611,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 		params = make_tree_vector ();
 		vec_safe_push (params, call);
 		vec_safe_push (params, call);
-		return altivec_resolve_overloaded_builtin
+		return vector_resolve_overloaded_builtin
 		  (loc, rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_NOR], params);
 	      }
 	      /* Other types are errors.  */
@@ -7781,7 +7670,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	      else
 		add_sub_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_SUB];
 
-	      tree call = altivec_resolve_overloaded_builtin (loc,
+	      tree call = vector_resolve_overloaded_builtin (loc,
 							      add_sub_builtin,
 							      params);
 	      tree const1 = build_int_cstu (TREE_TYPE (arg0_type), 1);
@@ -7791,7 +7680,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	      params = make_tree_vector ();
 	      vec_safe_push (params, call);
 	      vec_safe_push (params, and_expr);
-	      return altivec_resolve_overloaded_builtin (loc, add_sub_builtin,
+	      return vector_resolve_overloaded_builtin (loc, add_sub_builtin,
 							 params);
 	    }
 	  /* For {un}signed __int128s use the vaddeuqm instruction
@@ -7806,7 +7695,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	       else
 		 bii = rs6000_builtin_decls[P8V_BUILTIN_VEC_VSUBEUQM];
 
-	       return altivec_resolve_overloaded_builtin (loc, bii, arglist);
+	       return vector_resolve_overloaded_builtin (loc, bii, arglist);
 	    }
 
 	  /* Types other than {un}signed int and {un}signed __int128
@@ -7870,7 +7759,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	    else
 	      as_c_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_SUBC];
 
-	    tree call1 = altivec_resolve_overloaded_builtin (loc, as_c_builtin,
+	    tree call1 = vector_resolve_overloaded_builtin (loc, as_c_builtin,
 							     params);
 	    params = make_tree_vector ();
 	    vec_safe_push (params, arg0);
@@ -7882,7 +7771,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	    else
 	      as_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_SUB];
 
-	    tree call2 = altivec_resolve_overloaded_builtin (loc, as_builtin,
+	    tree call2 = vector_resolve_overloaded_builtin (loc, as_builtin,
 							     params);
 	    tree const1 = build_int_cstu (TREE_TYPE (arg0_type), 1);
 	    tree ones_vector = build_vector_from_val (arg0_type, const1);
@@ -7891,13 +7780,13 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	    params = make_tree_vector ();
 	    vec_safe_push (params, call2);
 	    vec_safe_push (params, and_expr);
-	    call2 = altivec_resolve_overloaded_builtin (loc, as_c_builtin,
+	    call2 = vector_resolve_overloaded_builtin (loc, as_c_builtin,
 							params);
 	    params = make_tree_vector ();
 	    vec_safe_push (params, call1);
 	    vec_safe_push (params, call2);
 	    tree or_builtin = rs6000_builtin_decls[ALTIVEC_BUILTIN_VEC_OR];
-	    return altivec_resolve_overloaded_builtin (loc, or_builtin,
+	    return vector_resolve_overloaded_builtin (loc, or_builtin,
 						       params);
 	    }
 	  /* For {un}signed __int128s use the vaddecuq/vsubbecuq
@@ -7912,7 +7801,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	       else
 		 bii = rs6000_builtin_decls[P8V_BUILTIN_VEC_VSUBECUQ];
 
-	       return altivec_resolve_overloaded_builtin (loc, bii, arglist);
+	       return vector_resolve_overloaded_builtin (loc, bii, arglist);
 	    }
 	  /* Types other than {un}signed int and {un}signed __int128
 		are errors.  */
@@ -8351,6 +8240,14 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
   if (n == 0)
     abort ();
 
+  if (fcode == S2PP_BUILTIN_VEC_STEP)
+    {
+      if (TREE_CODE (types[0]) != VECTOR_TYPE)
+	goto bad;
+
+      return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
+    }
+
   if (fcode == ALTIVEC_BUILTIN_VEC_STEP)
     {
       if (TREE_CODE (types[0]) != VECTOR_TYPE)
@@ -8363,7 +8260,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
     bool unsupported_builtin = false;
     enum rs6000_builtins overloaded_code;
     tree result = NULL;
-    for (desc = altivec_overloaded_builtins;
+    for (desc = vector_overloaded_builtins;
 	 desc->code && desc->code != fcode; desc++)
       continue;
 
@@ -8532,7 +8429,7 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
  bad:
   {
     const char *name = rs6000_overloaded_builtin_name (fcode);
-    error ("invalid parameter combination for AltiVec intrinsic %qs", name);
+    error ("invalid parameter combination for vector intrinsic %qs", name);
     return error_mark_node;
   }
 }

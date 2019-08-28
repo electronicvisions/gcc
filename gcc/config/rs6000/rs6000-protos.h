@@ -179,7 +179,7 @@ extern unsigned int rs6000_special_round_type_align (tree, unsigned int,
 extern unsigned int darwin_rs6000_special_round_type_align (tree, unsigned int,
 							    unsigned int);
 extern tree altivec_resolve_overloaded_builtin (location_t, tree, void *);
-extern tree s2pp_resolve_overloaded_builtin (location_t, tree, void *);
+extern tree vector_resolve_overloaded_builtin (location_t, tree, void *);
 extern rtx rs6000_libcall_value (machine_mode);
 extern rtx rs6000_va_arg (tree, tree);
 extern int function_ok_for_sibcall (tree);
