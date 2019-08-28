@@ -15880,7 +15880,7 @@ altivec_expand_dst_builtin (tree exp, rtx target ATTRIBUTE_UNUSED,
 
 /* Expand vec_init builtin.  */
 static rtx
-altivec_expand_vec_init_builtin (tree type, tree exp, rtx target)
+vector_expand_vec_init_builtin (tree type, tree exp, rtx target)
 {
   machine_mode tmode = TYPE_MODE (type);
   machine_mode inner_mode = GET_MODE_INNER (tmode);
@@ -15931,46 +15931,6 @@ get_element_number (tree vec_type, tree arg)
     }
 
   return elt;
-}
-
-/* Expand the builtin in EXP and store the result in TARGET.  Store
-   true in *EXPANDEDP if we found a builtin to expand.  */
-
-/* Expand vec_init builtin.  */
-static rtx
-s2pp_expand_vec_init_builtin (tree type, tree exp, rtx target)
-{
-  enum machine_mode tmode = TYPE_MODE (type);
-  enum machine_mode inner_mode = GET_MODE_INNER (tmode);
-  int i, n_elt = GET_MODE_NUNITS (tmode);
-
-  gcc_assert (VECTOR_MODE_P (tmode));
-  gcc_assert (n_elt == call_expr_nargs (exp));
-
-  if (!target || !register_operand (target, tmode))
-    target = gen_reg_rtx (tmode);
-
-  /* If we have a vector compromised of a single element, such as V1TImode, do
-     the initialization directly.  */
-  if (n_elt == 1 && GET_MODE_SIZE (tmode) == GET_MODE_SIZE (inner_mode))
-    {
-      rtx x = expand_normal (CALL_EXPR_ARG (exp, 0));
-      emit_move_insn (target, gen_lowpart (tmode, x));
-    }
-  else
-    {
-      rtvec v = rtvec_alloc (n_elt);
-
-      for (i = 0; i < n_elt; ++i)
-	{
-	  rtx x = expand_normal (CALL_EXPR_ARG (exp, i));
-	  RTVEC_ELT (v, i) = gen_lowpart (inner_mode, x);
-	}
-
-      rs6000_expand_vector_init (target, gen_rtx_PARALLEL (tmode, v));
-    }
-
-  return target;
 }
 
 /* Expand vec_set builtin.  */
@@ -16195,7 +16155,7 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
 
     case S2PP_BUILTIN_VEC_INIT_V8HI:
     case S2PP_BUILTIN_VEC_INIT_V16QI:
-      return s2pp_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
+      return vector_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
 
     case S2PP_BUILTIN_VEC_SET_V8HI:
     case S2PP_BUILTIN_VEC_SET_V16QI:
@@ -16580,7 +16540,7 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
     case VSX_BUILTIN_VEC_INIT_V2DF:
     case VSX_BUILTIN_VEC_INIT_V2DI:
     case VSX_BUILTIN_VEC_INIT_V1TI:
-      return altivec_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
+      return vector_expand_vec_init_builtin (TREE_TYPE (exp), exp, target);
 
     case ALTIVEC_BUILTIN_VEC_SET_V4SI:
     case ALTIVEC_BUILTIN_VEC_SET_V8HI:
