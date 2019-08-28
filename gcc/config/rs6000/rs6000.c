@@ -14775,54 +14775,7 @@ altivec_expand_stvex_be (rtx op0, rtx op1, machine_mode mode, unsigned unspec)
 }
 
 static rtx
-s2pp_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
-{
-  rtx pat, addr;
-  tree arg0 = CALL_EXPR_ARG (exp, 0);
-  tree arg1 = CALL_EXPR_ARG (exp, 1);
-  enum machine_mode tmode = insn_data[icode].operand[0].mode;
-  enum machine_mode mode0 = Pmode;
-  enum machine_mode mode1 = Pmode;
-  rtx op0 = expand_normal (arg0);
-  rtx op1 = expand_normal (arg1);
-
-  if (icode == CODE_FOR_nothing)
-    /* Builtin not supported on this processor.  */
-    return 0;
-
-  /* If we got invalid arguments bail out before generating bad rtl.  */
-  if (arg0 == error_mark_node || arg1 == error_mark_node)
-    return const0_rtx;
-
-  if (target == 0
-      || GET_MODE (target) != tmode
-      || ! (*insn_data[icode].operand[0].predicate) (target, tmode))
-    target = gen_reg_rtx (tmode);
-
-  op1 = copy_to_mode_reg (mode1, op1);
-
-  if (op0 == const0_rtx)
-    {
-      addr = gen_rtx_MEM (blk ? BLKmode : tmode, op1);
-    }
-  else
-    {
-      op0 = copy_to_mode_reg (mode0, op0);
-      addr = gen_rtx_MEM (blk ? BLKmode : tmode, gen_rtx_PLUS (Pmode, op0, op1));
-    }
-
-  pat = GEN_FCN (icode) (target, addr);
-
-  if (! pat)
-    return 0;
-  /* AWH: emit_insn (gen_sync()); */
-  emit_insn (pat);
-
-  return target;
-}
-
-static rtx
-altivec_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
+vector_expand_lv_builtin (enum insn_code icode, tree exp, rtx target, bool blk)
 {
   rtx pat, addr;
   tree arg0 = CALL_EXPR_ARG (exp, 0);
@@ -15982,38 +15935,38 @@ s2pp_expand_builtin (tree exp, rtx target, bool *expandedp)
   switch (fcode)
     {
     case S2PP_BUILTIN_FXVLAX_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_v16qi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_GT_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_GT_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_gt_v16qi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_LT_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_LT_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_lt_v16qi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_EQ_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVLAX_EQ_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvlax_eq_v16qi,exp, target, false);
 
     case S2PP_BUILTIN_FXVINX_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_v16qi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_GT_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_GT_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_gt_v16qi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_LT_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_LT_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_lt_v16qi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_EQ_V8HI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v8hi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v8hi,exp, target, false);
     case S2PP_BUILTIN_FXVINX_EQ_V16QI:
-      return s2pp_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v16qi,exp, target, false);
+      return vector_expand_lv_builtin (CODE_FOR_s2pp_fxvinx_eq_v16qi,exp, target, false);
     default:
       break;
       /* Fall through.  */
@@ -16305,93 +16258,93 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
   switch (fcode)
     {
     case ALTIVEC_BUILTIN_LVSL:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvsl,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvsl,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVSR:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvsr,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvsr,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVEBX:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvebx,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvebx,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVEHX:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvehx,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvehx,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVEWX:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvewx,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvewx,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVXL_V2DF:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvxl_v2df,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvxl_v2df,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVXL_V2DI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvxl_v2di,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvxl_v2di,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVXL_V4SF:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvxl_v4sf,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvxl_v4sf,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVXL:
     case ALTIVEC_BUILTIN_LVXL_V4SI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvxl_v4si,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvxl_v4si,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVXL_V8HI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvxl_v8hi,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvxl_v8hi,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVXL_V16QI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvxl_v16qi,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvxl_v16qi,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX_V1TI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v1ti,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v1ti,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX_V2DF:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v2df,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v2df,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX_V2DI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v2di,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v2di,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX_V4SF:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v4sf,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v4sf,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX:
     case ALTIVEC_BUILTIN_LVX_V4SI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v4si,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v4si,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX_V8HI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v8hi,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v8hi,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVX_V16QI:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvx_v16qi,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvx_v16qi,
 					exp, target, false);
     case ALTIVEC_BUILTIN_LVLX:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvlx,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvlx,
 					exp, target, true);
     case ALTIVEC_BUILTIN_LVLXL:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvlxl,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvlxl,
 					exp, target, true);
     case ALTIVEC_BUILTIN_LVRX:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvrx,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvrx,
 					exp, target, true);
     case ALTIVEC_BUILTIN_LVRXL:
-      return altivec_expand_lv_builtin (CODE_FOR_altivec_lvrxl,
+      return vector_expand_lv_builtin (CODE_FOR_altivec_lvrxl,
 					exp, target, true);
     case VSX_BUILTIN_LXVD2X_V1TI:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v1ti,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v1ti,
 					exp, target, false);
     case VSX_BUILTIN_LXVD2X_V2DF:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v2df,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v2df,
 					exp, target, false);
     case VSX_BUILTIN_LXVD2X_V2DI:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v2di,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v2di,
 					exp, target, false);
     case VSX_BUILTIN_LXVW4X_V4SF:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v4sf,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v4sf,
 					exp, target, false);
     case VSX_BUILTIN_LXVW4X_V4SI:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v4si,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v4si,
 					exp, target, false);
     case VSX_BUILTIN_LXVW4X_V8HI:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v8hi,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v8hi,
 					exp, target, false);
     case VSX_BUILTIN_LXVW4X_V16QI:
-      return altivec_expand_lv_builtin (CODE_FOR_vsx_load_v16qi,
+      return vector_expand_lv_builtin (CODE_FOR_vsx_load_v16qi,
 					exp, target, false);
     /* For the following on big endian, it's ok to use any appropriate
        unaligned-supporting load, so use a generic expander.  For
@@ -16401,43 +16354,43 @@ altivec_expand_builtin (tree exp, rtx target, bool *expandedp)
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v2df
 			       : CODE_FOR_vsx_ld_elemrev_v2df);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
     case VSX_BUILTIN_LD_ELEMREV_V1TI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v1ti
 			       : CODE_FOR_vsx_ld_elemrev_v1ti);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
     case VSX_BUILTIN_LD_ELEMREV_V2DI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v2di
 			       : CODE_FOR_vsx_ld_elemrev_v2di);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
     case VSX_BUILTIN_LD_ELEMREV_V4SF:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v4sf
 			       : CODE_FOR_vsx_ld_elemrev_v4sf);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
     case VSX_BUILTIN_LD_ELEMREV_V4SI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v4si
 			       : CODE_FOR_vsx_ld_elemrev_v4si);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
     case VSX_BUILTIN_LD_ELEMREV_V8HI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v8hi
 			       : CODE_FOR_vsx_ld_elemrev_v8hi);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
     case VSX_BUILTIN_LD_ELEMREV_V16QI:
       {
 	enum insn_code code = (BYTES_BIG_ENDIAN ? CODE_FOR_vsx_load_v16qi
 			       : CODE_FOR_vsx_ld_elemrev_v16qi);
-	return altivec_expand_lv_builtin (code, exp, target, false);
+	return vector_expand_lv_builtin (code, exp, target, false);
       }
       break;
     default:
