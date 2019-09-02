@@ -8200,15 +8200,7 @@ vector_resolve_overloaded_builtin (location_t loc, tree fndecl,
   if (n == 0)
     abort ();
 
-  if (fcode == S2PP_BUILTIN_VEC_STEP)
-    {
-      if (TREE_CODE (types[0]) != VECTOR_TYPE)
-	goto bad;
-
-      return build_int_cst (NULL_TREE, TYPE_VECTOR_SUBPARTS (types[0]));
-    }
-
-  if (fcode == ALTIVEC_BUILTIN_VEC_STEP)
+  if ((fcode == ALTIVEC_BUILTIN_VEC_STEP) || (fcode == S2PP_BUILTIN_VEC_STEP))
     {
       if (TREE_CODE (types[0]) != VECTOR_TYPE)
 	goto bad;
