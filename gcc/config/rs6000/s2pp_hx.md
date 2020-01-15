@@ -3,13 +3,6 @@
 (define_c_enum "unspec"
   [UNSPEC_FXV_HXSTAX
    UNSPEC_FXV_HXLAX
-   UNSPEC_FXV_HXLAX_DIRECT
-   UNSPEC_FXV_HXSTAX_GT
-   UNSPEC_FXV_HXSTAX_LT
-   UNSPEC_FXV_HXSTAX_EQ
-   UNSPEC_FXV_HXLAX_GT
-   UNSPEC_FXV_HXLAX_LT
-   UNSPEC_FXV_HXLAX_EQ
    UNSPEC_FXV_HXOUTX
    UNSPEC_FXV_HXINX
    UNSPEC_FXV_HXOUTX_GT
@@ -62,14 +55,7 @@
 (define_mode_iterator FXV_HXI [V64HI V128QI])
 (define_code_iterator HX_C_cond [gt lt eq])
 
-(define_int_iterator FXV_HXLAX [UNSPEC_FXV_HXLAX
-			       UNSPEC_FXV_HXLAX_GT
-			       UNSPEC_FXV_HXLAX_LT
-			       UNSPEC_FXV_HXLAX_EQ])
-(define_int_iterator FXV_HXSTAX [UNSPEC_FXV_HXSTAX
-				UNSPEC_FXV_HXSTAX_GT
-				UNSPEC_FXV_HXSTAX_LT
-				UNSPEC_FXV_HXSTAX_EQ])
+;; FIXME: wrong below?
 (define_int_iterator FXV_HXINX [UNSPEC_FXV_HXINX
 			       UNSPEC_FXV_HXINX_GT
 			       UNSPEC_FXV_HXINX_LT
@@ -88,22 +74,6 @@
 
 (define_code_attr HX_C_char [(gt "1") (lt "2") (eq "3")])
 
-(define_int_attr fxv_hx_lax_int [(UNSPEC_FXV_HXLAX "0")
-			     (UNSPEC_FXV_HXLAX_GT "1")
-			     (UNSPEC_FXV_HXLAX_LT "2")
-			     (UNSPEC_FXV_HXLAX_EQ "3")])
-(define_int_attr fxv_hx_lax_char [(UNSPEC_FXV_HXLAX "_")
-			      (UNSPEC_FXV_HXLAX_GT "_gt_")
-			      (UNSPEC_FXV_HXLAX_LT "_lt_")
-			      (UNSPEC_FXV_HXLAX_EQ "_eq_")])
-(define_int_attr fxv_hx_stax_int [(UNSPEC_FXV_HXSTAX "0")
-			  (UNSPEC_FXV_HXSTAX_GT "1")
-			  (UNSPEC_FXV_HXSTAX_LT "2")
-			  (UNSPEC_FXV_HXSTAX_EQ "3")])
-(define_int_attr fxv_hx_stax_char [(UNSPEC_FXV_HXSTAX "_")
-			       (UNSPEC_FXV_HXSTAX_GT "_gt_")
-			       (UNSPEC_FXV_HXSTAX_LT "_lt_")
-			       (UNSPEC_FXV_HXSTAX_EQ "_eq_")])
 (define_int_attr fxv_hx_inx_int [(UNSPEC_FXV_HXINX "0")
 			     (UNSPEC_FXV_HXINX_GT "1")
 			     (UNSPEC_FXV_HXINX_LT "2")
@@ -194,31 +164,6 @@
 ;; 1 at the end  of case 6 for gt comp -> similar to xor(1,1)
 ;; alternatively use 2
 
-;; AWH: keep this, for later, as sync might become necessary again
-;;(define_split
-;;  [(set (match_operand:FXV_HXI 0 "s2pp_hx_register_operand" "")
-;;	(match_operand:FXV_HXI 1 "indexed_or_indirect_operand" ""))]
-;;  "VECTOR_MEM_S2PP_HX_P (<MODE>mode)
-;;   && (register_operand (operands[0], <MODE>mode)
-;;       || register_operand (operands[1], <MODE>mode))"
-;;  [(parallel
-;;    [(set (match_operand:FXV_HXI 0 "s2pp_hx_register_operand" "=qv")
-;;	  (match_operand:FXV_HXI 1 "memory_operand" "Z"))
-;;     (unspec [(const_int 0)] UNSPEC_FXV_HXLAX)])]
-;;  "")
-
-(define_split
-  [(set (match_operand:FXV_HXI 0 "indexed_or_indirect_operand" "")
-	(match_operand:FXV_HXI 1 "s2pp_hx_register_operand" ""))]
-  "VECTOR_MEM_S2PP_HX_P (<MODE>mode)
-   && (register_operand (operands[0], <MODE>mode)
-       || register_operand (operands[1], <MODE>mode))"
-  [(parallel
-    [(set (match_operand:FXV_HXI 0 "memory_operand" "")
-	  (match_operand:FXV_HXI 1 "s2pp_hx_register_operand" ""))
-    (unspec [(const_int 0)] UNSPEC_FXV_HXSTAX)])]
-  "")
-
 (define_split
   [(set (match_operand:FXV_HXI 0 "s2pp_hx_register_operand" "")
 	(match_operand:FXV_HXI 1 "easy_vector_constant" ""))]
@@ -233,38 +178,112 @@
     operands[3] = CONST_VECTOR_ELT(operands[1], 1);
   }")
 
-;;store
-(define_insn_and_split "s2pp_hx_fxvstax<fxv_hx_stax_char><mode>"
-  [(parallel
-    [(set (match_operand:FXV_HXI 0 "memory_operand" "=Z")
-	  (match_operand:FXV_HXI 1 "register_operand" "qv"))
-    (unspec [(const_int 0)] FXV_HXSTAX)])]
-  "TARGET_S2PP_HX"
-  "#"
-  "reload_completed"
-  [(set (match_operand:FXV_HXI 0 "memory_operand" "")
-        (unspec:FXV_HXI [(match_operand:FXV_HXI 1 "s2pp_hx_register_operand" "")] FXV_HXSTAX))
-   (unspec_volatile [(const_int 0)] UNSPEC_FXV_HXSYNC)]
-  ""
-  [(set_attr "type" "vecstore")])
-
-(define_insn "*s2pp_hx_fxvstax_<fxv_hx_stax_int>_<mode>_direct"
-  [(set (match_operand:FXV_HXI 0 "memory_operand" "=Z")
-	(unspec:FXV_HXI [(match_operand:FXV_HXI 1 "register_operand" "qv")] FXV_HXSTAX))]
-  "TARGET_S2PP_HX"
-  "fxvstax %1,%y0,<fxv_hx_stax_int>"
-  [(set_attr "type" "vecstore")])
-
 
 ;;load
-(define_insn "s2pp_hx_fxvlax<fxv_hx_lax_char><mode>"
+;; ECM: cf. altivec
+(define_insn "s2pp_hx_fxvlax_<mode>_internal"
   [(parallel
     [(set (match_operand:FXV_HXI 0 "register_operand" "=qv")
 	  (match_operand:FXV_HXI 1 "memory_operand" "Z"))
-    (unspec [(const_int 0)] FXV_HXLAX)])]
+     (unspec [(const_int 0)] UNSPEC_FXV_HXLAX)])]
   "TARGET_S2PP_HX"
-  "fxvlax %0,%y1,<fxv_hx_lax_int>"
+  "fxvlax %0,%y1"
   [(set_attr "type" "vecload")])
+
+;; ECM: cf. altivec
+(define_expand "s2pp_hx_fxvlax_<mode>"
+  [(set (match_operand:FXV_HXI 0 "register_operand")
+	(match_operand:FXV_HXI 1 "indexed_or_indirect_operand"))]
+  "TARGET_S2PP_HX"
+{
+  rtx addr = XEXP (operand1, 0);
+  if (rs6000_sum_of_two_registers_p (addr))
+    {
+      rtx op1 = XEXP (addr, 0);
+      rtx op2 = XEXP (addr, 1);
+      emit_insn (gen_s2pp_hx_fxvlax_<mode>_2op (operand0, op1, op2));
+    }
+  else
+    {
+      emit_insn (gen_s2pp_hx_fxvlax_<mode>_1op (operand0, addr));
+    }
+  DONE;
+})
+
+;; cf. altivec
+(define_insn "s2pp_hx_fxvlax_<mode>_2op"
+  [(set (match_operand:FXV_HXI 0 "register_operand" "=qv")
+	(mem:FXV_HXI (and:SI (plus:SI (match_operand:SI 1 "register_operand" "b")
+				      (match_operand:SI 2 "register_operand" "r"))
+			     (const_int -16))))]
+  "TARGET_S2PP_HX"
+  "fxvlax %0,%1,%2"
+  [(set_attr "type" "vecload")])
+
+;; cf. altivec
+(define_insn "s2pp_hx_fxvlax_<mode>_1op"
+  [(set (match_operand:FXV_HXI 0 "register_operand" "=qv")
+	(mem:FXV_HXI (and:SI (match_operand:SI 1 "register_operand" "r")
+			     (const_int -16))))]
+  "TARGET_S2PP_HX"
+  "fxvlax %0,0,%1"
+  [(set_attr "type" "vecload")])
+
+
+;;store
+
+;; We add an explicit sync the store to a indexed or indirect memory operand.
+(define_split
+  [(set (match_operand:FXV_HXI 0 "indexed_or_indirect_operand")
+	(match_operand:FXV_HXI 1 "s2pp_hx_register_operand"))]
+  "TARGET_S2PP_HX"
+  [(parallel [(set (match_operand:FXV_HXI 0 "memory_operand")
+		   (match_operand:FXV_HXI 1 "s2pp_hx_register_operand"))
+	      (unspec [(const_int 0)] UNSPEC_FXV_HXSTAX)])
+   (unspec_volatile [(const_int 0)] UNSPEC_FXV_HXSYNC)]
+  "")
+
+;; cf. Altivec, but used for the builtins only?
+(define_expand "s2pp_hx_fxvstax_<mode>"
+  [(set (match_operand:FXV_HXI 1 "indexed_or_indirect_operand")
+	(match_operand:FXV_HXI 0 "s2pp_hx_register_operand"))]
+  "TARGET_S2PP_HX"
+{
+  rtx addr = XEXP (operand1, 0);
+  if (rs6000_sum_of_two_registers_p (addr))
+    {
+      rtx op1 = XEXP (addr, 0);
+      rtx op2 = XEXP (addr, 1);
+      emit_insn (gen_s2pp_hx_fxvstax_<mode>_2op (operand0, op1, op2));
+      emit_insn (gen_hxsync());
+    }
+  else
+    {
+      emit_insn (gen_s2pp_hx_fxvstax_<mode>_1op (operand0, addr));
+      emit_insn (gen_hxsync());
+    }
+  DONE;
+})
+
+;; cf. Altivec but we don't need the align to 16 (4-bit LSB to 0)
+(define_insn "s2pp_hx_fxvstax_<mode>_2op"
+  [(parallel [(set (mem:FXV_HXI (plus:SI (match_operand:SI 1 "register_operand" "b")
+				         (match_operand:SI 2 "register_operand" "r")))
+	           (match_operand:FXV_HXI 0 "s2pp_hx_register_operand" "qv"))
+	      (unspec [(const_int 0)] UNSPEC_FXV_HXSTAX)])]
+  "TARGET_S2PP_HX"
+  "fxvstax %0,%1,%2"
+  [(set_attr "type" "vecstore")])
+
+;; cf. Altivec but we don't need the align to 16 (4-bit LSB to 0)
+(define_insn "s2pp_hx_fxvstax_<mode>_1op"
+  [(parallel [(set (mem:FXV_HXI (match_operand:SI 1 "register_operand" "r"))
+		   (match_operand:FXV_HXI 0 "s2pp_hx_register_operand" "qv"))
+	      (unspec [(const_int 0)] UNSPEC_FXV_HXSTAX)])]
+  "TARGET_S2PP_HX"
+  "fxvstax %0,0,%1"
+  [(set_attr "type" "vecstore")])
+
 
 ;;synram
 (define_insn "s2pp_hx_fxvoutx<fxv_hx_outx_char><mode>"
