@@ -22,8 +22,6 @@
 
 #include <stdint.h>
 
-#define vector __vector
-
 #include <stdbool.h>
 
 /* Condition register codes for s2pp predicates. */
