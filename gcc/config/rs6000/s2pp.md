@@ -123,8 +123,8 @@
   [(set_attr "type" "sync")])
 
 (define_insn "*s2pp_mov<mode>"
-  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv,kv")
-	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,j,W"))]
+  [(set (match_operand:FXVI 0 "nonimmediate_operand" "=Z,kv,kv,*Y,*r,*r,kv")
+	(match_operand:FXVI 1 "input_operand" "kv,Z,kv,r,Y,r,W"))]
   "VECTOR_MEM_S2PP_P (<MODE>mode)
    && (register_operand (operands[0], <MODE>mode)
        || register_operand (operands[1], <MODE>mode))"
@@ -137,12 +137,11 @@
     case 3: return "#";
     case 4: return "#";
     case 5: return "#";
-    case 6: return "fxvsel %0,0,0";
-    case 7: return output_vec_const_move (operands);
+    case 6: return output_vec_const_move (operands);
     default: gcc_unreachable ();
     }
 }
-  [(set_attr "type" "vecstore,vecload,vecsimple,store,load,*,vecsimple,*")])
+  [(set_attr "type" "vecstore,vecload,vecsimple,store,load,*,*")])
 ;; AWH:
 ;; 0 at the end of case 2 in order to return true -> similar to vor(x,x)
 ;; alternatively use 3

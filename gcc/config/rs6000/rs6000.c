@@ -7078,8 +7078,6 @@ output_vec_const_move (rtx *operands)
   if (TARGET_S2PP)
     {
       rtx splat_vec;
-      if (zero_constant (vec, mode))
-	return "fxvsel %0,0,0,0";
 
       splat_vec = gen_easy_s2pp_constant (vec);
       gcc_assert (GET_CODE (splat_vec) == VEC_DUPLICATE);
